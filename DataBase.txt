@@ -1,0 +1,157 @@
+-- Create database if not exists
+CREATE DATABASE IF NOT EXISTS `trottinette_db`;
+USE `trottinette_db`;
+
+-- Table structure for table `utilisateurs`
+DROP TABLE IF EXISTS `utilisateurs`;
+CREATE TABLE `utilisateurs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `prenom` varchar(255) NOT NULL,
+  `nom` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `mot_de_passe_hash` varchar(255) NOT NULL,
+  `mot_de_passe_sel` varchar(255) NOT NULL,
+  `telephone` varchar(50) NOT NULL,
+  `adresse` text,
+  `date_inscription` datetime DEFAULT CURRENT_TIMESTAMP,
+  `role` enum('client','admin','partenaire') DEFAULT 'client',
+  `verified` tinyint(1) DEFAULT '0',
+  `verification_token` varchar(255) DEFAULT NULL,
+  `verification_code` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `pointrelais`
+DROP TABLE IF EXISTS `pointrelais`;
+CREATE TABLE `pointrelais` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nom` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `adresse` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `localisation` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `horairesOuverture` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `pointrelais_chk_1` CHECK (json_valid(`horairesOuverture`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `trottinette`
+DROP TABLE IF EXISTS `trottinette`;
+CREATE TABLE `trottinette` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `idUser` int DEFAULT NULL,
+  `modele` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `numeroSerie` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `etat` enum('DISPONIBLE','EN_LOCATION','EN_MAINTENANCE') COLLATE utf8mb4_general_ci NOT NULL,
+  `batterie` int DEFAULT NULL,
+  `localisation` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dateAjout` datetime DEFAULT NULL,
+  `pointRelaisId` int DEFAULT NULL,
+  `autonomie` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `maintenance`
+DROP TABLE IF EXISTS `maintenance`;
+CREATE TABLE `maintenance` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `trottinetteId` int NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `dateDebut` datetime DEFAULT NULL,
+  `dateFin` datetime DEFAULT NULL,
+  `statut` enum('EN_COURS','TERMINEE','ANNULEE') COLLATE utf8mb4_general_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_maintenance_trottinette` (`trottinetteId`),
+  CONSTRAINT `fk_maintenance_trottinette` FOREIGN KEY (`trottinetteId`) REFERENCES `trottinette` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `event`
+DROP TABLE IF EXISTS `event`;
+CREATE TABLE `event` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `titre` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `dateDebut` datetime DEFAULT NULL,
+  `dateFin` datetime DEFAULT NULL,
+  `lieu` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `statut` enum('A_VENIR','EN_COURS','TERMINE','ANNULE') COLLATE utf8mb4_general_ci NOT NULL,
+  `state` varchar(250) COLLATE utf8mb4_general_ci NOT NULL,
+  `trottinetteMinAutonomie` int DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `participation`
+DROP TABLE IF EXISTS `participation`;
+CREATE TABLE `participation` (
+  `eventId` int NOT NULL,
+  `dateInscription` datetime DEFAULT NULL,
+  `statut` enum('INSCRIT','ANNULE') COLLATE utf8mb4_general_ci NOT NULL,
+  `id` varchar(45) COLLATE utf8mb4_general_ci NOT NULL,
+  `utilisateurId` int DEFAULT NULL,
+  PRIMARY KEY (`eventId`,`id`),
+  KEY `fk_participation_event` (`eventId`),
+  CONSTRAINT `fk_participation_event` FOREIGN KEY (`eventId`) REFERENCES `event` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `reclamation`
+DROP TABLE IF EXISTS `reclamation`;
+CREATE TABLE `reclamation` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `titre` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci NOT NULL,
+  `date_creation` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `type_reclamation` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `user_email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_email` (`user_email`),
+  KEY `type_reclamation` (`type_reclamation`),
+  CONSTRAINT `fk_reclamation_utilisateur` FOREIGN KEY (`user_email`) REFERENCES `utilisateurs` (`email`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `reponse`
+DROP TABLE IF EXISTS `reponse`;
+CREATE TABLE `reponse` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `reclamation_id` int NOT NULL,
+  `message` text COLLATE utf8mb4_general_ci NOT NULL,
+  `date_reponse` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `user_type` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `reclamation_id` (`reclamation_id`),
+  CONSTRAINT `reponse_ibfk_1` FOREIGN KEY (`reclamation_id`) REFERENCES `reclamation` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `reservation`
+DROP TABLE IF EXISTS `reservation`;
+CREATE TABLE `reservation` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `utilisateurId` int NOT NULL,
+  `trottinetteId` int NOT NULL,
+  `dateReservation` datetime DEFAULT NULL,
+  `statut` enum('RESERVEE','ANNULEE','CONFIRMEE') COLLATE utf8mb4_general_ci NOT NULL,
+  `montant` decimal(10,2) DEFAULT NULL,
+  `paiement` enum('CARTE','CHEQUE','ESPECE') COLLATE utf8mb4_general_ci NOT NULL,
+  `pointRelaisId` int DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Table structure for table `packpaiement`
+DROP TABLE IF EXISTS `packpaiement`;
+CREATE TABLE `packpaiement` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `tarifKm` decimal(10,2) DEFAULT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Add foreign key constraints
+ALTER TABLE `trottinette` 
+  ADD CONSTRAINT `fk_trottinette_pointrelais` FOREIGN KEY (`pointRelaisId`) REFERENCES `pointrelais` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_trottinette_utilisateur` FOREIGN KEY (`idUser`) REFERENCES `utilisateurs` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `reservation`
+  ADD CONSTRAINT `fk_reservation_utilisateur` FOREIGN KEY (`utilisateurId`) REFERENCES `utilisateurs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_reservation_trottinette` FOREIGN KEY (`trottinetteId`) REFERENCES `trottinette` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_reservation_pointrelais` FOREIGN KEY (`pointRelaisId`) REFERENCES `pointrelais` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `participation`
+  ADD CONSTRAINT `fk_participation_utilisateur` FOREIGN KEY (`utilisateurId`) REFERENCES `utilisateurs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;

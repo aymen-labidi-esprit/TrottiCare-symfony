@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des événements{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1 class="mb-4"><i class="fas fa-calendar-alt me-2"></i>Liste des événements publics</h1>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="statut" class="form-label">Filtrer par statut</label>
+            <select name="statut" id="statut" class="form-select">
+                <option value="">Tous</option>
+                <option value="A_VENIR" {{ currentStatut == 'A_VENIR' ? 'selected' : '' }}>A venir</option>
+                <option value="EN_COURS" {{ currentStatut == 'EN_COURS' ? 'selected' : '' }}>En cours</option>
+                <option value="TERMINE" {{ currentStatut == 'TERMINE' ? 'selected' : '' }}>Terminé</option>
+                <option value="ANNULE" {{ currentStatut == 'ANNULE' ? 'selected' : '' }}>Annulé</option>
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label for="lieu" class="form-label">Filtrer par lieu</label>
+            <input type="text" name="lieu" id="lieu" class="form-control" placeholder="Ex: Tunis" value="{{ currentLieu }}">
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Appliquer les filtres</button>
+        </div>
+    </form>
+
+    <div class="row">
+        {% for event in events %}
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ event.titre }}</h5>
+                        <p><strong>Date :</strong> {{ event.dateDebut ? event.dateDebut|date('d/m/Y H:i') : 'N/A' }}</p>
+                        <p><strong>Lieu :</strong> {{ event.lieu ? event.lieu.value : 'Non défini' }}</p>
+                        <p><strong>Statut :</strong>
+                            {% if event.statut == 'A_VENIR' %}
+                                <span class="badge bg-info">A venir</span>
+                            {% elseif event.statut == 'EN_COURS' %}
+                                <span class="badge bg-success">En cours</span>
+                            {% elseif event.statut == 'TERMINE' %}
+                                <span class="badge bg-secondary">Terminé</span>
+                            {% else %}
+                                <span class="badge bg-danger">Annulé</span>
+                            {% endif %}
+                        </p>
+                        <a href="{{ path('app_event_show', {'id': event.id}) }}" class="btn btn-outline-primary btn-sm">Voir les détails</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-warning text-center">Aucun événement trouvé pour ces filtres.</div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
