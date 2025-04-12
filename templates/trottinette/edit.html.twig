@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier la Trottinette{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Modifier la Trottinette</h1>
+        
+        <div class="row mb-4">
+            <div class="col">
+                
+            </div>
+            <div class="col-auto">
+                <a href="{{ path('app_trottinette_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-tag me-2 text-primary"></i>{{ form_label(form.modele) }}
+                                    </label>
+                                    {{ form_widget(form.modele, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le modèle'}}) }}
+                                    <div class="form-text text-danger">
+                                        {{ form_errors(form.modele) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-fingerprint me-2 text-primary"></i>{{ form_label(form.numeroSerie) }}
+                                    </label>
+                                    {{ form_widget(form.numeroSerie, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le numéro de série'}}) }}
+                                    <div class="form-text text-danger">
+                                        {{ form_errors(form.numeroSerie) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-info-circle me-2 text-primary"></i>{{ form_label(form.etat) }}
+                                    </label>
+                                    {{ form_widget(form.etat, {'attr': {'class': 'form-select'}}) }}
+                                    <div class="form-text text-danger">
+                                        {{ form_errors(form.etat) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-battery-three-quarters me-2 text-primary"></i>{{ form_label(form.batterie) }}
+                                    </label>
+                                    {{ form_widget(form.batterie, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le niveau de batterie'}}) }}
+                                    <div class="form-text text-danger">
+                                        {{ form_errors(form.batterie) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>{{ form_label(form.localisation) }}
+                                    </label>
+                                    {{ form_widget(form.localisation, {'attr': {'class': 'form-control', 'placeholder': 'Entrez la localisation'}}) }}
+                                    <div class="form-text text-danger">
+                                        {{ form_errors(form.localisation) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-road me-2 text-primary"></i>{{ form_label(form.autonomie) }}
+                                    </label>
+                                    {{ form_widget(form.autonomie, {'attr': {'class': 'form-control', 'placeholder': 'Entrez l\'autonomie'}}) }}
+                                    <div class="form-text text-danger">
+                                        {{ form_errors(form.autonomie) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Enregistrer les Modifications
+                            </button>
+                        </div>
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Informations
+                        </h5>
+                        <p class="card-text text-muted">
+                            Modifiez les informations de la trottinette selon vos besoins.
+                            Les champs marqués d'un astérisque (*) sont requis.
+                        </p>
+                        <hr>
+                        <h6 class="mb-3">Conseils :</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Vérifiez l'état actuel de la trottinette
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Mettez à jour le niveau de batterie
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Confirmez la localisation actuelle
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

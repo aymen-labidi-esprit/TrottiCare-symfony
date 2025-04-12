@@ -1,0 +1,175 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Trottinette{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Détails de la Trottinette</h1>
+        
+        <div class="row mb-4">
+            <div class="col">
+                
+            </div>
+            <div class="col-auto">
+                <a href="{{ path('app_trottinette_edit', {'id': trottinette.id}) }}" class="btn btn-warning me-2">
+                    <i class="fas fa-edit me-2"></i>Modifier
+                </a>
+                <a href="{{ path('app_trottinette_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="card-title mb-0">{{ trottinette.modele }}</h3>
+                            <span class="badge {% if trottinette.etat.value == 'DISPONIBLE' %}bg-success{% elseif trottinette.etat.value == 'EN_LOCATION' %}bg-warning{% else %}bg-danger{% endif %} fs-6">
+                                {{ trottinette.etat.toString() }}
+                            </span>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <p class="card-text mb-2">
+                                        <i class="fas fa-fingerprint me-2 text-primary"></i>
+                                        <strong>N° Série:</strong> {{ trottinette.numeroSerie }}
+                                    </p>
+                                    <p class="card-text mb-2">
+                                        <i class="fas fa-battery-three-quarters me-2 text-primary"></i>
+                                        <strong>Batterie:</strong> {{ trottinette.batterie }}%
+                                    </p>
+                                    <p class="card-text mb-2">
+                                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                        <strong>Localisation:</strong> {{ trottinette.localisation }}
+                                    </p>
+                                    <p class="card-text">
+                                        <i class="fas fa-road me-2 text-primary"></i>
+                                        <strong>Autonomie:</strong> {{ trottinette.autonomie }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <p class="card-text mb-2">
+                                        <i class="fas fa-calendar-plus me-2 text-primary"></i>
+                                        <strong>Date d'Ajout:</strong> {{ trottinette.dateAjout ? trottinette.dateAjout|date('d/m/Y H:i') : 'Non définie' }}
+                                    </p>
+                                    <p class="card-text mb-2">
+                                        <i class="fas fa-store me-2 text-primary"></i>
+                                        <strong>Point Relais ID:</strong> {{ trottinette.pointRelaisId ?: 'Non défini' }}
+                                    </p>
+                                    <p class="card-text">
+                                        <i class="fas fa-user me-2 text-primary"></i>
+                                        <strong>Utilisateur:</strong> 
+                                        {% if trottinette.utilisateur %}
+                                            ID: {{ trottinette.utilisateur.id }} - {{ trottinette.utilisateur.prenom }} {{ trottinette.utilisateur.nom }}
+                                        {% else %}
+                                            Non défini
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if trottinette.etat != 'EN_MAINTENANCE' %}
+                    <div class="card mb-4">
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-3">Maintenance</h5>
+                            <p class="card-text text-muted mb-3">Cette trottinette n'est pas actuellement en maintenance.</p>
+                            <a href="{{ path('app_maintenance_new', {'trottinette': trottinette.id}) }}" class="btn btn-primary">
+                                <i class="fas fa-tools me-2"></i>Planifier une Maintenance
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4">
+                <!-- User Information Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user me-2"></i>Informations Utilisateur
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if trottinette.utilisateur %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">{{ trottinette.utilisateur.prenom }} {{ trottinette.utilisateur.nom }}</h6>
+                                    <small class="text-muted">ID: {{ trottinette.utilisateur.id }}</small>
+                                </div>
+                            </div>
+                            <p class="card-text mb-2">
+                                <i class="fas fa-envelope me-2 text-primary"></i>
+                                <strong>Email:</strong> {{ trottinette.utilisateur.email }}
+                            </p>
+                            <p class="card-text mb-2">
+                                <i class="fas fa-phone me-2 text-primary"></i>
+                                <strong>Téléphone:</strong> {{ trottinette.utilisateur.telephone }}
+                            </p>
+                            <p class="card-text">
+                                <i class="fas fa-user-tag me-2 text-primary"></i>
+                                <strong>Rôle:</strong> {{ trottinette.utilisateur.role|capitalize }}
+                            </p>
+                        {% else %}
+                            <p class="text-center text-muted my-3">Aucun utilisateur associé</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Point Relais Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-store me-2"></i>Point Relais
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if trottinette.pointRelaisId %}
+                            <p class="card-text">
+                                <i class="fas fa-hashtag me-2 text-primary"></i>
+                                <strong>ID:</strong> {{ trottinette.pointRelaisId }}
+                            </p>
+                        {% else %}
+                            <p class="text-center text-muted my-3">Aucun point relais associé</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Actions Rapides</h5>
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_trottinette_edit', {'id': trottinette.id}) }}" class="btn btn-warning">
+                                <i class="fas fa-edit me-2"></i>Modifier la Trottinette
+                            </a>
+                            {% if trottinette.etat != 'EN_MAINTENANCE' %}
+                                <a href="{{ path('app_maintenance_new', {'trottinette': trottinette.id}) }}" class="btn btn-secondary">
+                                    <i class="fas fa-tools me-2"></i>Nouvelle Maintenance
+                                </a>
+                            {% endif %}
+                            <form method="post" action="{{ path('app_trottinette_delete', {'id': trottinette.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette trottinette?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ trottinette.id) }}">
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="fas fa-trash-alt me-2"></i>Supprimer la Trottinette
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Maintenances{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <!-- Header section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold text-primary mb-0">Liste des Maintenances</h1>
+            <a href="{{ path('app_maintenance_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Nouvelle maintenance
+            </a>
+        </div>
+        
+        <!-- Status cards -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-warning p-3 me-3">
+                            <i class="fas fa-wrench text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-0">En cours</h6>
+                            <h4 class="mb-0">{{ maintenances|filter(m => m.statut == 'EN_COURS')|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-success p-3 me-3">
+                            <i class="fas fa-check text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-0">Terminées</h6>
+                            <h4 class="mb-0">{{ maintenances|filter(m => m.statut == 'TERMINEE')|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-danger p-3 me-3">
+                            <i class="fas fa-times text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-0">Annulées</h6>
+                            <h4 class="mb-0">{{ maintenances|filter(m => m.statut == 'ANNULEE')|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Flash messages -->
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show mb-4">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        
+        <!-- Search and filter -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Rechercher...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="statusFilter" class="form-select">
+                            <option value="">Tous les statuts</option>
+                            <option value="EN_COURS">En cours</option>
+                            <option value="TERMINEE">Terminée</option>
+                            <option value="ANNULEE">Annulée</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="maintenanceTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0">ID</th>
+                                <th class="border-0">Trottinette ID</th>
+                                <th class="border-0">Description</th>
+                                <th class="border-0">Date début</th>
+                                <th class="border-0">Date fin</th>
+                                <th class="border-0">Statut</th>
+                                <th class="border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for maintenance in maintenances %}
+                            <tr data-status="{{ maintenance.statut }}">
+                                <td>{{ maintenance.id }}</td>
+                                <td>{{ maintenance.trottinetteId }}</td>
+                                <td>{{ maintenance.description|length > 50 ? maintenance.description|slice(0, 50) ~ '...' : maintenance.description }}</td>
+                                <td>{{ maintenance.dateDebut ? maintenance.dateDebut|date('d/m/Y H:i') : '' }}</td>
+                                <td>{{ maintenance.dateFin ? maintenance.dateFin|date('d/m/Y H:i') : '' }}</td>
+                                <td>
+                                    <span class="badge rounded-pill {% if maintenance.statut == 'EN_COURS' %}bg-warning{% elseif maintenance.statut == 'TERMINEE' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ maintenance.statut }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a href="{{ path('app_maintenance_show', {'id': maintenance.id}) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('app_maintenance_edit', {'id': maintenance.id}) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ maintenance.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade" id="deleteModal{{ maintenance.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirmation de suppression</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body text-start">
+                                                    Êtes-vous sûr de vouloir supprimer cette maintenance ?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <form method="post" action="{{ path('app_maintenance_delete', {'id': maintenance.id}) }}" class="d-inline">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ maintenance.id) }}">
+                                                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                                        <p>Aucune maintenance trouvée</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for search and filter functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const statusFilter = document.getElementById('statusFilter');
+            const table = document.getElementById('maintenanceTable');
+            const rows = table.getElementsByTagName('tr');
+
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedStatus = statusFilter.value;
+                
+                for (let i = 1; i < rows.length; i++) { // Skip header row
+                    const row = rows[i];
+                    if (row.cells) { // Check if it's a data row
+                        const status = row.getAttribute('data-status');
+                        const rowText = row.textContent.toLowerCase();
+                        
+                        const statusMatch = !selectedStatus || status === selectedStatus;
+                        const textMatch = !searchTerm || rowText.includes(searchTerm);
+                        
+                        if (statusMatch && textMatch) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                }
+            }
+            
+            searchInput.addEventListener('input', filterTable);
+            statusFilter.addEventListener('change', filterTable);
+        });
+    </script>
+{% endblock %}
