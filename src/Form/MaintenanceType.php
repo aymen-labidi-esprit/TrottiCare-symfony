@@ -24,10 +24,12 @@ class MaintenanceType extends AbstractType
                     return sprintf('%s - %s', $trottinette->getModele(), $trottinette->getNumeroSerie());
                 },
                 'label' => 'Trottinette',
+                'required' => false,
                 'attr' => ['class' => 'form-control']
             ])
             ->add('dateDebut', DateTimeType::class, [
                 'label' => 'Date de début',
+                'required' => false,
                 'widget' => 'single_text',
                 'attr' => ['class' => 'form-control']
             ])
@@ -39,13 +41,15 @@ class MaintenanceType extends AbstractType
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
+                'required' => false,
                 'attr' => ['class' => 'form-control', 'rows' => 4]
             ])
             ->add('statut', ChoiceType::class, [
                 'label' => 'Statut',
+                'required' => false,
                 'choices' => [
                     'En cours' => 'EN_COURS',
-                    'Terminée' => 'TERMINEE',
+                    'Terminée' => 'TERMINE',
                     'Annulée' => 'ANNULEE'
                 ],
                 'attr' => ['class' => 'form-control']
@@ -55,18 +59,21 @@ class MaintenanceType extends AbstractType
                 'choices' => [
                     'Réparation' => 'REPARATION',
                     'Entretien' => 'ENTRETIEN',
-                    'Inspection' => 'INSPECTION',
+                    'Inspection' => 'VERIFICATION',
                 ],
                 'required' => false,
-                'attr' => ['class' => 'form-control'],
-                'mapped' => false,
+                'attr' => ['class' => 'form-control']
             ]);
+            
+            // Add trottinette field at the beginning of the form
+            $builder->get('trottinette')->setRequired(true);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Maintenance::class,
+            'html5_validation' => false,
         ]);
     }
 }

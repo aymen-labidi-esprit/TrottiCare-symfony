@@ -1,114 +1,72 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Trottinette{% endblock %}
+{% block title %}Nouvelle Trottinette{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1>Créer une nouvelle Trottinette</h1>
+<div class="container py-4">
+    <h1>Créer une nouvelle Trottinette</h1>
 
-        {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-tag me-2 text-primary"></i>{{ form_label(form.modele) }}
-                    </label>
-                    {{ form_widget(form.modele, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le modèle'}}) }}
-                    <div class="form-text text-danger">
-                        {{ form_errors(form.modele) }}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-fingerprint me-2 text-primary"></i>{{ form_label(form.numeroSerie) }}
-                    </label>
-                    {{ form_widget(form.numeroSerie, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le numéro de série'}}) }}
-                    <div class="form-text text-danger">
-                        {{ form_errors(form.numeroSerie) }}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-info-circle me-2 text-primary"></i>{{ form_label(form.etat) }}
-                    </label>
-                    {{ form_widget(form.etat, {'attr': {'class': 'form-select'}}) }}
-                    <div class="form-text text-danger">
-                        {{ form_errors(form.etat) }}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-battery-three-quarters me-2 text-primary"></i>{{ form_label(form.batterie) }}
-                    </label>
-                    {{ form_widget(form.batterie, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le niveau de batterie'}}) }}
-                    <div class="form-text text-danger">
-                        {{ form_errors(form.batterie) }}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>{{ form_label(form.localisation) }}
-                    </label>
-                    {{ form_widget(form.localisation, {'attr': {'class': 'form-control', 'placeholder': 'Entrez la localisation'}}) }}
-                    <div class="form-text text-danger">
-                        {{ form_errors(form.localisation) }}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-road me-2 text-primary"></i>{{ form_label(form.autonomie) }}
-                    </label>
-                    {{ form_widget(form.autonomie, {'attr': {'class': 'form-control', 'placeholder': 'Entrez l\'autonomie'}}) }}
-                    <div class="form-text text-danger">
-                        {{ form_errors(form.autonomie) }}
-                    </div>
-                </div>
+    {# Alerte globale seulement si le formulaire a été soumis #}
+    {% if not form.vars.valid and form.vars.submitted %}
+        <div class="alert alert-danger">
+            <h4 class="alert-heading">Veuillez corriger les erreurs ci-dessous</h4>
+        </div>
+    {% endif %}
+
+    {{ form_start(form, {
+        'attr': {
+            'class': 'needs-validation' ~ (form.vars.submitted ? ' was-validated' : ''),
+            'novalidate': 'novalidate'
+        },
+        'method': 'POST',
+        'action': path('app_trottinette_new')
+    }) }}
+
+    {% for field in [
+        'modele',
+        'numeroSerie',
+        'etat',
+        'batterie',
+        'localisation',
+        'autonomie',
+        'pointRelaisId'
+    ] %}
+        <div class="mb-3">
+            {{ form_label(attribute(form, field)) }}
+            {{ form_widget(attribute(form, field), {
+                'attr': {
+                    'class': 'form-control' ~ (form.vars.submitted and attribute(form, field).vars.valid ? ' is-valid' : '') ~ 
+                            (form.vars.submitted and not attribute(form, field).vars.valid ? ' is-invalid' : '')
+                }
+            }) }}
+            <div class="invalid-feedback">
+                {{ form_errors(attribute(form, field)) }}
             </div>
         </div>
+    {% endfor %}
 
-        <div class="mt-4">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save me-2"></i>Enregistrer la Trottinette
-            </button>
-        </div>
-        {{ form_end(form) }}
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-2"></i>Créer
+        </button>
+        <a href="{{ path('app_trottinette_index') }}" class="btn btn-secondary ms-2">
+            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+        </a>
+    </div>
 
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title mb-3">
-                    <i class="fas fa-info-circle me-2"></i>Informations
-                </h5>
-                <p class="card-text text-muted">
-                    Remplissez tous les champs obligatoires pour ajouter une nouvelle trottinette à votre flotte.
-                    Les champs marqués d'un astérisque (*) sont requis.
-                </p>
-                <hr>
-                <h6 class="mb-3">Conseils :</h6>
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-2">
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Vérifiez le numéro de série unique
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Indiquez l'état initial de la trottinette
-                    </li>
-                    <li>
-                        <i class="fas fa-check-circle text-success me-2"></i>
-                        Précisez la localisation pour le suivi
-                    </li>
-                </ul>
-            </div>
+    {{ form_end(form) }}
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Guide de saisie</h5>
+            <ul class="mb-0">
+                <li>Le modèle doit contenir au moins 2 caractères</li>
+                <li>Le numéro de série doit contenir au moins 4 caractères (lettres, chiffres et tirets uniquement)</li>
+                <li>Le niveau de batterie doit être entre 0 et 100%</li>
+                <li>Une trottinette disponible doit avoir au moins 10% de batterie</li>
+                <li>Le format d'autonomie doit être comme "25 km" ou "2 heures"</li>
+            </ul>
         </div>
     </div>
+</div>
 {% endblock %}

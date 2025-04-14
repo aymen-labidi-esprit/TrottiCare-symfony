@@ -72,9 +72,9 @@
                                     <tr>
                                         <th>État</th>
                                         <td>
-                                            {% if maintenance.trottinette.etat == 'DISPONIBLE' %}
+                                            {% if maintenance.trottinette.etat.value == 'DISPONIBLE' %}
                                                 <span class="badge bg-success">Disponible</span>
-                                            {% elseif maintenance.trottinette.etat == 'EN_LOCATION' %}
+                                            {% elseif maintenance.trottinette.etat.value == 'EN_LOCATION' %}
                                                 <span class="badge bg-warning">En Location</span>
                                             {% else %}
                                                 <span class="badge bg-danger">En Maintenance</span>

@@ -124,7 +124,13 @@
                                 <td>{{ trottinette.pointRelaisId ?: 'Non défini' }}</td>
                                 <td>
                                     <span class="badge rounded-pill {% if trottinette.etat.value == 'DISPONIBLE' %}bg-success{% elseif trottinette.etat.value == 'EN_LOCATION' %}bg-warning{% else %}bg-danger{% endif %}">
-                                        {{ trottinette.etat.toString() }}
+                                        {% if trottinette.etat.value == 'DISPONIBLE' %}
+                                            Disponible
+                                        {% elseif trottinette.etat.value == 'EN_LOCATION' %}
+                                            En Location
+                                        {% elseif trottinette.etat.value == 'EN_MAINTENANCE' %}
+                                            En Maintenance
+                                        {% endif %}
                                     </span>
                                 </td>
                                 <td>
@@ -156,28 +162,6 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
-                                    
-                                    <!-- Delete Modal -->
-                                    <div class="modal fade" id="deleteModal{{ trottinette.id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Confirmation de suppression</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body text-start">
-                                                    Êtes-vous sûr de vouloir supprimer cette trottinette ?
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                    <form method="post" action="{{ path('app_trottinette_delete', {'id': trottinette.id}) }}" class="d-inline">
-                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ trottinette.id) }}">
-                                                        <button type="submit" class="btn btn-danger">Supprimer</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </td>
                             </tr>
                         {% else %}
@@ -196,6 +180,30 @@
             </div>
         </div>
     </div>
+
+    <!-- Delete Modals (moved outside of the table) -->
+    {% for trottinette in trottinettes %}
+        <div class="modal fade" id="deleteModal{{ trottinette.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ trottinette.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel{{ trottinette.id }}">Confirmation de suppression</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Êtes-vous sûr de vouloir supprimer la trottinette <strong>{{ trottinette.modele }}</strong> ({{ trottinette.numeroSerie }}) ?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <form method="post" action="{{ path('app_trottinette_delete', {'id': trottinette.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ trottinette.id) }}">
+                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 
     <!-- JavaScript for search and filter functionality -->
     <script>

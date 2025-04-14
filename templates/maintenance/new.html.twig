@@ -6,19 +6,57 @@
     <div class="container mt-4">
         <h1>Créer une nouvelle Maintenance</h1>
 
-        {{ form_start(form) }}
-            {{ form_row(form.description) }}
-            {{ form_row(form.dateDebut) }}
-            {{ form_row(form.dateFin) }}
-            {{ form_row(form.statut) }}
-            {% if form.cout is defined %}
-                {{ form_row(form.cout) }}
-            {% endif %}
-            {% if form.technicien is defined %}
-                {{ form_row(form.technicien) }}
+        {% if not form.vars.valid and form.vars.submitted %}
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Des erreurs ont été trouvées :</h4>
+                <ul class="mb-0">
+                    {% for child in form.children %}
+                        {% if not child.vars.valid %}
+                            {% for error in child.vars.errors %}
+                                <li>{{ error.message }}</li>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'needs-validation'}}) }}
+            {{ form_row(form.description, {'attr': {'class': form.description.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
+            {% if not form.description.vars.valid %}
+                <div class="invalid-feedback d-block">{{ form_errors(form.description) }}</div>
             {% endif %}
             
-            <button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+            {{ form_row(form.dateDebut, {'attr': {'class': form.dateDebut.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
+            {% if not form.dateDebut.vars.valid %}
+                <div class="invalid-feedback d-block">{{ form_errors(form.dateDebut) }}</div>
+            {% endif %}
+            
+            {{ form_row(form.dateFin, {'attr': {'class': form.dateFin.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
+            {% if not form.dateFin.vars.valid %}
+                <div class="invalid-feedback d-block">{{ form_errors(form.dateFin) }}</div>
+            {% endif %}
+            
+            {{ form_row(form.statut, {'attr': {'class': form.statut.vars.valid ? 'form-select' : 'form-select is-invalid'}}) }}
+            {% if not form.statut.vars.valid %}
+                <div class="invalid-feedback d-block">{{ form_errors(form.statut) }}</div>
+            {% endif %}
+            
+            {% if form.cout is defined %}
+                {{ form_row(form.cout, {'attr': {'class': form.cout.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
+                {% if form.cout.vars.valid is defined and not form.cout.vars.valid %}
+                    <div class="invalid-feedback d-block">{{ form_errors(form.cout) }}</div>
+                {% endif %}
+            {% endif %}
+            
+            {% if form.technicien is defined %}
+                {{ form_row(form.technicien, {'attr': {'class': form.technicien.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
+                {% if form.technicien.vars.valid is defined and not form.technicien.vars.valid %}
+                    <div class="invalid-feedback d-block">{{ form_errors(form.technicien) }}</div>
+                {% endif %}
+            {% endif %}
+            
+            <button class="btn btn-primary mt-3">{{ button_label|default('Enregistrer') }}</button>
         {{ form_end(form) }}
     </div>
 {% endblock %}

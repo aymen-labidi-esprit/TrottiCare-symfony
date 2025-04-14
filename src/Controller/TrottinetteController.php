@@ -13,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Form\FormError;
 
 #[Route('/trottinette')]
 class TrottinetteController extends AbstractController
@@ -52,23 +53,26 @@ class TrottinetteController extends AbstractController
         $form = $this->createForm(TrottinetteType::class, $trottinette);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $trottinette->setDateAjout(new \DateTime());
-            
-            try {
-                $entityManager->persist($trottinette);
-                $entityManager->flush();
-
-                $this->addFlash('success', 'La trottinette a été ajoutée avec succès.');
-                return $this->redirectToRoute('app_trottinette_index');
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de l\'ajout de la trottinette: ' . $e->getMessage());
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+                $trottinette->setDateAjout(new \DateTime());
+                
+                try {
+                    $entityManager->persist($trottinette);
+                    $entityManager->flush();
+                    $this->addFlash('success', 'La trottinette a été ajoutée avec succès.');
+                    return $this->redirectToRoute('app_trottinette_index');
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Erreur lors de l\'ajout de la trottinette: ' . $e->getMessage());
+                }
             }
+            // Supprimez tout le bloc else avec les validations manuelles
+            // Symfony gère déjà ces erreurs automatiquement
         }
 
         return $this->render('trottinette/new.html.twig', [
             'trottinette' => $trottinette,
-            'form' => $form->createView(),
+            'form' => $form,
         ]);
     }
 
@@ -86,19 +90,20 @@ class TrottinetteController extends AbstractController
         $form = $this->createForm(TrottinetteType::class, $trottinette);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            try {
-                $entityManager->flush();
-                $this->addFlash('success', 'La trottinette a été modifiée avec succès.');
-                return $this->redirectToRoute('app_trottinette_index');
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la modification de la trottinette: ' . $e->getMessage());
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+                try {
+                    $entityManager->flush();
+                    $this->addFlash('success', 'La trottinette a été modifiée avec succès.');
+                    return $this->redirectToRoute('app_trottinette_index');
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Erreur lors de la modification de la trottinette: ' . $e->getMessage());
+                }
             }
-        }
-
+        }    
         return $this->render('trottinette/edit.html.twig', [
             'trottinette' => $trottinette,
-            'form' => $form->createView(),
+            'form' => $form,
         ]);
     }
 
