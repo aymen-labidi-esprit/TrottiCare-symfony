@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un nouvel événement{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('app_event_index') }}">Événements</a></li>
+                <li class="breadcrumb-item active">Créer un nouvel événement</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h1 class="card-title display-5 mb-4">
+                            <i class="fas fa-plus-circle me-3 text-primary"></i>Créer un nouvel événement
+                        </h1>
+
+                        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+                            <div class="row g-4">
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.titre, {'attr': {'class': 'form-control', 'placeholder': 'Titre de l\'événement'}}) }}
+                                        {{ form_label(form.titre) }}
+                                        {{ form_errors(form.titre) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Description de l\'événement', 'style': 'height: 100px'}}) }}
+                                        {{ form_label(form.description) }}
+                                        {{ form_errors(form.description) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control', 'placeholder': 'Date de début'}}) }}
+                                        {{ form_label(form.dateDebut) }}
+                                        {{ form_errors(form.dateDebut) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.dateFin, {'attr': {'class': 'form-control', 'placeholder': 'Date de fin'}}) }}
+                                        {{ form_label(form.dateFin) }}
+                                        {{ form_errors(form.dateFin) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.lieu, {'attr': {'class': 'form-control', 'placeholder': 'Lieu'}}) }}
+                                        {{ form_label(form.lieu) }}
+                                        {{ form_errors(form.lieu) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.trottinetteMinAutonomie, {'attr': {'class': 'form-control', 'placeholder': 'Autonomie minimale de la trottinette'}}) }}
+                                        {{ form_label(form.trottinetteMinAutonomie) }}
+                                        {{ form_errors(form.trottinetteMinAutonomie) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-12 d-flex justify-content-between align-items-center mt-4">
+                                    <a href="{{ path('app_event_index') }}" class="btn btn-secondary btn-lg">
+                                        <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                                    </a>
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-plus me-2"></i>Créer l'événement
+                                    </button>
+                                </div>
+                            </div>
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

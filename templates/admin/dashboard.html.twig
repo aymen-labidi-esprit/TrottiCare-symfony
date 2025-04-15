@@ -1,0 +1,138 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord administrateur{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4"><i class="fas fa-tachometer-alt me-3"></i>Tableau de bord administrateur</h1>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title mb-0">{{ eventData|length }}</h3>
+                            <p class="card-text mb-0">Total des événements</p>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ path('app_event_index') }}">Voir les détails</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% set totalParticipants = 0 %}
+                            {% for item in eventData %}
+                                {% set totalParticipants = totalParticipants + item.participantCount %}
+                            {% endfor %}
+                            <h3 class="card-title mb-0">{{ totalParticipants }}</h3>
+                            <p class="card-text mb-0">Total des participants</p>
+                        </div>
+                        <i class="fas fa-users fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#">Voir les détails</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title mb-0">
+                                {% set upcomingEvents = 0 %}
+                                {% for item in eventData %}
+                                    {% if item.event.statut == 'A_VENIR' %}
+                                        {% set upcomingEvents = upcomingEvents + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ upcomingEvents }}
+                            </h3>
+                            <p class="card-text mb-0">Événements à venir</p>
+                        </div>
+                        <i class="fas fa-clock fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#">Voir les détails</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Aperçu des événements
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Date de début</th>
+                            <th>Lieu</th>
+                            <th>Statut</th>
+                            <th>Participants</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in eventData %}
+                            <tr>
+                                <td>{{ item.event.titre }}</td>
+                                <td>{{ item.event.dateDebut ? item.event.dateDebut|date('Y-m-d H:i') : 'Non défini' }}</td>
+                                <td>{{ item.event.lieu ? item.event.lieu.value : 'Non défini' }}</td>
+                                <td>
+                                    {% if item.event.statut == 'A_VENIR' %}
+                                        <span class="badge bg-info">À venir</span>
+                                    {% elseif item.event.statut == 'EN_COURS' %}
+                                        <span class="badge bg-success">En cours</span>
+                                    {% elseif item.event.statut == 'TERMINE' %}
+                                        <span class="badge bg-secondary">Terminé</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Annulé</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ item.participantCount }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('app_event_show', {'id': item.event.id}) }}" class="btn btn-info" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('app_event_edit', {'id': item.event.id}) }}" class="btn btn-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ path('app_admin_event_participants', {'id': item.event.id}) }}" class="btn btn-primary" title="Participants">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
