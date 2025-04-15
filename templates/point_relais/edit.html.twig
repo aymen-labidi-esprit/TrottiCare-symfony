@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le Point Relais{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-lg border-0 fade-in">
+        <div class="card-header bg-warning text-dark">
+          <h3 class="mb-0">
+            <i class="fas fa-edit me-2"></i> Modifier le Point Relais
+          </h3>
+        </div>
+        <div class="card-body p-4">
+
+          {# ✅ Flash messages #}
+          {% for label, messages in app.flashes %}
+            {% for message in messages %}
+              <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endfor %}
+
+          {{ form_start(form, {
+            attr: {
+              novalidate: 'novalidate',
+              'data-turbo': 'false'
+            }
+          }) }}
+
+          {% if form.vars.errors|length > 0 %}
+            <div class="alert alert-danger">
+              {{ form_errors(form) }}
+            </div>
+          {% endif %}
+
+          <div class="mb-3">
+            {{ form_label(form.nom) }}
+            {{ form_widget(form.nom, { attr: { class: 'form-control' } }) }}
+            {{ form_errors(form.nom) }}
+          </div>
+
+          <div class="mb-3">
+            {{ form_label(form.addresse) }}
+            {{ form_widget(form.addresse, { attr: { class: 'form-control' } }) }}
+            {{ form_errors(form.addresse) }}
+          </div>
+
+          <div class="mb-3">
+            {{ form_label(form.HoraireOuverture) }}
+            {{ form_widget(form.HoraireOuverture, { attr: { class: 'form-control' } }) }}
+            {{ form_errors(form.HoraireOuverture) }}
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <a href="{{ path('point_relais_index') }}" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i> Retour
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-1"></i> Enregistrer
+            </button>
+          </div>
+
+          {{ form_end(form) }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
