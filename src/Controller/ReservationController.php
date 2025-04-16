@@ -74,4 +74,17 @@ public function edit(Request $request, Reservation $reservation, EntityManagerIn
     ]);
 }
 
+#[Route('/{id}', name: 'reservation_delete', methods: ['POST'])]
+public function delete(Request $request, Reservation $reservation, EntityManagerInterface $em): Response
+{
+    if ($this->isCsrfTokenValid('delete'.$reservation->getId(), $request->request->get('_token'))) {
+        $em->remove($reservation);
+        $em->flush();
+
+        $this->addFlash('success', 'Réservation supprimée.');
+    }
+
+    return $this->redirectToRoute('reservation_index');
+}
+
 }
