@@ -33,7 +33,14 @@ class MaintenanceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Remove any code that might be setting maintenance.cout
+            // Set the trottinette ID from the selected trottinette
+            if ($maintenance->getTrottinette()) {
+                $maintenance->setTrottinetteId($maintenance->getTrottinette()->getId());
+                
+                // Update trottinette status to EN_MAINTENANCE
+                $trottinette = $maintenance->getTrottinette();
+                $trottinette->setEtat(TrottinetteStatus::EN_MAINTENANCE);
+            }
             
             $entityManager->persist($maintenance);
             $entityManager->flush();

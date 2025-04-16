@@ -3,183 +3,70 @@
 {% block title %}Nouvelle Trottinette{% endblock %}
 
 {% block body %}
-    <div class="container py-4">
-        <h1>Créer une nouvelle Trottinette</h1>
+<div class="container py-4">
+    <h1>Créer une nouvelle Trottinette</h1>
 
-        {% if not form.vars.valid and form.vars.submitted %}
-            <div class="alert alert-danger">
-                <h4 class="alert-heading">Des erreurs ont été trouvées :</h4>
-                <ul class="mb-0">
-                    {% if form.modele.vars.errors|length > 0 %}
-                        {% for error in form.modele.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {% if form.numeroSerie.vars.errors|length > 0 %}
-                        {% for error in form.numeroSerie.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {% if form.etat.vars.errors|length > 0 %}
-                        {% for error in form.etat.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {% if form.batterie.vars.errors|length > 0 %}
-                        {% for error in form.batterie.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {% if form.autonomie.vars.errors|length > 0 %}
-                        {% for error in form.autonomie.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {% if form.vars.errors|length > 0 %}
-                        {% for error in form.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    {# If no specific field errors were shown but the form is invalid, add a generic message #}
-                    {% if form.vars.errors|length == 0 and not form.modele.vars.valid %}
-                        <li>Le modèle ne peut pas être vide.</li>
-                    {% endif %}
-                    
-                    {% if form.vars.errors|length == 0 and not form.numeroSerie.vars.valid %}
-                        <li>Le numéro de série ne peut pas être vide.</li>
-                    {% endif %}
-                    
-                    {% if form.vars.errors|length == 0 and not form.etat.vars.valid %}
-                        <li>L'état ne peut pas être vide.</li>
-                    {% endif %}
-                    
-                    {% if form.modele.vars.errors|length == 0 and form.numeroSerie.vars.errors|length == 0 and form.etat.vars.errors|length == 0 and form.batterie.vars.errors|length == 0 and form.vars.errors|length == 0 %}
-                        <li>Veuillez remplir tous les champs obligatoires.</li>
-                    {% endif %}
-                </ul>
-            </div>
-        {% endif %}
+    {# Alerte globale seulement si le formulaire a été soumis #}
+    {% if not form.vars.valid and form.vars.submitted %}
+        <div class="alert alert-danger">
+            <h4 class="alert-heading">Veuillez corriger les erreurs ci-dessous</h4>
+        </div>
+    {% endif %}
 
-        {{ form_start(form, {
-            'attr': {
-                'novalidate': 'novalidate',
-                'class': 'needs-validation'
-            },
-            'method': 'POST',
-            'action': path('app_trottinette_new')
-        }) }}
-            {{ form_label(form.modele, 'Modèle') }}
-            {{ form_widget(form.modele, {'attr': {'class': form.modele.vars.valid ? 'form-control' : 'form-control is-invalid', 'required': 'required'}}) }}
-            {% if not form.modele.vars.valid and form.modele.vars.errors|length > 0 %}
-                <div class="invalid-feedback d-block">
-                    <ul>
-                        {% for error in form.modele.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            {{ form_label(form.numeroSerie, 'Numéro de Série') }}
-            {{ form_widget(form.numeroSerie, {'attr': {'class': form.numeroSerie.vars.valid ? 'form-control' : 'form-control is-invalid', 'required': 'required'}}) }}
-            {% if not form.numeroSerie.vars.valid and form.numeroSerie.vars.errors|length > 0 %}
-                <div class="invalid-feedback d-block">
-                    <ul>
-                        {% for error in form.numeroSerie.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            {{ form_label(form.etat, 'État') }}
-            {{ form_widget(form.etat, {'attr': {'class': form.etat.vars.valid ? 'form-select' : 'form-select is-invalid', 'required': 'required'}}) }}
-            {% if not form.etat.vars.valid and form.etat.vars.errors|length > 0 %}
-                <div class="invalid-feedback d-block">
-                    <ul>
-                        {% for error in form.etat.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            {{ form_label(form.batterie, 'Batterie (%)') }}
-            {{ form_widget(form.batterie, {'attr': {'class': form.batterie.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
-            {% if not form.batterie.vars.valid and form.batterie.vars.errors|length > 0 %}
-                <div class="invalid-feedback d-block">
-                    <ul>
-                        {% for error in form.batterie.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            {{ form_label(form.localisation, 'Localisation') }}
-            {{ form_widget(form.localisation, {'attr': {'class': form.localisation.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
-            {% if not form.localisation.vars.valid and form.localisation.vars.errors|length > 0 %}
-                <div class="invalid-feedback d-block">
-                    <ul>
-                        {% for error in form.localisation.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            {{ form_label(form.autonomie, 'Autonomie') }}
-            {{ form_widget(form.autonomie, {'attr': {'class': form.autonomie.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
-            {% if not form.autonomie.vars.valid and form.autonomie.vars.errors|length > 0 %}
-                <div class="invalid-feedback d-block">
-                    <ul>
-                        {% for error in form.autonomie.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            {{ form_label(form.pointRelaisId, 'Point Relais ID') }}
-            {{ form_widget(form.pointRelaisId, {'attr': {'class': form.pointRelaisId.vars.valid ? 'form-control' : 'form-control is-invalid'}}) }}
-            {% if not form.pointRelaisId.vars.valid and form.pointRelaisId.vars.errors|length > 0 %}
-                <div class="invalid-feedback d-block">
-                    <ul>
-                        {% for error in form.pointRelaisId.vars.errors %}
-                            <li>{{ error.message }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-            
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-2"></i>Créer
-                </button>
-                <a href="{{ path('app_trottinette_index') }}" class="btn btn-secondary ms-2">
-                    <i class="fas fa-arrow-left me-2"></i>Retour à la liste
-                </a>
-            </div>
-        
-        {{ form_end(form) }}
+    {{ form_start(form, {
+        'attr': {
+            'class': 'needs-validation' ~ (form.vars.submitted ? ' was-validated' : ''),
+            'novalidate': 'novalidate'
+        },
+        'method': 'POST',
+        'action': path('app_trottinette_new')
+    }) }}
 
-        <div class="card mt-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Guide de saisie</h5>
-                <ul class="mb-0">
-                    <li>Le modèle doit contenir au moins 2 caractères</li>
-                    <li>Le numéro de série doit contenir au moins 4 caractères (lettres, chiffres et tirets uniquement)</li>
-                    <li>Le niveau de batterie doit être entre 0 et 100%</li>
-                    <li>Une trottinette disponible doit avoir au moins 10% de batterie</li>
-                    <li>Le format d'autonomie doit être comme "25 km" ou "2 heures"</li>
-                </ul>
+    {% for field in [
+        'modele',
+        'numeroSerie',
+        'etat',
+        'batterie',
+        'localisation',
+        'autonomie',
+        'pointRelaisId'
+    ] %}
+        <div class="mb-3">
+            {{ form_label(attribute(form, field)) }}
+            {{ form_widget(attribute(form, field), {
+                'attr': {
+                    'class': 'form-control' ~ (form.vars.submitted and attribute(form, field).vars.valid ? ' is-valid' : '') ~ 
+                            (form.vars.submitted and not attribute(form, field).vars.valid ? ' is-invalid' : '')
+                }
+            }) }}
+            <div class="invalid-feedback">
+                {{ form_errors(attribute(form, field)) }}
             </div>
         </div>
+    {% endfor %}
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-2"></i>Créer
+        </button>
+        <a href="{{ path('app_trottinette_index') }}" class="btn btn-secondary ms-2">
+            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+        </a>
     </div>
+
+    {{ form_end(form) }}
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Guide de saisie</h5>
+            <ul class="mb-0">
+                <li>Le modèle doit contenir au moins 2 caractères</li>
+                <li>Le numéro de série doit contenir au moins 4 caractères (lettres, chiffres et tirets uniquement)</li>
+                <li>Le niveau de batterie doit être entre 0 et 100%</li>
+                <li>Une trottinette disponible doit avoir au moins 10% de batterie</li>
+                <li>Le format d'autonomie doit être comme "25 km" ou "2 heures"</li>
+            </ul>
+        </div>
+    </div>
+</div>
 {% endblock %}

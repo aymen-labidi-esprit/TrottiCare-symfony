@@ -53,10 +53,11 @@ class Trottinette
     private ?string $numeroSerie = null;
 
     #[ORM\Column(name: 'etat', type: 'string', enumType: TrottinetteStatus::class)]
-    #[Assert\NotNull(message: 'L\'état est obligatoire')]
+    #[Assert\NotBlank(message: 'L\'état est obligatoire')]
     private TrottinetteStatus $etat = TrottinetteStatus::DISPONIBLE;
 
     #[ORM\Column(name: 'batterie', nullable: true)]
+    #[Assert\NotBlank(message: 'batterie est obligatoire')]
     #[Assert\Type(
         type: 'integer',
         message: 'La valeur {{ value }} n\'est pas un nombre entier valide.'
@@ -68,13 +69,8 @@ class Trottinette
     )]
     private ?int $batterie = null;
 
-    #[Assert\Expression(
-        "this.getEtat() != 'DISPONIBLE' || this.getBatterie() >= 10",
-        message: 'Une trottinette disponible doit avoir au moins 10% de batterie'
-    )]
-    private $statusBatteryConstraint;
-
     #[ORM\Column(name: 'localisation', length: 100, nullable: true)]
+    #[Assert\NotBlank(message: 'La localisation est obligatoire')]
     #[Assert\Length(
         max: 100,
         maxMessage: 'La localisation ne peut pas dépasser {{ limit }} caractères.'
@@ -95,12 +91,13 @@ class Trottinette
     private ?int $pointRelaisId = null;
 
     #[ORM\Column(name: 'autonomie', length: 45, nullable: true)]
+    #[Assert\NotBlank(message: 'L\'autonomie est obligatoire')]
     #[Assert\Length(
         max: 45,
         maxMessage: 'L\'autonomie ne peut pas dépasser {{ limit }} caractères.'
     )]
     #[Assert\Regex(
-        pattern: '/^(\d+)\s*(km|heures?)$/',
+        pattern: '/^\d+\s*(km|heures?)$/i',
         message: 'Le format d\'autonomie doit être comme "25 km" ou "2 heures"'
     )]
     private ?string $autonomie = null;
@@ -120,6 +117,8 @@ class Trottinette
                 ->addViolation();
         }
     }
+
+    // ======== GETTERS & SETTERS ========
 
     public function getId(): ?int
     {
@@ -166,7 +165,6 @@ class Trottinette
 
     public function setEtat($etat): self
     {
-        // Si $etat est une chaîne, convertir en objet TrottinetteStatus
         if (is_string($etat)) {
             $this->etat = TrottinetteStatus::from($etat);
         } else {

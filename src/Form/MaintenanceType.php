@@ -49,7 +49,7 @@ class MaintenanceType extends AbstractType
                 'required' => false,
                 'choices' => [
                     'En cours' => 'EN_COURS',
-                    'Terminée' => 'TERMINEE',
+                    'Terminée' => 'TERMINE',
                     'Annulée' => 'ANNULEE'
                 ],
                 'attr' => ['class' => 'form-control']
@@ -59,12 +59,14 @@ class MaintenanceType extends AbstractType
                 'choices' => [
                     'Réparation' => 'REPARATION',
                     'Entretien' => 'ENTRETIEN',
-                    'Inspection' => 'INSPECTION',
+                    'Inspection' => 'VERIFICATION',
                 ],
                 'required' => false,
-                'attr' => ['class' => 'form-control'],
-                'mapped' => false,
+                'attr' => ['class' => 'form-control']
             ]);
+            
+            // Add trottinette field at the beginning of the form
+            $builder->get('trottinette')->setRequired(true);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

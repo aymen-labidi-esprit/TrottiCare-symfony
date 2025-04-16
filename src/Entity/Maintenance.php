@@ -17,8 +17,6 @@ class Maintenance
     private ?int $id = null;
 
     #[ORM\Column(name: "trottinetteId", type: "integer")]
-    #[Assert\NotBlank(message: 'Une trottinette doit être sélectionnée.')]
-    #[Assert\Positive(message: 'L\'identifiant de la trottinette doit être un nombre positif.')]
     private ?int $trottinetteId = null;
 
     #[ORM\ManyToOne(targetEntity: Trottinette::class)]
@@ -143,7 +141,7 @@ class Maintenance
 
     public function getType(): ?string
     {
-        return $this->statut;
+        return $this->type;
     }
 
     public function setType(?string $type): self
