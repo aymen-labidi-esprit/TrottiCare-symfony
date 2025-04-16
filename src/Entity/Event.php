@@ -8,7 +8,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: EventRepository::class)]
 #[ORM\Table(name: 'event')]
@@ -20,56 +19,27 @@ class Event
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\NotBlank(message: "Le titre est obligatoire")]
-    #[Assert\Length(
-        min: 3,
-        max: 255,
-        minMessage: "Le titre doit comporter au moins {{ limit }} caractères",
-        maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères"
-    )]
     private ?string $titre = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Assert\NotBlank(message: "La description est obligatoire")]
-    #[Assert\Length(
-        min: 10,
-        minMessage: "La description doit comporter au moins {{ limit }} caractères"
-    )]
     private ?string $description = null;
 
     #[ORM\Column(name: 'dateDebut', type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Assert\NotBlank(message: "La date de début est obligatoire")]
-    #[Assert\Type("\DateTimeInterface")]
     private ?\DateTimeInterface $dateDebut = null;
 
     #[ORM\Column(name: 'dateFin', type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Assert\NotBlank(message: "La date de fin est obligatoire")]
-    #[Assert\Type("\DateTimeInterface")]
-    #[Assert\GreaterThan(
-        propertyPath: "dateDebut",
-        message: "La date de fin doit être postérieure à la date de début"
-    )]
     private ?\DateTimeInterface $dateFin = null;
 
     #[ORM\Column(length: 255, nullable: true, enumType: GouvernoratEnum::class)]
-    #[Assert\NotNull(message: "Le lieu est obligatoire")]
     private ?GouvernoratEnum $lieu = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: "Le statut est obligatoire")]
     private string $statut = 'A_VENIR';
 
     #[ORM\Column(length: 250)]
-    #[Assert\NotBlank(message: "L'état est obligatoire")]
     private string $state;
 
     #[ORM\Column(name: 'trottinetteMinAutonomie', nullable: true)]
-    #[Assert\PositiveOrZero(message: "L'autonomie minimale doit être un nombre positif ou zéro")]
-    #[Assert\Range(
-        min: 0,
-        max: 100,
-        notInRangeMessage: "L'autonomie doit être comprise entre {{ min }} et {{ max }} km"
-    )]
     private ?int $trottinetteMinAutonomie = 0;
 
     #[ORM\OneToMany(mappedBy: 'event', targetEntity: Participation::class, orphanRemoval: true)]
