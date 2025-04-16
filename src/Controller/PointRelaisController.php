@@ -75,15 +75,4 @@ final class PointRelaisController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'point_relais_delete', methods: ['POST'])]
-    public function delete(Request $request, PointRelais $pointRelais, EntityManagerInterface $em): Response
-    {
-        if ($this->isCsrfTokenValid('delete' . $pointRelais->getId(), $request->request->get('_token'))) {
-            $em->remove($pointRelais);
-            $em->flush();
-            $this->addFlash('success', 'Point relais supprimé.');
-        }
-
-        return $this->redirectToRoute('point_relais_index');
-    }
 }
