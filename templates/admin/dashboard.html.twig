@@ -4,76 +4,85 @@
 
 {% block body %}
 <div class="container mt-4">
-    <h1 class="display-4 mb-4"><i class="fas fa-tachometer-alt me-2"></i>Tableau de bord administrateur</h1>
-
     <div class="row mb-4">
-        <!-- Total événements -->
+        <div class="col">
+            <h1 class="display-4"><i class="fas fa-tachometer-alt me-3"></i>Tableau de bord administrateur</h1>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
         <div class="col-md-4">
-            <div class="card bg-primary text-white mb-4" onclick="toggleSection('event-section')">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3>{{ eventData|length }}</h3>
-                        <p>Total des événements</p>
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title mb-0">{{ eventData|length }}</h3>
+                            <p class="card-text mb-0">Total des événements</p>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-3x"></i>
                     </div>
-                    <i class="fas fa-calendar-alt fa-3x"></i>
                 </div>
-                <div class="card-footer text-white d-flex justify-content-between">
-                    <span>Voir les détails</span>
-                    <i class="fas fa-angle-right"></i>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{{ path('app_event_index') }}">Voir les détails</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                 </div>
             </div>
         </div>
-
-        <!-- Total participants -->
         <div class="col-md-4">
-            <div class="card bg-success text-white mb-4" onclick="toggleSection('participant-section')">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        {% set totalParticipants = 0 %}
-                        {% for item in eventData %}
-                            {% set totalParticipants = totalParticipants + item.participantCount %}
-                        {% endfor %}
-                        <h3>{{ totalParticipants }}</h3>
-                        <p>Total des participants</p>
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% set totalParticipants = 0 %}
+                            {% for item in eventData %}
+                                {% set totalParticipants = totalParticipants + item.participantCount %}
+                            {% endfor %}
+                            <h3 class="card-title mb-0">{{ totalParticipants }}</h3>
+                            <p class="card-text mb-0">Total des participants</p>
+                        </div>
+                        <i class="fas fa-users fa-3x"></i>
                     </div>
-                    <i class="fas fa-users fa-3x"></i>
                 </div>
-                <div class="card-footer text-white d-flex justify-content-between">
-                    <span>Voir les détails</span>
-                    <i class="fas fa-angle-right"></i>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#">Voir les détails</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                 </div>
             </div>
         </div>
-
-        <!-- Événements à venir -->
         <div class="col-md-4">
-            <div class="card bg-warning text-white mb-4" onclick="toggleSection('upcoming-section')">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        {% set upcomingCount = 0 %}
-                        {% for item in eventData %}
-                            {% if item.event.statut == 'A_VENIR' %}
-                                {% set upcomingCount = upcomingCount + 1 %}
-                            {% endif %}
-                        {% endfor %}
-                        <h3>{{ upcomingCount }}</h3>
-                        <p>Événements à venir</p>
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title mb-0">
+                                {% set upcomingEvents = 0 %}
+                                {% for item in eventData %}
+                                    {% if item.event.statut == 'A_VENIR' %}
+                                        {% set upcomingEvents = upcomingEvents + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ upcomingEvents }}
+                            </h3>
+                            <p class="card-text mb-0">Événements à venir</p>
+                        </div>
+                        <i class="fas fa-clock fa-3x"></i>
                     </div>
-                    <i class="fas fa-clock fa-3x"></i>
                 </div>
-                <div class="card-footer text-white d-flex justify-content-between">
-                    <span>Voir les détails</span>
-                    <i class="fas fa-angle-right"></i>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="#">Voir les détails</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SECTION ÉVÉNEMENTS -->
-    <div id="event-section" class="details-section">
-        <div class="card mb-4">
-            <div class="card-header"><i class="fas fa-table me-1"></i> Aperçu des événements</div>
-            <div class="card-body">
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Aperçu des événements
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
                 <table class="table table-bordered table-hover">
                     <thead>
                         <tr>
@@ -102,87 +111,28 @@
                                         <span class="badge bg-danger">Annulé</span>
                                     {% endif %}
                                 </td>
-                                <td><span class="badge bg-primary">{{ item.participantCount }}</span></td>
+                                <td>
+                                    <span class="badge bg-primary">{{ item.participantCount }}</span>
+                                </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ path('app_event_show', {'id': item.event.id}) }}" class="btn btn-info"><i class="fas fa-eye"></i></a>
-                                        <a href="{{ path('app_event_edit', {'id': item.event.id}) }}" class="btn btn-warning"><i class="fas fa-edit"></i></a>
-                                        <a href="{{ path('app_admin_event_participants', {'id': item.event.id}) }}" class="btn btn-primary"><i class="fas fa-users"></i></a>
+                                        <a href="{{ path('app_event_show', {'id': item.event.id}) }}" class="btn btn-info" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('app_event_edit', {'id': item.event.id}) }}" class="btn btn-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ path('app_admin_event_participants', {'id': item.event.id}) }}" class="btn btn-primary" title="Participants">
+                                            <i class="fas fa-users"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
-                        {% else %}
-                            <tr><td colspan="6" class="text-center">Aucun événement trouvé.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECTION PARTICIPANTS -->
-    <div id="participant-section" class="details-section" style="display: none;">
-        <div class="card mb-4">
-            <div class="card-header"><i class="fas fa-users me-1"></i> Détails des participants</div>
-            <div class="card-body">
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>Nom</th>
-                            <th>Prénom</th>
-                            <th>Email</th>
-                            <th>Téléphone</th>
-                            <th>Événement</th>
-                            <th>Date d’inscription</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for participation in participants %}
-                            <tr>
-                                <td>{{ participation.utilisateur.nom }}</td>
-                                <td>{{ participation.utilisateur.prenom }}</td>
-                                <td>{{ participation.utilisateur.email }}</td>
-                                <td>{{ participation.utilisateur.telephone }}</td>
-                                <td>{{ participation.event.titre }}</td>
-                                <td>{{ participation.dateInscription|date('d/m/Y H:i') }}</td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="6" class="text-center">Aucun participant trouvé.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- SECTION ÉVÉNEMENTS À VENIR -->
-    <div id="upcoming-section" class="details-section" style="display: none;">
-        <div class="card mb-4">
-            <div class="card-header"><i class="fas fa-clock me-1"></i> Événements à venir</div>
-            <div class="card-body">
-                <ul class="list-group">
-                    {% for item in eventData %}
-                        {% if item.event.statut == 'A_VENIR' %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ item.event.titre }}
-                                <span class="badge bg-primary">{{ item.event.dateDebut|date('d/m/Y H:i') }}</span>
-                            </li>
-                        {% endif %}
-                    {% else %}
-                        <li class="list-group-item text-center">Aucun événement à venir.</li>
-                    {% endfor %}
-                </ul>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    function toggleSection(id) {
-        document.querySelectorAll('.details-section').forEach(section => section.style.display = 'none');
-        const target = document.getElementById(id);
-        if (target) target.style.display = 'block';
-    }
-</script>
 {% endblock %}
-

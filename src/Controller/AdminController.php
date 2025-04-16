@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Event;
 use App\Form\EventType;
 use App\Repository\EventRepository;
-use App\Repository\ParticipationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,50 +21,48 @@ class AdminController extends AbstractController
     }
 
     #[Route('/dashboard', name: 'app_admin_dashboard')]
-    public function dashboard(
-        EventRepository $eventRepository,
-        ParticipationRepository $participationRepository
-    ): Response {
+    public function dashboard(EventRepository $eventRepository): Response
+    {
         $events = $eventRepository->findAll();
-        $participants = $participationRepository->findAll();
-
+        
         $eventData = [];
         foreach ($events as $event) {
             $eventData[] = [
                 'event' => $event,
-                'participantCount' => $event->getParticipations()->count(),
+                'participantCount' => $event->getParticipations()->count()
             ];
         }
-
+        
         return $this->render('admin/dashboard.html.twig', [
             'eventData' => $eventData,
-            'participants' => $participants,
         ]);
     }
-
+    
     #[Route('/events', name: 'app_admin_events')]
     public function events(EventRepository $eventRepository): Response
     {
+        $events = $eventRepository->findAll();
+        
         return $this->render('admin/events.html.twig', [
-            'events' => $eventRepository->findAll(),
+            'events' => $events,
         ]);
     }
-
+    
     #[Route('/events/{id}/participants', name: 'app_admin_event_participants')]
     public function eventParticipants(Event $event): Response
     {
         return $this->render('admin/event_participants.html.twig', [
-            'event' => $event,
+            'event' => $event
         ]);
     }
-
+    
     #[Route('/events/new', name: 'app_admin_event_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $event = new Event();
         $event->setState('Active');
         $event->setStatut('A_VENIR');
-
+        
         $form = $this->createForm(EventType::class, $event);
         $form->handleRequest($request);
 
@@ -73,7 +70,7 @@ class AdminController extends AbstractController
             $entityManager->persist($event);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Événement créé avec succès.');
+            $this->addFlash('success', 'Event created successfully!');
             return $this->redirectToRoute('app_admin_events');
         }
 
@@ -82,7 +79,7 @@ class AdminController extends AbstractController
             'form' => $form,
         ]);
     }
-
+    
     #[Route('/events/{id}/edit', name: 'app_admin_event_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Event $event, EntityManagerInterface $entityManager): Response
     {
@@ -91,8 +88,8 @@ class AdminController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
-
-            $this->addFlash('success', 'Événement mis à jour avec succès.');
+            
+            $this->addFlash('success', 'Event updated successfully!');
             return $this->redirectToRoute('app_admin_events');
         }
 
@@ -101,19 +98,17 @@ class AdminController extends AbstractController
             'form' => $form,
         ]);
     }
-
+    
     #[Route('/events/{id}', name: 'app_admin_event_delete', methods: ['POST'])]
     public function delete(Request $request, Event $event, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $event->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$event->getId(), $request->request->get('_token'))) {
             $entityManager->remove($event);
             $entityManager->flush();
-
-            $this->addFlash('success', 'Événement supprimé avec succès.');
+            
+            $this->addFlash('success', 'Event deleted successfully!');
         }
 
         return $this->redirectToRoute('app_admin_events');
     }
 }
-
-

@@ -41,7 +41,9 @@ registered: "inscrits"
 Not specified: "Non spécifié"
 
 # Event edit page
+Edit Event: "Modifier l'Événement"
 Event Title: "Titre de l'Événement"
+Event Description: "Description de l'Événement"
 Save Changes: "Enregistrer les Modifications"
 
 # Public events page

@@ -20,44 +20,62 @@ class Event
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\NotBlank(message: "Le titre est requis.")]
+    #[Assert\NotBlank(message: "Le titre est obligatoire")]
+    #[Assert\Length(
+        min: 3,
+        max: 255,
+        minMessage: "Le titre doit comporter au moins {{ limit }} caractères",
+        maxMessage: "Le titre ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $titre = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Assert\NotBlank(message: "La description est requise.")]
+    #[Assert\NotBlank(message: "La description est obligatoire")]
+    #[Assert\Length(
+        min: 10,
+        minMessage: "La description doit comporter au moins {{ limit }} caractères"
+    )]
     private ?string $description = null;
 
     #[ORM\Column(name: 'dateDebut', type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Assert\NotNull(message: "La date de début est requise.")]
-    #[Assert\Type(type: \DateTimeInterface::class)]
-    #[Assert\GreaterThan('now', message: "La date de début doit être dans le futur.")]
+    #[Assert\NotBlank(message: "La date de début est obligatoire")]
+    #[Assert\Type("\DateTimeInterface")]
     private ?\DateTimeInterface $dateDebut = null;
 
     #[ORM\Column(name: 'dateFin', type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Assert\NotNull(message: "La date de fin est requise.")]
-    #[Assert\Type(type: \DateTimeInterface::class)]
-    #[Assert\GreaterThan(propertyPath: 'dateDebut', message: "La date de fin doit être après la date de début.")]
+    #[Assert\NotBlank(message: "La date de fin est obligatoire")]
+    #[Assert\Type("\DateTimeInterface")]
+    #[Assert\GreaterThan(
+        propertyPath: "dateDebut",
+        message: "La date de fin doit être postérieure à la date de début"
+    )]
     private ?\DateTimeInterface $dateFin = null;
 
     #[ORM\Column(length: 255, nullable: true, enumType: GouvernoratEnum::class)]
-    #[Assert\NotNull(message: "Le lieu est requis.")]
+    #[Assert\NotNull(message: "Le lieu est obligatoire")]
     private ?GouvernoratEnum $lieu = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: "Le statut est requis.")]
+    #[Assert\NotBlank(message: "Le statut est obligatoire")]
     private string $statut = 'A_VENIR';
 
     #[ORM\Column(length: 250)]
-    #[Assert\NotBlank(message: "L'état est requis.")]
+    #[Assert\NotBlank(message: "L'état est obligatoire")]
     private string $state;
 
     #[ORM\Column(name: 'trottinetteMinAutonomie', nullable: true)]
-    #[Assert\NotNull(message: "L'autonomie minimale est requise.")]
-    #[Assert\GreaterThanOrEqual(0, message: "L'autonomie minimale doit être ≥ 0.")]
+    #[Assert\PositiveOrZero(message: "L'autonomie minimale doit être un nombre positif ou zéro")]
+    #[Assert\Range(
+        min: 0,
+        max: 100,
+        notInRangeMessage: "L'autonomie doit être comprise entre {{ min }} et {{ max }} km"
+    )]
     private ?int $trottinetteMinAutonomie = 0;
 
     #[ORM\OneToMany(mappedBy: 'event', targetEntity: Participation::class, orphanRemoval: true)]
     private Collection $participations;
+
+    private ?GouvernoratEnum $gouvernorat = null;
 
     public function __construct()
     {
@@ -178,6 +196,7 @@ class Event
     public function removeParticipation(Participation $participation): static
     {
         if ($this->participations->removeElement($participation)) {
+            // set the owning side to null (unless already changed)
             if ($participation->getEvent() === $this) {
                 $participation->setEvent(null);
             }
@@ -186,14 +205,38 @@ class Event
         return $this;
     }
 
-    public function getLieuAsString(): ?string
+    public function getGouvernorat(): ?GouvernoratEnum
     {
-        return $this->lieu?->value;
+        return $this->gouvernorat;
     }
 
+    public function setGouvernorat(?GouvernoratEnum $gouvernorat): self
+    {
+        $this->gouvernorat = $gouvernorat;
+        return $this;
+    }
+
+    /**
+     * Helper method to get gouvernorat as string
+     */
+    public function getGouvernoratAsString(): ?string
+    {
+        return $this->gouvernorat ? $this->gouvernorat->value : null;
+    }
+    
+    /**
+     * Helper method to get lieu as string
+     */
+    public function getLieuAsString(): ?string
+    {
+        return $this->lieu ? $this->lieu->value : null;
+    }
+    
+    /**
+     * Make sure the lieu can be properly converted to string
+     */
     public function __toString(): string
     {
         return $this->getLieuAsString() ?? '';
     }
 }
-
