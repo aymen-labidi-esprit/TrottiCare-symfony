@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Events | Trotticare Template{% endblock %}
+
+{% block content %}
+    <main class="flex-grow-1">
+        <div class="container mt-4">
+            <div class="row mb-4">
+                <div class="col">
+                    <h1 class="display-4"><i class="fas fa-calendar-alt me-3"></i>Upcoming Events</h1>
+                    <p class="lead">Join our electric scooter community events and adventures!</p>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <!-- Event Card Example 1 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">City Tour</h5>
+                            <div class="mb-3">
+                                <p class="card-text mb-2">
+                                    <i class="fas fa-clock me-2 text-primary"></i>
+                                    <strong>Starts:</strong> Jun 15, 2024 09:30
+                                </p>
+                                <p class="card-text mb-2">
+                                    <i class="fas fa-hourglass-end me-2 text-primary"></i>
+                                    <strong>Ends:</strong> Jun 15, 2024 12:30
+                                </p>
+                                <p class="card-text">
+                                    <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                                    <strong>Location:</strong> Central Park
+                                </p>
+                            </div>
+                            <a href="event-details.html" class="btn btn-primary w-100">
+                                <i class="fas fa-info-circle me-2"></i>View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- More event cards here -->
+            </div>
+        </div>
+    </main>
+{% endblock %}

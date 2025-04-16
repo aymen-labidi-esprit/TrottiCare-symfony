@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - Admin{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <h1 class="mb-4">Bienvenue dans le Dashboard Admin</h1>
+
+        <div class="row">
+            <!-- Manage Reclamations -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Gestion des Réclamations</h5>
+                        <p class="card-text">Visualisez, modifiez et supprimez les réclamations soumises par les utilisateurs.</p>
+                        <a href="{{ path('admin_reclamations') }}" class="btn btn-primary">Gérer les réclamations</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Users (Optional) -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Gestion des Utilisateurs</h5>
+                        <p class="card-text">Visualisez et gérez les utilisateurs enregistrés sur la plateforme.</p>
+                        <a href="#" class="btn btn-secondary">Gérer les utilisateurs</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics (Optional) -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Analyse des Données</h5>
+                        <p class="card-text">Consultez les statistiques et rapports sur les réclamations et l'utilisation de la plateforme.</p>
+                        <a href="#" class="btn btn-success">Voir les rapports</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

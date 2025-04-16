@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réponses à la Réclamation{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0">
+                            Réponses à la réclamation : 
+                            <strong>{{ reclamation.titre }}</strong>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% if responses is not empty %}
+                            <ul class="list-group mb-4">
+                                {% for response in responses %}
+                                    <li class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <p class="mb-1">{{ response.message }}</p>
+                                                <small class="text-muted">
+                                                    Envoyée le {{ response.dateReponse|date('d/m/Y H:i') }}
+                                                </small><br>
+                                                <span class="badge bg-secondary mt-1">
+                                                    {{ response.userType|capitalize }}
+                                                </span>
+                                            </div>
+                                            <div class="text-end">
+                                                <a href="{{ path('edit_response', {'id': response.id}) }}"
+                                                   class="btn btn-sm btn-primary me-1">
+                                                    Modifier
+                                                </a>
+                                                <a href="{{ path('delete_response', {'id': response.id}) }}"
+                                                   class="btn btn-sm btn-danger"
+                                                   onclick="return confirm('Voulez-vous vraiment supprimer cette réponse ?');">
+                                                    Supprimer
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="alert alert-warning text-center mb-4" role="alert">
+                                Aucune réponse disponible pour cette réclamation.
+                            </div>
+                        {% endif %}
+
+                        <div class="text-center">
+                            <a href="{{ path('admin_reclamations') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-1"></i> Retour à la liste des réclamations
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

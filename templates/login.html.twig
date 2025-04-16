@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login | Trotticare Events{% endblock %}
+
+{% block content %}
+    <div class="progress-bar"></div>
+
+    <section class="login-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card login-card shadow fade-in">
+                        <div class="login-header text-center text-white mb-4">
+                            <div>
+                                <h2 class="mb-0 fw-bold">Welcome Back</h2>
+                                <p class="mb-0">Sign in to continue to Trotticare Events</p>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Alert for demo purposes -->
+                            <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                                <strong>Demo Account:</strong> user@example.com / password123
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+
+                            <form id="loginForm" class="slide-up" style="animation-delay: 0.2s;">
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="emailInput" placeholder="name@example.com" required>
+                                    <label for="emailInput"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" id="passwordInput" placeholder="Password" required>
+                                    <label for="passwordInput"><i class="fas fa-lock me-2"></i>Password</label>
+                                </div>
+                                <div class="d-flex justify-content-between mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="rememberMe">
+                                        <label class="form-check-label" for="rememberMe">
+                                            Remember me
+                                        </label>
+                                    </div>
+                                    <a href="forgot-password.html" class="text-primary hover-underline">Forgot password?</a>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-login btn-ripple confetti-button">
+                                        Sign In <i class="fas fa-sign-in-alt ms-2"></i>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div class="text-center my-4 position-relative">
+                                <hr class="my-0">
+                                <span class="position-absolute top-50 start-50 translate-middle px-3 bg-white text-muted">or sign in with</span>
+                            </div>
+
+                            <!-- Social Login -->
+                            <div class="social-login mb-4 slide-up" style="animation-delay: 0.4s;">
+                                <a href="#" class="facebook"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" class="google"><i class="fab fa-google"></i></a>
+                                <a href="#" class="apple"><i class="fab fa-apple"></i></a>
+                            </div>
+
+                            <div class="text-center slide-up" style="animation-delay: 0.6s;">
+                                <p class="mb-0">Don't have an account? <a href="{{ path('signup') }}" class="text-primary fw-bold hover-underline">Sign up</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Réclamations{% endblock %}
+
+{% block content %}
+    <h1>Gestion des Réclamations</h1>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Description</th>
+            <th>Date de création</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for reclamation in reclamations %}
+            <tr>
+                <td>{{ reclamation.titre }}</td>
+                <td>{{ reclamation.description }}</td>
+                <td>{{ reclamation.date_creation|date('Y-m-d') }}</td>
+                <td>
+                    <a href="{{ path('delete_reclamation', {'id': reclamation.id}) }}" class="btn btn-danger">Supprimer</a>
+                    <a href="{{ path('add_response', {'id': reclamation.id}) }}" class="btn btn-info">Ajouter une réponse</a>
+                    <a href="{{ path('view_responses', {'id': reclamation.id}) }}" class="btn btn-success">Voir les réponses</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

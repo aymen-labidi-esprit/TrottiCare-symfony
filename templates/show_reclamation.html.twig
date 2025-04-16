@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Réclamation{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <h1 class="mb-4">{{ reclamation.titre }}</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <p><strong>Description:</strong> {{ reclamation.description }}</p>
+                <p><strong>Type de Réclamation:</strong> {{ reclamation.getTypeReclamation() }}</p>
+                <p><strong>Date de Création:</strong> {{ reclamation.getDateCreation()|date('Y-m-d') }}</p>
+            </div>
+        </div>
+
+        <h3>Réponses</h3>
+        {% if reponses is not empty %}
+            <ul class="list-group">
+                {% for reponse in reponses %}
+                    <li class="list-group-item">
+                        <p><strong>{{ reponse.message }}</strong></p>
+                        <small class="text-muted">{{ reponse.getDateReponse()|date('Y-m-d') }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune réponse pour cette réclamation.</p>
+        {% endif %}
+    </div>
+{% endblock %}

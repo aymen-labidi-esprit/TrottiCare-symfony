@@ -1,0 +1,95 @@
+# config/routes.yaml
+
+# ============================
+# Front-End Routes (manuelles)
+# ============================
+
+app_home:
+    path: /
+    controller: App\Controller\FrontController::index
+
+reclamation_list:
+    path: /reclamations
+    controller: App\Controller\FrontController::listReclamations
+
+show_reclamation:
+    path: /reclamations/{id}
+    controller: App\Controller\FrontController::showReclamation
+
+create_reclamation:
+    path: /reclamation/create
+    controller: App\Controller\FrontController::createReclamation
+
+edit_reclamation_front:
+    path: /reclamation/{id}/edit
+    controller: App\Controller\FrontController::editReclamationFront
+
+delete_reclamation_front:
+    path: /reclamation/{id}/delete
+    controller: App\Controller\FrontController::deleteReclamationFront
+
+events:
+    path: /events
+    controller: App\Controller\FrontController::listEvents
+
+about:
+    path: /about
+    controller: App\Controller\FrontController::about
+
+contact:
+    path: /contact
+    controller: App\Controller\FrontController::contact
+
+login:
+    path: /login
+    controller: App\Controller\FrontController::login
+
+signup:
+    path: /signup
+    controller: App\Controller\FrontController::signup
+
+# ============================
+# Admin Routes (manuelles)
+# ============================
+
+admin_dashboard:
+    path: /admin
+    controller: App\Controller\AdminController::dashboard
+
+admin_reclamations:
+    path: /admin/reclamations
+    controller: App\Controller\AdminController::manageReclamations
+
+edit_reclamation:
+    path: /admin/reclamation/{id}/edit
+    controller: App\Controller\AdminController::editReclamation
+
+delete_reclamation:
+    path: /admin/reclamation/{id}/delete
+    controller: App\Controller\AdminController::deleteReclamation
+
+add_response:
+    path: /admin/reclamation/{id}/add_response
+    controller: App\Controller\AdminController::addResponse
+
+view_responses:
+    path: /admin/reclamation/{id}/responses
+    controller: App\Controller\AdminController::viewResponses
+
+edit_response:
+    path: /admin/response/{id}/edit
+    controller: App\Controller\AdminController::editResponse
+
+delete_response:
+    path: /admin/response/{id}/delete
+    controller: App\Controller\AdminController::deleteResponse
+# ============================
+# ✅ Routes basées sur les attributs PHP
+# ============================
+# Ceci permet d'activer automatiquement toutes les routes définies via #[Route(...)]
+# dans tous les contrôleurs (FrontController, AdminController, etc.)
+
+#controllers_with_attributes:
+    #resource: ../src/Controller/
+    #type: attribute 
+    

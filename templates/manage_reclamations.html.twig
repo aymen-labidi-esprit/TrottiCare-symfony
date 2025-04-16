@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Réclamations{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4">Liste des Réclamations</h1>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Titre</th>
+                    <th>Description</th>
+                    <th>Date de création</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for reclamation in reclamations %}
+                    <tr>
+                        <td>{{ reclamation.titre }}</td>
+                        <td>{{ reclamation.description|slice(0, 60) ~ '...' }}</td>
+                        <td>{{ reclamation.getDateCreation()|date('Y-m-d') }}</td>
+                        <td class="d-flex flex-wrap gap-1">
+                            <a href="{{ path('delete_reclamation', {'id': reclamation.id}) }}" class="btn btn-sm btn-danger">Supprimer</a>
+                            <a href="{{ path('add_response', {'id': reclamation.id}) }}" class="btn btn-sm btn-info">Ajouter une réponse</a>
+                            <a href="{{ path('view_responses', {'id': reclamation.id}) }}" class="btn btn-sm btn-success">Voir les réponses</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

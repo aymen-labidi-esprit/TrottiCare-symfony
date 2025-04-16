@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+    <div class="container py-5">
+        <h1 class="mb-4">Liste des Réclamations</h1>
+
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Titre</th>
+                        <th>Description</th>
+                        <th>Type de réclamation</th>
+                        <th>Date de création</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reclamation in reclamations %}
+                        <tr>
+                            <td>{{ reclamation.titre }}</td>
+                            <td>{{ reclamation.description }}</td>
+                            <td>{{ reclamation.getTypeReclamation() }}</td>
+                            <td>{{ reclamation.getDateCreation()|date('Y-m-d') }}</td>
+                            <td>
+                                <a href="{{ path('edit_reclamation_front', {'id': reclamation.id}) }}" class="btn btn-warning btn-sm">Modifier</a>
+                                <a href="{{ path('delete_reclamation_front', {'id': reclamation.id}) }}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Voulez-vous vraiment supprimer cette réclamation ?');">
+                                   Supprimer
+                                </a>
+                                <a href="{{ path('show_reclamation', {'id': reclamation.id}) }}" class="btn btn-info btn-sm">Voir</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">Aucune réclamation trouvée.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sign Up | Trotticare Events{% endblock %}
+
+{% block content %}
+    <div class="progress-bar"></div>
+
+    <section class="login-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card login-card shadow fade-in">
+                        <div class="login-header text-center text-white mb-4">
+                            <div>
+                                <h2 class="mb-0 fw-bold">Create An Account</h2>
+                                <p class="mb-0">Sign up to join Trotticare Events</p>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <form id="signupForm" class="slide-up" style="animation-delay: 0.2s;">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="nameInput" placeholder="Full Name" required>
+                                    <label for="nameInput"><i class="fas fa-user me-2"></i>Full Name</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="emailInput" placeholder="name@example.com" required>
+                                    <label for="emailInput"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input type="password" class="form-control" id="passwordInput" placeholder="Password" required>
+                                    <label for="passwordInput"><i class="fas fa-lock me-2"></i>Password</label>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-login btn-ripple confetti-button">
+                                        Sign Up <i class="fas fa-user-plus ms-2"></i>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div class="text-center slide-up" style="animation-delay: 0.4s;">
+                                <p class="mb-0">Already have an account? <a href="{{ path('login') }}" class="text-primary fw-bold hover-underline">Login</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
