@@ -65,9 +65,20 @@ class TrottinetteController extends AbstractController
                 } catch (\Exception $e) {
                     $this->addFlash('error', 'Erreur lors de l\'ajout de la trottinette: ' . $e->getMessage());
                 }
+            } else {
+                // Do not add flash messages, let the form validation system handle the errors
+                
+                // For debugging only - add explicit error messages for required fields
+                if (empty($trottinette->getModele())) {
+                    $form->get('modele')->addError(new FormError('Le modèle est obligatoire'));
+                }
+                
+                if (empty($trottinette->getNumeroSerie())) {
+                    $form->get('numeroSerie')->addError(new FormError('Le numéro de série est obligatoire'));
+                }
+                
+                // DO NOT redirect here - stay on the form to show validation errors
             }
-            // Supprimez tout le bloc else avec les validations manuelles
-            // Symfony gère déjà ces erreurs automatiquement
         }
 
         return $this->render('trottinette/new.html.twig', [
@@ -99,8 +110,22 @@ class TrottinetteController extends AbstractController
                 } catch (\Exception $e) {
                     $this->addFlash('error', 'Erreur lors de la modification de la trottinette: ' . $e->getMessage());
                 }
+            } else {
+                // Do not add flash messages, let the form validation system handle the errors
+                
+                // For debugging only - add explicit error messages for required fields
+                if (empty($trottinette->getModele())) {
+                    $form->get('modele')->addError(new FormError('Le modèle est obligatoire'));
+                }
+                
+                if (empty($trottinette->getNumeroSerie())) {
+                    $form->get('numeroSerie')->addError(new FormError('Le numéro de série est obligatoire'));
+                }
+                
+                // DO NOT redirect here - stay on the form to show validation errors
             }
-        }    
+        }
+
         return $this->render('trottinette/edit.html.twig', [
             'trottinette' => $trottinette,
             'form' => $form,

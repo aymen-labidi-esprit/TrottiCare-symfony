@@ -8,8 +8,12 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 
 class TrottinetteType extends AbstractType
 {
@@ -19,20 +23,14 @@ class TrottinetteType extends AbstractType
             ->add('modele', TextType::class, [
                 'label' => 'Modèle',
                 'required' => true,
-                'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => 'Ex: Xiaomi Pro 2',
-                ],
-                'error_bubbling' => true,
+                'attr' => ['class' => 'form-control'],
+                'error_bubbling' => true
             ])
             ->add('numeroSerie', TextType::class, [
                 'label' => 'Numéro de Série',
                 'required' => true,
-                'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => 'Ex: TROT-1234-XYZ',
-                ],
-                'error_bubbling' => true,
+                'attr' => ['class' => 'form-control'],
+                'error_bubbling' => true
             ])
             ->add('etat', EnumType::class, [
                 'class' => TrottinetteStatus::class,
@@ -44,37 +42,27 @@ class TrottinetteType extends AbstractType
                     TrottinetteStatus::EN_MAINTENANCE => 'En Maintenance',
                 },
                 'attr' => ['class' => 'form-select'],
-                'error_bubbling' => true,
-                'placeholder' => 'Sélectionnez un état',
+                'error_bubbling' => true
             ])
             ->add('batterie', IntegerType::class, [
                 'label' => 'Batterie (%)',
                 'required' => false,
                 'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => 'Ex: 85',
-                    'min' => 0,
-                    'max' => 100,
+                    'class' => 'form-control'
                 ],
-                'error_bubbling' => true,
+                'error_bubbling' => true
             ])
             ->add('localisation', TextType::class, [
                 'label' => 'Localisation',
                 'required' => false,
-                'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => 'Ex: Tunis Centre',
-                ],
-                'error_bubbling' => true,
+                'attr' => ['class' => 'form-control'],
+                'error_bubbling' => true
             ])
             ->add('autonomie', TextType::class, [
                 'label' => 'Autonomie',
                 'required' => false,
-                'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => 'Ex: 25 km ou 2 heures',
-                ],
-                'error_bubbling' => true,
+                'attr' => ['class' => 'form-control'],
+                'error_bubbling' => true
             ])
             ->add('pointRelaisId', IntegerType::class, [
                 'label' => 'Point Relais ID',
@@ -83,8 +71,16 @@ class TrottinetteType extends AbstractType
                     'class' => 'form-control',
                     'readonly' => true,
                 ],
-                'error_bubbling' => true,
+                'error_bubbling' => true
             ]);
+            
+        // Add a form event listener to capture validation errors
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
+            $form = $event->getForm();
+            $data = $event->getData();
+            
+            // Custom validation can be added here if needed
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -92,7 +88,7 @@ class TrottinetteType extends AbstractType
         $resolver->setDefaults([
             'data_class' => Trottinette::class,
             'html5_validation' => false,
-            'attr' => ['novalidate' => 'novalidate'], // Désactive la validation HTML5
+            'attr' => ['novalidate' => 'novalidate'], // Disable HTML5 validation
         ]);
     }
 }

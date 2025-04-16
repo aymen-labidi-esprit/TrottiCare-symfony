@@ -130,6 +130,28 @@
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade" id="deleteModal{{ maintenance.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirmation de suppression</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body text-start">
+                                                    Êtes-vous sûr de vouloir supprimer cette maintenance ?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <form method="post" action="{{ path('app_maintenance_delete', {'id': maintenance.id}) }}" class="d-inline">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ maintenance.id) }}">
+                                                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         {% else %}
@@ -148,31 +170,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Delete Modals (moved outside of the table) -->
-    {% for maintenance in maintenances %}
-        <div class="modal fade" id="deleteModal{{ maintenance.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ maintenance.id }}" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deleteModalLabel{{ maintenance.id }}">Confirmation de suppression</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-start">
-                        <p>Êtes-vous sûr de vouloir supprimer cette maintenance pour la trottinette n°{{ maintenance.trottinetteId }} ?</p>
-                        <p class="text-muted">{{ maintenance.description|length > 100 ? maintenance.description|slice(0, 100) ~ '...' : maintenance.description }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <form method="post" action="{{ path('app_maintenance_delete', {'id': maintenance.id}) }}">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ maintenance.id) }}">
-                            <button type="submit" class="btn btn-danger">Supprimer</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
 
     <!-- JavaScript for search and filter functionality -->
     <script>
