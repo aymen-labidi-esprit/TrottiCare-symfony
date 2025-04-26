@@ -1,0 +1,86 @@
+{# templates/public/event/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Événements - TrottiCare{% endblock %}
+
+{% block body %}
+    <div data-lov-id="src/pages/Events.tsx:76:4" class="min-h-screen bg-gray-50 page-content"> {# Added page-content for flex layout #}
+        {# Header is included in base.html.twig #}
+
+        <div data-lov-id="src/pages/Events.tsx:78:6" class="container mx-auto px-4 py-16"> {# Use container class from CSS #}
+            <h2 data-lov-id="src/pages/Events.tsx:79:8" class="text-3xl font-bold text-gray-900 mb-8 section-title"> {# Use classes from CSS #}
+                Événements
+            </h2>
+
+            {# Filter and Search Controls #}
+            <div data-lov-id="src/pages/Events.tsx:81:8" class="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center event-filters"> {# Added custom class #}
+                {# Search Form #}
+                <form method="get" action="{{ path('public_event_index') }}" class="flex-grow max-w-md"> {# Use flex-grow #}
+                    <input type="hidden" name="filter" value="{{ current_filter }}"> {# Keep current filter when searching #}
+                    <input data-lov-id="src/pages/Events.tsx:82:10"
+                           type="search" {# Use search type #}
+                           name="search" {# Add name attribute #}
+                           class="search-input" {# Use custom class for styling #}
+                           placeholder="Rechercher des événements..."
+                           value="{{ search_term|default('') }}">
+                    {# Consider adding a submit button or trigger search on input change via JS #}
+                    {# <button type="submit" class="button button-secondary">Rechercher</button> #}
+                </form>
+
+                {# Filter Buttons (Links that reload the page with query params) #}
+                <div data-lov-id="src/pages/Events.tsx:89:10" class="flex gap-2 filter-buttons"> {# Added custom class #}
+                    <a href="{{ path('public_event_index', {'filter': 'all', 'search': search_term}) }}"
+                       class="button {{ current_filter == 'all' ? 'button-primary' : 'button-secondary' }}"> {# Active state styling #}
+                        Tous
+                    </a>
+                    <a href="{{ path('public_event_index', {'filter': 'upcoming', 'search': search_term}) }}"
+                       class="button {{ current_filter == 'upcoming' ? 'button-primary' : 'button-secondary' }}">
+                        À venir
+                    </a>
+                    <a href="{{ path('public_event_index', {'filter': 'past', 'search': search_term}) }}"
+                       class="button {{ current_filter == 'past' ? 'button-primary' : 'button-secondary' }}">
+                        Passés
+                    </a>
+                </div>
+            </div>
+
+            {# Event Grid #}
+            <div data-lov-id="src/pages/Events.tsx:111:8" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 events-grid"> {# Use classes from CSS #}
+                {% for event_data in events_data %}
+                    {# Pass the whole event_data array to the partial #}
+                    {% include 'public/event/_event_card.html.twig' with { 'event_data': event_data } %}
+                {% else %}
+                    <div class="col-span-full text-center py-10 text-gray-500"> {# Use col-span-full #}
+                        <p><i class="fas fa-info-circle fa-2x mb-3"></i></p> {# Example icon #}
+                        <p>Aucun événement trouvé correspondant à vos critères.</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+        </div> {# End container #}
+    </div> {# End page-content wrapper #}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# Optional JS for live search/filter without page reload (more complex) #}
+    <script>
+        // Example: Basic active state toggling for filter buttons (if not using page reload)
+        /*
+        document.querySelectorAll('.filter-buttons .button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                 // Remove active class from all
+                 document.querySelectorAll('.filter-buttons .button').forEach(btn => {
+                     btn.classList.remove('button-primary');
+                     btn.classList.add('button-secondary');
+                 });
+                 // Add active class to clicked button
+                 this.classList.remove('button-secondary');
+                 this.classList.add('button-primary');
+                 // Add AJAX call or form submission logic here
+                 // e.preventDefault(); // Prevent link navigation if using AJAX
+            });
+        });
+        */
+    </script>
+{% endblock %}

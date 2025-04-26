@@ -1,0 +1,188 @@
+{# templates/public/event/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ event.titre }} - Détails Événement{% endblock %}
+
+{% block body %}
+    {# Use same overall wrapper class if needed, or just rely on base layout #}
+    <div data-lov-id="src/pages/EventDetails.tsx:76:4" class="min-h-screen bg-gray-50 page-content">
+        {# Header is included in base.html.twig #}
+
+        <div data-lov-id="src/pages/EventDetails.tsx:78:6" class="container mx-auto px-4 py-16"> {# Use container class from CSS #}
+
+            {# Back Link #}
+            <div data-lov-id="src/pages/EventDetails.tsx:79:8" class="mb-4">
+                {# Ensure public_event_index route exists #}
+                <a data-lov-id="src/pages/EventDetails.tsx:80:10" class="flex items-center text-blue-600 hover:text-blue-800 back-link" href="{{ path('public_event_index') }}"> {# Added custom class #}
+                    {# Chevron Left Icon SVG #}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left h-4 w-4"><path d="m15 18-6-6 6-6"></path></svg>
+                    <span data-lov-id="src/pages/EventDetails.tsx:82:12">Retour aux événements</span>
+                </a>
+            </div>
+
+            {# Main Event Card #}
+            <div data-lov-id="src/pages/EventDetails.tsx:86:8" class="bg-white rounded-lg shadow-md overflow-hidden">
+
+                {# Card Header #}
+                <div data-lov-id="src/pages/EventDetails.tsx:87:10" class="h-48 bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center p-6 event-detail-header"> {# Added custom class #}
+                    <h2 data-lov-id="src/pages/EventDetails.tsx:88:12" class="text-4xl font-bold text-white text-center">
+                        {{ event.titre }}
+                    </h2>
+                </div>
+
+                {# Card Body #}
+                <div data-lov-id="src/pages/EventDetails.tsx:91:10" class="p-8 event-detail-body"> {# Added custom class #}
+
+                    {# Metadata Row #}
+                    <div data-lov-id="src/pages/EventDetails.tsx:92:12" class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                        {# Left Side Metadata #}
+                        <div data-lov-id="src/pages/EventDetails.tsx:93:14" class="flex flex-col gap-3">
+                            {# Date #}
+                            <div data-lov-id="src/pages/EventDetails.tsx:94:16" class="flex items-center gap-2 event-meta-item"> {# Use consistent classes #}
+                                {# Calendar Icon SVG #}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-500"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+                                <span data-lov-id="src/pages/EventDetails.tsx:96:18" class="event-meta-text">{{ event.dateDebut ? event.dateDebut|date('d M Y \\à H:i') : 'N/A' }}</span> {# Use meta text class #}
+                            </div>
+                            {# Duration #}
+                            {% if duration %}
+                                <div data-lov-id="src/pages/EventDetails.tsx:99:16" class="flex items-center gap-2 event-meta-item">
+                                    {# Clock Icon SVG #}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-500"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    <span data-lov-id="src/pages/EventDetails.tsx:101:18" class="event-meta-text">Durée: {{ duration }}</span>
+                                </div>
+                            {% endif %}
+                            {# Location #}
+                            <div data-lov-id="src/pages/EventDetails.tsx:109:16" class="flex items-center gap-2 event-meta-item">
+                                {# MapPin Icon SVG #}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-500"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                {# Use the state (Gouvernorat) property #}
+                                <span data-lov-id="src/pages/EventDetails.tsx:111:18" class="event-meta-text">{{ event.state ? event.state.label : 'Non défini' }}</span>
+                            </div>
+                            {# Participants #}
+                            <div data-lov-id="src/pages/EventDetails.tsx:114:16" class="flex items-center gap-2 event-meta-item">
+                                {# Users Icon SVG #}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-500"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                <span data-lov-id="src/pages/EventDetails.tsx:116:18" class="event-meta-text">{{ event.participations|length }} participant(s)</span>
+                            </div>
+                        </div>
+                        {# Right Side Status Badge #}
+                        <div data-lov-id="src/pages/EventDetails.tsx:120:14">
+                        <span data-lov-id="src/pages/EventDetails.tsx:121:16" class="status-badge status-{{ event.statut|lower }}"> {# Dynamic class #}
+                            {% if event.statut == 'A_VENIR' %}À venir
+                            {% elseif event.statut == 'EN_COURS' %}En cours
+                            {% elseif event.statut == 'TERMINE' %}Terminé
+                            {% elseif event.statut == 'ANNULE' %}Annulé
+                            {% else %}{{ event.statut|default('') }}{% endif %}
+                        </span>
+                        </div>
+                    </div>
+
+                    {# Content Sections #}
+                    <div data-lov-id="src/pages/EventDetails.tsx:132:12" class="space-y-6"> {# Use space-y utility #}
+                        {# Description #}
+                        <div data-lov-id="src/pages/EventDetails.tsx:133:14">
+                            <h3 data-lov-id="src/pages/EventDetails.tsx:134:16" class="text-xl font-semibold mb-3">Description</h3>
+                            <p data-lov-id="src/pages/EventDetails.tsx:135:16" class="text-gray-700 event-description-full"> {# Added custom class #}
+                                {{ event.description|nl2br }} {# Use nl2br filter for line breaks #}
+                            </p>
+                        </div>
+
+                        {# Additional Info (Hardcoded based on example) #}
+                        <div data-lov-id="src/pages/EventDetails.tsx:138:14">
+                            <h3 data-lov-id="src/pages/EventDetails.tsx:139:16" class="text-xl font-semibold mb-3">Informations Supplémentaires</h3>
+                            <ul data-lov-id="src/pages/EventDetails.tsx:140:16" class="list-disc list-inside space-y-2 text-gray-700">
+                                {# Display min autonomy from entity if available, else static text #}
+                                <li data-lov-id="src/pages/EventDetails.tsx:141:18">
+                                    Autonomie minimale requise:
+                                    {% if event.trottinetteMinAutonomie is not null and event.trottinetteMinAutonomie > 0 %}
+                                        {{ event.trottinetteMinAutonomie }} km
+                                    {% else %}
+                                        Aucune spécifiée
+                                    {% endif %}
+                                </li>
+                                {# Static info from example - these are not in the DB #}
+                                <li data-lov-id="src/pages/EventDetails.tsx:142:18">Tarifs: 10 TND par personne (Exemple)</li>
+                                <li data-lov-id="src/pages/EventDetails.tsx:143:18">Équipement de sécurité fourni</li>
+                                <li data-lov-id="src/pages/EventDetails.tsx:144:18">Groupe limité à 20 participants maximum (Exemple)</li>
+                            </ul>
+                        </div>
+
+                        {# Participation Button Section #}
+                        <div data-lov-id="src/pages/EventDetails.tsx:149:16" class="pt-4">
+                            {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                                {% if event.statut == 'A_VENIR' %}
+                                    {# User logged in, event upcoming #}
+                                    {% if user_participation_status == constant('App\\Enum\\ParticipationStatus::INSCRIT') %}
+                                        {# Already participating - show Cancel button #}
+                                        <form action="{{ path('public_event_cancel_participation', {id: event.id}) }}" method="post" class="d-inline-block me-2">
+                                            <button type="submit" class="button button-secondary-outline" {# Style as needed #}
+                                                    onclick="return confirm('Annuler votre participation ?')">
+                                                Annuler Participation
+                                            </button>
+                                            <span class="badge bg-success ms-2">Vous êtes inscrit !</span>
+                                        </form>
+                                    {% elseif user_participation_status == constant('App\\Enum\\ParticipationStatus::ANNULE') %}
+                                        {# Cancelled - show Re-participate button #}
+                                        <form action="{{ path('app_event_participate', {id: event.id}) }}" method="post" class="d-inline-block me-2">
+                                            <button type="submit" class="button button-primary">Réinscrire</button>
+                                            <span class="badge bg-secondary ms-2">Participation annulée</span>
+                                        </form>
+                                    {% else %}
+                                        {# Not participated yet - show Participate button #}
+                                        <form action="{{ path('app_event_participate', {id: event.id}) }}" method="post" class="d-inline-block me-2">
+                                            <button type="submit" class="button button-primary button-large"> {# Larger button #}
+                                                Participer à cet événement
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    {# Event not upcoming (in progress, past, cancelled) #}
+                                    <button class="button button-primary button-large" disabled>
+                                        {% if event.statut == 'EN_COURS' %}Événement en cours
+                                        {% elseif event.statut == 'TERMINE' %}Événement terminé
+                                        {% elseif event.statut == 'ANNULE' %}Événement annulé
+                                        {% else %}Participation non disponible{% endif %}
+                                    </button>
+                                {% endif %}
+                            {% else %}
+                                {# User not logged in #}
+                                <button data-lov-id="src/pages/EventDetails.tsx:150:18" class="button button-primary button-large" disabled>
+                                    Participer à cet événement
+                                </button>
+                                <p data-lov-id="src/pages/EventDetails.tsx:157:28" class="text-sm text-gray-500 mt-2">
+                                    <a href="{{ path('app_login') }}" class="text-blue-600 hover:underline">Connectez-vous</a> pour participer.
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# Participants List Section #}
+                    <div data-lov-id="src/pages/EventDetails.tsx:162:12" class="mt-12">
+                        <h3 data-lov-id="src/pages/EventDetails.tsx:163:14" class="text-xl font-semibold mb-4">
+                            Liste des participants ({{ event.participations.count }})
+                        </h3>
+                        {% if event.participations is not empty %}
+                            <ul class="list-group"> {# Example list styling #}
+                                {% for participation in event.participations %}
+                                    {# Only show inscribed participants publicly? Or all? Decide here. #}
+                                    {% if participation.statut == constant('App\\Enum\\ParticipationStatus::INSCRIT') %}
+                                        <li class="list-group-item">
+                                            {% if participation.utilisateur %}
+                                                {{ participation.utilisateur.prenom }} {{ participation.utilisateur.nom | slice(0, 1) }}. {# Show initial for privacy #}
+                                            {% else %}
+                                                Participant anonyme
+                                            {% endif %}
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p data-lov-id="src/pages/EventDetails.tsx:184:16" class="text-gray-500">Aucun participant inscrit pour le moment.</p>
+                        {% endif %}
+                    </div>
+
+                </div> {# End Card Body #}
+            </div> {# End Main Card #}
+        </div> {# End Container #}
+    </div> {# End page wrapper #}
+{% endblock %}
