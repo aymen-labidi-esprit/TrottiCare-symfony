@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Points Relais{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1>Points Relais</h1>
+
+    {# ✅ Flash messages #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <a href="{{ path('point_relais_new') }}" class="btn btn-primary mb-3" data-turbo="false">
+        Nouveau point relais
+    </a>
+
+    {% if point_relais is empty %}
+        <div class="alert alert-info">Aucun point relais trouvé.</div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Adresse</th>
+                    <th>Horaire d'ouverture</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for relais in point_relais %}
+                    <tr>
+                        <td>{{ relais.id }}</td>
+                        <td>{{ relais.nom }}</td>
+                        <td>{{ relais.addresse }}</td>
+                        <td>{{ relais.horaireOuverture ? relais.horaireOuverture|date('H:i \\l\\e d/m/Y') : '' }}</td>
+                        <td>
+                            <a href="{{ path('point_relais_show', {id: relais.id}) }}" class="btn btn-sm btn-info">Voir</a>
+                            <a href="{{ path('point_relais_edit', {id: relais.id}) }}" class="btn btn-sm btn-secondary">Modifier</a>
+
+                            <button 
+                                type="button"
+                                class="btn btn-sm btn-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteModal"
+                                data-action="{{ path('point_relais_delete', {id: relais.id}) }}"
+                                data-token="{{ csrf_token('delete' ~ relais.id) }}"
+                            >
+                                Supprimer
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+{# ✅ Delete Confirmation Modal #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" id="deleteForm">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          Êtes-vous sûr de vouloir supprimer ce point relais ?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-danger">Supprimer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const action = button.getAttribute('data-action');
+            const token = button.getAttribute('data-token');
+
+            const form = deleteModal.querySelector('form');
+            form.setAttribute('action', action);
+
+            let tokenInput = form.querySelector('input[name="_token"]');
+            if (!tokenInput) {
+                tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '_token';
+                form.appendChild(tokenInput);
+            }
+            tokenInput.value = token;
+        });
+    </script>
+{% endblock %}
