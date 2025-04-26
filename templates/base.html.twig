@@ -1,54 +1,177 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}{{ 'Welcome'|trans }}!{% endblock %} | Trotticare Events</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-            <link href="/css/custom.css" rel="stylesheet">
-        {% endblock %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}TrottiApp{% endblock %}</title>
+    
+    <!-- Bootstrap 5.3 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Animate.css CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --gradient-angle: 45deg;
+        }
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        {% endblock %}
-    </head>
-    <body class="d-flex flex-column min-vh-100">
-        <nav class="navbar navbar-expand-lg navbar-light">
-            <div class="container">
-                <a class="navbar-brand" href="{{ path('app_public_events') }}">
-                    <img src="{{ asset('images/Logo.png') }}" alt="Trotticare Events" height="50" class="me-2">
-                    <span class="fw-bold text-black">Trotticare</span>
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                    var(--gradient-angle),
+                    rgba(0, 0, 0, 0.4) 0%,
+                    rgba(0, 0, 0, 0.1) 100%
+            );
+        }
+
+        .step-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .scroll-down {
+            position: absolute;
+            bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .section {
+            padding: 5rem 0;
+        }
+
+        .gradient-icon {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ path('app_home') }}">
+                <i class="bi bi-lightning-charge-fill text-primary me-2"></i>
+                TrottiCare
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_home') }}">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('admin_trottinette_index') }}">Fonctionnement</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_admin_events') }}">Evènement</a>
+                    </li>
+                    {% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_public_events') }}"><i class="fas fa-calendar-alt me-1"></i>{{ 'Events'|trans }}</a>
+                            <a class="nav-link" href="{{ path('point_relais_index') }}">Point Relais</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_event_new') }}"><i class="fas fa-plus me-1"></i>{{ 'New Event'|trans }}</a>
+                            <a class="nav-link" href="{{ path('reservation_index') }}">Réservations</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ path('app_admin_dashboard') }}"><i class="fas fa-tachometer-alt me-1"></i>{{ 'Admin Dashboard'|trans }}</a>
+                            <a class="nav-link" href="/reclamations/">Mes Réclamations</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_logout') }}">Déconnexion</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_login') }}">Connexion</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary ms-2" href="{{ path('app_register') }}">Inscription</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-5">
+        {% block body %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-4">TrottiCare</h5>
+                    <p>Votre solution de mobilité urbaine électrique et écologique.</p>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-4">Liens rapides</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ path('app_home') }}" class="text-white">Accueil</a></li>
+                        <li class="mb-2"><a href="#how-it-works" class="text-white">Fonctionnement</a></li>
+                        <li class="mb-2"><a href="#features" class="text-white">Avantages</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-4">Contact</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-envelope me-2"></i>contact@trotti.tn</li>
+                        <li class="mb-2"><i class="bi bi-phone me-2"></i>+216 71 000 000</li>
+                        <li class="mb-2"><i class="bi bi-geo-alt me-2"></i>Tunis, Tunisie</li>
                     </ul>
                 </div>
             </div>
-        </nav>
-        <div class="main-content flex-grow-1">
-            {% block body %}{% endblock %}
-        </div>
-        <footer class="footer py-3 bg-light mt-auto">
-            <div class="container text-center">
-                <span class="text-muted">© 2024 Trotticare Events. {{ 'All rights reserved'|trans }}.</span>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; {{ "now"|date("Y") }} TrottiCare. Tous droits réservés.</p>
             </div>
-        </footer>
-    </body>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block javascripts %}{% endblock %}
+</body>
 </html>

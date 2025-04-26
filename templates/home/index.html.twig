@@ -1,0 +1,213 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}TrottiCare – Votre Mobilité Urbaine{% endblock %}
+
+{% block styles %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --gradient-angle: 45deg;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                    var(--gradient-angle),
+                    rgba(0, 0, 0, 0.4) 0%,
+                    rgba(0, 0, 0, 0.1) 100%
+            );
+        }
+
+        .step-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .scroll-down {
+            position: absolute;
+            bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .section {
+            padding: 5rem 0;
+        }
+
+        .gradient-icon {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {# HERO #}
+    <section class="position-relative text-white overflow-hidden" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); min-height: 90vh;">
+        <div class="hero-overlay"></div>
+        <div class="container d-flex flex-column justify-content-center align-items-center h-100 position-relative py-8">
+            <div class="mb-5 animate__animated animate__zoomIn">
+                <i class="bi bi-lightning-charge-fill gradient-icon display-1"></i>
+            </div>
+            <h1 class="display-3 fw-extrabold mb-4 text-center animate__animated animate__fadeInUp">
+                Explorez votre ville<br>avec <span class="text-warning">TrottiCare</span>
+            </h1>
+            <p class="lead fs-4 col-md-10 col-xl-8 text-center mb-5 animate__animated animate__fadeInUp animate__delay-1s">
+                Mobilité urbaine électrique, écologique et accessible. Réservez votre trottinette en quelques clics et profitez d'une expérience de déplacement unique.
+            </p>
+            <div class="d-flex gap-3 flex-wrap justify-content-center animate__animated animate__fadeInUp animate__delay-2s">
+                {% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+                    <a href="{{ path('client_dashboard') }}"
+                       class="btn btn-lg btn-light px-5 rounded-pill fw-bold d-flex align-items-center gap-2">
+                        Tableau de bord <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="#map-section"
+                       class="btn btn-lg btn-outline-light px-5 rounded-pill">
+                        <i class="bi bi-geo-alt me-2"></i>Localiser
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_register') }}"
+                       class="btn btn-lg btn-light px-5 rounded-pill fw-bold">
+                        Commencer maintenant
+                    </a>
+                    <a href="{{ path('app_login') }}"
+                       class="btn btn-lg btn-outline-light px-5 rounded-pill">
+                        Connexion
+                    </a>
+                {% endif %}
+            </div>
+            <div class="scroll-down text-white fs-2 mt-8">
+                <i class="bi bi-chevron-double-down"></i>
+            </div>
+        </div>
+    </section>
+
+    {# HOW IT WORKS #}
+    <section class="section bg-white">
+        <div class="container">
+            <div class="text-center mb-8">
+                <span class="badge bg-primary bg-opacity-10 text-primary fs-6 mb-3">Fonctionnement</span>
+                <h2 class="display-5 fw-bold mb-4">Comment ça marche ?</h2>
+            </div>
+            <div class="row g-4 g-lg-5 justify-content-center">
+                {% set steps = [
+                    {icon:'person-check', title:'Inscription Express', text:'Créez votre compte en 1 minute avec vérification instantanée'},
+                    {icon:'map', title:'Localisation en temps réel', text:'Trouvez les trottinettes disponibles autour de vous'},
+                    {icon:'qr-code-scan', title:'Déverrouillage intelligent', text:'Scannez le QR code et roulez en 10 secondes'}
+                ] %}
+                {% for step in steps %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card step-card h-100 border-0 p-5 text-center bg-light">
+                            <div class="mb-4">
+                                <div class="d-inline-block bg-primary bg-opacity-10 rounded-circle p-4">
+                                    <i class="bi bi-{{ step.icon }} fs-1 text-primary"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <span class="badge bg-dark text-white rounded-pill fs-6">Étape {{ loop.index }}</span>
+                                </div>
+                                <h3 class="h4 fw-bold mb-3">{{ step.title }}</h3>
+                                <p class="text-muted mb-0">{{ step.text }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# FEATURES #}
+    <section class="section bg-dark text-white">
+        <div class="container">
+            <div class="text-center mb-8">
+                <span class="badge bg-white bg-opacity-10 fs-6 mb-3">Avantages</span>
+                <h2 class="display-5 fw-bold mb-4">Pourquoi choisir TrottiCare ?</h2>
+            </div>
+            <div class="row g-4 g-lg-5">
+                {% set features = [
+                    {icon:'speedometer2', title:'Performance', text:'Moteur 500W - Autonomie 40km - Vitesse max 25km/h'},
+                    {icon:'shield-check', title:'Sécurité', text:'Éclairage LED, freins à disque et casque inclus'},
+                    {icon:'leaf', title:'Écologie', text:'0 émission CO₂ - Batterie recyclable'},
+                    {icon:'currency-euro', title:'Tarification', text:'0,25TND/min - Forfaits jusqu\'à -30%'},
+                    {icon:'headset', title:'Support 24/7', text:'Assistance technique et dépannage rapide'},
+                    {icon:'stars', title:'Premium', text:'Accès prioritaire aux nouvelles fonctionnalités'}
+                ] %}
+                {% for feat in features %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card feature-card h-100 border-0 bg-dark-800 p-4">
+                            <div class="card-body text-center">
+                                <i class="bi bi-{{ feat.icon }} fs-1 text-primary mb-4"></i>
+                                <h3 class="h5 fw-bold mb-3">{{ feat.title }}</h3>
+                                <p class="text-muted mb-0">{{ feat.text }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# MAP #}
+    {# MAP #}
+    <section id="map-section" class="section bg-light">
+        <div class="container">
+            <div class="text-center mb-8">
+                <span class="badge bg-primary bg-opacity-10 text-primary fs-6 mb-3">Localisation</span>
+                <h2 class="display-5 fw-bold mb-4">Notre réseau</h2>
+            </div>
+            <div class="card border-0 shadow-lg overflow-hidden">
+                <div class="row g-0">
+                    <div class="col-lg-6 d-flex align-items-center bg-dark text-white p-5">
+                        <div>
+                            <h3 class="fw-bold mb-4">Disponibilité en temps réel</h3>
+                            <ul class="list-unstyled">
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-check2-circle text-success me-3 fs-5"></i>
+                                    <span>+200 trottinettes disponibles</span>
+                                </li>
+                                <li class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-geo-alt text-primary me-3 fs-5"></i>
+                                    <span>15 points de service en ville</span>
+                                </li>
+                                <li class="d-flex align-items-center">
+                                    <i class="bi bi-clock-history text-warning me-3 fs-5"></i>
+                                    <span>Mise à jour toutes les 30 secondes</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div id="map" style="width:100%; height:400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

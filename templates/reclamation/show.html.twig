@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+{% block title %}Détails Réclamation{% endblock %}
+
+{% block body %}
+    <div class="container py-4">
+        <h1>Détails de la Réclamation</h1>
+        <ul class="list-group my-4">
+            <li class="list-group-item"><strong>ID :</strong> {{ reclamation.id }}</li>
+            <li class="list-group-item"><strong>Titre :</strong> {{ reclamation.titre }}</li>
+            <li class="list-group-item"><strong>Description :</strong> {{ reclamation.description }}</li>
+            <li class="list-group-item"><strong>Type :</strong> {{ reclamation.typeReclamation }}</li>
+            <li class="list-group-item"><strong>Email :</strong> {{ reclamation.userEmail }}</li>
+            <li class="list-group-item"><strong>Trottinette :</strong> 
+                {% if reclamation.trottinette %}
+                    {{ reclamation.trottinette.id }}
+                {% else %}
+                    Non spécifiée
+                {% endif %}
+            </li>
+            <li class="list-group-item"><strong>Date :</strong> {{ reclamation.dateCreation|date('d/m/Y H:i') }}</li>
+        </ul>
+
+        <div class="mt-4">
+            <h2>Réponses</h2>
+            {% if reclamation.reponses|length > 0 %}
+                <div class="list-group">
+                    {% for reponse in reclamation.reponses %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">
+                                    {% if reponse.auteur %}
+                                        {{ reponse.auteur.nom }} {{ reponse.auteur.prenom }}
+                                    {% else %}
+                                        Support Technique
+                                    {% endif %}
+                                </h5>
+                                <small class="text-muted">{{ reponse.dateReponse|date('d/m/Y H:i') }}</small>
+                            </div>
+                            <p class="mb-1">{{ reponse.message }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Aucune réponse n'a été donnée pour le moment.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mt-4">
+            <a href="{{ path('reclamation_edit', {'id': reclamation.id}) }}" class="btn btn-warning">Modifier</a>
+            <a href="{{ path('reclamation_index') }}" class="btn btn-secondary">Retour</a>
+        </div>
+    </div>
+{% endblock %}

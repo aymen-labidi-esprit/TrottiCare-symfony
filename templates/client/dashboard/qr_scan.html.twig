@@ -1,0 +1,26 @@
+{# templates/client/dashboard/qr_scan.html.twig #}
+{% extends 'base.html.twig' %}
+{% block title %}Scanner un QR Code{% endblock %}
+{% block body %}
+    <h2>QR Scanner</h2>
+    <div id="qr-reader" style="width:500px"></div>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        const html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            qrCodeMessage => {
+                fetch("{{ path('api_client_qr_process') }}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ code: qrCodeMessage })
+                })
+                    .then(res => res.json())
+                    .then(data => alert(data.message));
+                html5QrCode.stop();
+            },
+            errorMessage => console.warn(`QR error: ${errorMessage}`)
+        );
+    </script>
+{% endblock %}

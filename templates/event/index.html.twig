@@ -50,7 +50,7 @@
                                     </p>
                                     <p class="card-text">
                                         <i class="fas fa-map-marker-alt me-2 text-primary"></i>
-                                        <strong>Location:</strong> {{ event.lieu }}
+                                        <strong>Location:</strong> {{ event.state.label }}
                                     </p>
                                     {% if event.gouvernorat is defined and event.gouvernorat %}
                                         <p class="card-text">

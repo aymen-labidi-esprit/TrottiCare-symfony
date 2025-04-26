@@ -20,6 +20,10 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    # Explicitly configure repositories
+    App\Repository\TrottinetteRepository:
+        public: true
+        tags: ['doctrine.repository_service']
+
     # add more service definitions when explicit configuration is needed
-    App\Twig\AppExtension:
-        tags: ['twig.extension']
+    # please note that last definitions always *replace* previous ones

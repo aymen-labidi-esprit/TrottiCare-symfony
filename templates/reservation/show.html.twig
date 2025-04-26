@@ -1,0 +1,120 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Réservation{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 fade-in">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    <h3 class="mb-0">Détails de la Réservation</h3>
+                </div>
+
+                <div class="card-body p-4">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>ID</strong>
+                            <span>{{ reservation.id }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Date de début</strong>
+                            <span>{{ reservation.dateDebut ? reservation.dateDebut|date('Y-m-d') : '' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Date de fin</strong>
+                            <span>{{ reservation.dateFin ? reservation.dateFin|date('Y-m-d') : '' }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Montant</strong>
+                            <span>{{ reservation.montant }} €</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Status</strong>
+                            <span class="badge bg-info text-dark">{{ reservation.status.label() }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Mode de Paiement</strong>
+                            <span class="badge bg-secondary">{{ reservation.paiement.label() }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Date de fin</strong>
+                            <span>{{ reservation.dateCreation ? reservation.dateCreation|date('Y-m-d') : '' }}</span>
+                        </li>
+                        
+                    </ul>
+                </div>
+
+                <div class="card-footer bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <div class="d-flex gap-2">
+                        <a href="{{ path('reservation_edit', {id: reservation.id}) }}" class="btn btn-warning">
+                            <i class="fas fa-edit me-1"></i> Modifier
+                        </a>
+
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteModal"
+                            data-action="{{ path('reservation_delete', {id: reservation.id}) }}"
+                            data-token="{{ csrf_token('delete' ~ reservation.id) }}"
+                        >
+                            <i class="fas fa-trash-alt me-1"></i> Supprimer
+                        </button>
+                    </div>
+
+                    <a href="{{ path('reservation_index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ✅ Delete Confirmation Modal #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="deleteForm">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    Êtes-vous sûr de vouloir supprimer cette réservation ?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const action = button.getAttribute('data-action');
+            const token = button.getAttribute('data-token');
+
+            const form = deleteModal.querySelector('form');
+            form.setAttribute('action', action);
+
+            let tokenInput = form.querySelector('input[name="_token"]');
+            if (!tokenInput) {
+                tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '_token';
+                form.appendChild(tokenInput);
+            }
+            tokenInput.value = token;
+        });
+    </script>
+{% endblock %}

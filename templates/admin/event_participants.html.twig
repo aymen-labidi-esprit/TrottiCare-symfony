@@ -6,7 +6,7 @@
 <div class="container mt-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ path('app_admin_dashboard') }}">Tableau de bord</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Tableau de bord</a></li>
             <li class="breadcrumb-item active" aria-current="page">Participants de l'événement</li>
         </ol>
     </nav>
@@ -73,7 +73,7 @@
             {% endif %}
         </div>
         <div class="card-footer">
-            <a href="{{ path('app_admin_dashboard') }}" class="btn btn-secondary">
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
             </a>
             <a href="{{ path('app_event_show', {'id': event.id}) }}" class="btn btn-primary">

@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier la Maintenance{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Modifier la Maintenance</h1>
+        
+        {{ form_start(form) }}
+            {{ form_row(form.description) }}
+            {{ form_row(form.dateDebut) }}
+            {{ form_row(form.dateFin) }}
+            {{ form_row(form.statut) }}
+            {% if form.cout is defined %}
+                {{ form_row(form.cout) }}
+            {% endif %}
+            {% if form.technicien is defined %}
+                {{ form_row(form.technicien) }}
+            {% endif %}
+            <button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

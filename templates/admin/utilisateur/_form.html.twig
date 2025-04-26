@@ -1,0 +1,32 @@
+{# Expects 'form' variable #}
+{{ form_start(form) }}
+    {# Render standard fields #}
+    {{ form_row(form.nom) }}
+    {{ form_row(form.prenom) }}
+    {{ form_row(form.email) }}
+    {{ form_row(form.telephone) }}
+    {{ form_row(form.roleInterne) }}
+    {{ form_row(form.isVerified) }}
+    {# ← Here’s the new “Compte Actif” checkbox ↓ #}
+    {# ← Here’s the new “Compte Actif” checkbox ↓ #}
+<div class="form-check form-switch mb-3">
+    {{ form_widget(form.isActive, {
+        attr: { class: 'form-check-input' }
+    }) }}
+    {{ form_label(form.isActive, 'Compte Actif ?', {
+        label_attr: { class: 'form-check-label' }
+    }) }}
+    {{ form_errors(form.isActive) }}
+</div>
+
+    {# Password field - Check if the form has it (it should) #}
+    {% if form.plainPassword is defined %}
+        <div class="alert alert-info small">
+            Laissez les champs de mot de passe vides si vous ne souhaitez pas le modifier.
+        </div>
+        {{ form_row(form.plainPassword.first) }} {# Render first password field #}
+        {{ form_row(form.plainPassword.second) }} {# Render second password field #}
+    {% endif %}
+
+<button type="submit" class="btn btn-success mt-3">{{ button_label|default('Enregistrer') }}</button>
+{{ form_end(form) }}

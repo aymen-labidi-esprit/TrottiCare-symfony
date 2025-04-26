@@ -1,0 +1,79 @@
+{# templates/partenaire/dashboard/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de Bord Partenaire - TrottiCare{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="display-6">Tableau de Bord Partenaire</h1>
+                {# Use partner's name if available #}
+                <p class="lead">Bienvenue, {{ partenaire.prenom|default('Partenaire') }} ! Gérez vos trottinettes et événements.</p>
+            </div>
+        </div>
+
+        {# Quick Actions Section #}
+        <div class="row gy-3"> {# gy-3 adds vertical gap between columns on small screens #}
+            {# Trottinette Management Card #}
+            <div class="col-md-6">
+                <div class="card h-100"> {# h-100 makes cards in the same row equal height #}
+                    <div class="card-body d-flex flex-column"> {# flex-column + mt-auto on button container #}
+                        <h5 class="card-title"><i class="bi bi-scooter me-2"></i>Gestion des Trottinettes</h5>
+                        <p class="card-text">Ajoutez de nouvelles trottinettes à votre flotte ou consultez votre inventaire.</p>
+                        <div class="mt-auto"> {# Pushes buttons to the bottom #}
+                            <a href="{{ path('app_trottinette_new') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle-fill me-1"></i> Ajouter une Trottinette
+                            </a>
+                            {# Optional: Add link to view partner's trottinettes when the route exists #}
+                            {# <a href="{{ path('partenaire_trottinette_index') }}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-list-ul me-1"></i> Voir mes Trottinettes
+                        </a> #}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Event Management Card #}
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title"><i class="bi bi-calendar-event me-2"></i>Gestion des Événements</h5>
+                        <p class="card-text">Créez et gérez les événements que vous organisez ou auxquels vous participez.</p>
+                        <div class="mt-auto">
+                            <a href="{{ path('app_event_new') }}" class="btn btn-success">
+                                <i class="bi bi-calendar-plus-fill me-1"></i> Créer un Événement
+                            </a>
+                            {# Optional: Add link to view partner's events when the route exists #}
+                            {# <a href="{{ path('partenaire_event_index') }}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-calendar-event me-1"></i> Voir mes Événements
+                         </a> #}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Add more cards/sections as needed - e.g., Maintenance Overview #}
+            {#
+            <div class="col-md-6 mt-3">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title"><i class="bi bi-tools me-2"></i>Maintenance</h5>
+                        <p class="card-text">Consultez les demandes de maintenance pour vos trottinettes.</p>
+                         <div class="mt-auto">
+                             <a href="{{ path('partenaire_maintenance_index') }}" class="btn btn-warning"> {# Assuming this route exists #}
+            <i class="bi bi-list-check me-1"></i> Voir la Maintenance
+            </a>
+        </div>
+    </div>
+
+
+
+    </div>
+    </div>
+    </div>
+
+    </div> {# End Quick Actions Row #}
+
+    </div>
+{% endblock %}

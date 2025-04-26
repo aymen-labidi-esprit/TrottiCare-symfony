@@ -1,0 +1,4 @@
+# config/packages/symfonycasts_verify_email.yaml
+symfonycasts_verify_email:
+  lifetime: 3600
+  # throttle_lifetime: 60
