@@ -36,16 +36,16 @@
                     {# Metadata Row #}
                     <div data-lov-id="src/pages/EventDetails.tsx:92:12" class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         {# Left Side Metadata #}
-                        <div data-lov-id="src/pages/EventDetails.tsx:93:14" class="flex flex-col gap-3">
+                        <div data-lov-id="src/pages/EventDetails.tsx:93:14" class="d-flex gap-3 ">
                             {# Date #}
-                            <div data-lov-id="src/pages/EventDetails.tsx:94:16" class="flex items-center gap-2 event-meta-item"> {# Use consistent classes #}
+                            <div data-lov-id="src/pages/EventDetails.tsx:94:16" class="flex items-center gap-3 event-meta-item"> {# Use consistent classes #}
                                 {# Calendar Icon SVG #}
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-500"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
                                 <span data-lov-id="src/pages/EventDetails.tsx:96:18" class="event-meta-text">{{ event.dateDebut ? event.dateDebut|date('d M Y \\à H:i') : 'N/A' }}</span> {# Use meta text class #}
                             </div>
                             {# Duration #}
                             {% if duration %}
-                                <div data-lov-id="src/pages/EventDetails.tsx:99:16" class="flex items-center gap-2 event-meta-item">
+                                <div data-lov-id="src/pages/EventDetails.tsx:99:16" class="flex items-center gap-3 event-meta-item">
                                     {# Clock Icon SVG #}
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-500"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                     <span data-lov-id="src/pages/EventDetails.tsx:101:18" class="event-meta-text">Durée: {{ duration }}</span>
@@ -65,9 +65,10 @@
                                 <span data-lov-id="src/pages/EventDetails.tsx:116:18" class="event-meta-text">{{ event.participations|length }} participant(s)</span>
                             </div>
                         </div>
+                    <br/>
                         {# Right Side Status Badge #}
                         <div data-lov-id="src/pages/EventDetails.tsx:120:14">
-                        <span data-lov-id="src/pages/EventDetails.tsx:121:16" class="status-badge status-{{ event.statut|lower }}"> {# Dynamic class #}
+                        <span data-lov-id="src/pages/EventDetails.tsx:121:16" class="status-badge status-{{ event.statut|lower }} mt-3 mb-3"> {# Dynamic class #}
                             {% if event.statut == 'A_VENIR' %}À venir
                             {% elseif event.statut == 'EN_COURS' %}En cours
                             {% elseif event.statut == 'TERMINE' %}Terminé
@@ -75,13 +76,15 @@
                             {% else %}{{ event.statut|default('') }}{% endif %}
                         </span>
                         </div>
+                        <br/>
+
                     </div>
 
                     {# Content Sections #}
                     <div data-lov-id="src/pages/EventDetails.tsx:132:12" class="space-y-6"> {# Use space-y utility #}
                         {# Description #}
                         <div data-lov-id="src/pages/EventDetails.tsx:133:14">
-                            <h3 data-lov-id="src/pages/EventDetails.tsx:134:16" class="text-xl font-semibold mb-3">Description</h3>
+                            <h3 data-lov-id="src/pages/EventDetails.tsx:134:16" class="text-xl font-semibold mb-3 mt-3">Description</h3>
                             <p data-lov-id="src/pages/EventDetails.tsx:135:16" class="text-gray-700 event-description-full"> {# Added custom class #}
                                 {{ event.description|nl2br }} {# Use nl2br filter for line breaks #}
                             </p>
@@ -111,16 +114,33 @@
                         <div data-lov-id="src/pages/EventDetails.tsx:149:16" class="pt-4">
                             {% if is_granted('IS_AUTHENTICATED_FULLY') %}
                                 {% if event.statut == 'A_VENIR' %}
-                                    {# User logged in, event upcoming #}
+
+                                    {# ---> START OF CHANGE <--- #}
                                     {% if user_participation_status == constant('App\\Enum\\ParticipationStatus::INSCRIT') %}
-                                        {# Already participating - show Cancel button #}
-                                        <form action="{{ path('public_event_cancel_participation', {id: event.id}) }}" method="post" class="d-inline-block me-2">
-                                            <button type="submit" class="button button-secondary-outline" {# Style as needed #}
-                                                    onclick="return confirm('Annuler votre participation ?')">
-                                                Annuler Participation
-                                            </button>
-                                            <span class="badge bg-success ms-2">Vous êtes inscrit !</span>
-                                        </form>
+                                        {# User IS participating - Show "Already Participating" and Download Button #}
+                                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md" role="alert">
+                                            <p class="font-bold flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                                Vous participez déjà !
+                                            </p>
+                                            <p class="text-sm mt-1">Vous êtes bien inscrit(e) à cet événement.</p>
+                                        </div>
+                                        <div class="mt-4">
+                                            {# Ensure the 'participation' variable is passed from the controller if needed for the route #}
+                                            <a href="{{ path('public_event_download_ticket', {'id': event.id}) }}"
+                                               target="_blank" {# Open PDF in new tab #}
+                                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                {# Example Icon (Download) #}
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                Télécharger votre billet (PDF)
+                                            </a>
+                                        </div>
+
+
                                     {% elseif user_participation_status == constant('App\\Enum\\ParticipationStatus::ANNULE') %}
                                         {# Cancelled - show Re-participate button #}
                                         <form action="{{ path('app_event_participate', {id: event.id}) }}" method="post" class="d-inline-block me-2">

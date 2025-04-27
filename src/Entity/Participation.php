@@ -13,10 +13,10 @@ use DateTimeInterface;
 class Participation
 {
     #[ORM\Id]
-    #[ORM\Column(name: 'id')]
-    private ?string $id = null;
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
-    #[ORM\Id]
     #[ORM\ManyToOne(targetEntity: Event::class, inversedBy: 'participations')]
     #[ORM\JoinColumn(name: 'eventId', referencedColumnName: 'id', nullable: false)]
     private ?Event $event = null;
@@ -27,19 +27,13 @@ class Participation
     #[ORM\Column(name: 'statut', type: 'string', enumType: ParticipationStatus::class)]
     private ?ParticipationStatus $statut = null;
 
-    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'participations')]
     #[ORM\JoinColumn(name: 'utilisateurId', referencedColumnName: 'id', nullable: true)]
     private ?Utilisateur $utilisateur = null;
 
-    public function getId(): ?string
+    public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function setId(string $id): static
-    {
-        $this->id = $id;
-        return $this;
     }
 
     public function getEvent(): ?Event
