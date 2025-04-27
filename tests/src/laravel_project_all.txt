@@ -1,0 +1,1223 @@
+
+----- /Users/mac/Downloads/Events/src/Repository/UtilisateurRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Utilisateur;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Utilisateur>
+ *
+ * @method Utilisateur|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Utilisateur|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Utilisateur[]    findAll()
+ * @method Utilisateur[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class UtilisateurRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Utilisateur::class);
+    }
+
+    public function findByEmail(string $email): ?Utilisateur
+    {
+        return $this->findOneBy(['email' => $email]);
+    }
+
+    public function findByRole(string $role): array
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.roles LIKE :role')
+            ->setParameter('role', '%"'.$role.'%"')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function save(Utilisateur $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Utilisateur $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Repository/EventRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Event;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\QueryBuilder;
+
+/**
+ * @extends ServiceEntityRepository<Event>
+ *
+ * @method Event|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Event|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Event[]    findAll()
+ * @method Event[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class EventRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Event::class);
+    }
+
+    /**
+     * Find upcoming events
+     */
+    public function findUpcomingEvents(): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.dateDebut > :now')
+            ->setParameter('now', new \DateTime())
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find events by location
+     */
+    public function findByLocation(string $location): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.lieu LIKE :location')
+            ->setParameter('location', '%' . $location . '%')
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find events by date range
+     */
+    public function findByDateRange(\DateTime $start, \DateTime $end): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.dateDebut >= :start')
+            ->andWhere('e.dateFin <= :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find events by minimum scooter autonomy
+     */
+    public function findByMinScooterAutonomy(int $minAutonomy): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.trottinetteMinAutonomie <= :minAutonomy')
+            ->setParameter('minAutonomy', $minAutonomy)
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Repository/ParticipationRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Participation;
+use App\Entity\Event;
+use App\Entity\Utilisateur;
+use App\Enum\ParticipationStatus;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Participation>
+ *
+ * @method Participation|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Participation|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Participation[]    findAll()
+ * @method Participation[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class ParticipationRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Participation::class);
+    }
+
+    public function findByUser(Utilisateur $user): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.utilisateur = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.dateInscription', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByEvent(Event $event): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.event = :event')
+            ->setParameter('event', $event)
+            ->orderBy('p.dateInscription', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByEventAndStatus(Event $event, ParticipationStatus $status): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.event = :event')
+            ->andWhere('p.statut = :status')
+            ->setParameter('event', $event)
+            ->setParameter('status', $status)
+            ->orderBy('p.dateInscription', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Form/EventType.php -----
+<?php
+
+namespace App\Form;
+
+use App\Entity\Event;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
+use App\Enum\GouvernoratEnum;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class EventType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('titre', TextType::class, [
+                'label' => 'Titre',
+                'required' => true,
+            ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Description',
+                'required' => false,
+            ])
+            ->add('dateDebut', DateTimeType::class, [
+                'label' => 'Date de début',
+                'widget' => 'single_text',
+                'required' => true,
+            ])
+            ->add('dateFin', DateTimeType::class, [
+                'label' => 'Date de fin',
+                'widget' => 'single_text',
+                'required' => true,
+            ])
+            ->add('lieu', EnumType::class, [
+                'label' => 'Lieu',
+                'class' => GouvernoratEnum::class,
+                'required' => true,
+                'choice_label' => fn(GouvernoratEnum $enum) => $enum->value,
+                'placeholder' => 'Choisir un gouvernorat',
+            ])
+            ->add('trottinetteMinAutonomie', TextType::class, [
+                'label' => 'Autonomie minimale de la trottinette',
+                'required' => false,
+            ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Event::class,
+        ]);
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Entity/Event.php -----
+<?php
+
+namespace App\Entity;
+
+use App\Enum\GouvernoratEnum;
+use App\Repository\EventRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity(repositoryClass: EventRepository::class)]
+#[ORM\Table(name: 'event')]
+class Event
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $titre = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(name: 'dateDebut', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $dateDebut = null;
+
+    #[ORM\Column(name: 'dateFin', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $dateFin = null;
+
+    #[ORM\Column(length: 255, nullable: true, enumType: GouvernoratEnum::class)]
+    private ?GouvernoratEnum $lieu = null;
+
+    #[ORM\Column(length: 255)]
+    private string $statut = 'A_VENIR';
+
+    #[ORM\Column(length: 250)]
+    private string $state;
+
+    #[ORM\Column(name: 'trottinetteMinAutonomie', nullable: true)]
+    private ?int $trottinetteMinAutonomie = 0;
+
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: Participation::class, orphanRemoval: true)]
+    private Collection $participations;
+
+    private ?GouvernoratEnum $gouvernorat = null;
+
+    public function __construct()
+    {
+        $this->participations = new ArrayCollection();
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getTitre(): ?string
+    {
+        return $this->titre;
+    }
+
+    public function setTitre(?string $titre): static
+    {
+        $this->titre = $titre;
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    public function getDateDebut(): ?\DateTimeInterface
+    {
+        return $this->dateDebut;
+    }
+
+    public function setDateDebut(?\DateTimeInterface $dateDebut): static
+    {
+        $this->dateDebut = $dateDebut;
+        return $this;
+    }
+
+    public function getDateFin(): ?\DateTimeInterface
+    {
+        return $this->dateFin;
+    }
+
+    public function setDateFin(?\DateTimeInterface $dateFin): static
+    {
+        $this->dateFin = $dateFin;
+        return $this;
+    }
+
+    public function getLieu(): ?GouvernoratEnum
+    {
+        return $this->lieu;
+    }
+
+    public function setLieu(?GouvernoratEnum $lieu): static
+    {
+        $this->lieu = $lieu;
+        return $this;
+    }
+
+    public function getStatut(): string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): static
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+    public function getState(): string
+    {
+        return $this->state;
+    }
+
+    public function setState(string $state): static
+    {
+        $this->state = $state;
+        return $this;
+    }
+
+    public function getTrottinetteMinAutonomie(): ?int
+    {
+        return $this->trottinetteMinAutonomie;
+    }
+
+    public function setTrottinetteMinAutonomie(?int $trottinetteMinAutonomie): static
+    {
+        $this->trottinetteMinAutonomie = $trottinetteMinAutonomie;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Participation>
+     */
+    public function getParticipations(): Collection
+    {
+        return $this->participations;
+    }
+
+    public function addParticipation(Participation $participation): static
+    {
+        if (!$this->participations->contains($participation)) {
+            $this->participations->add($participation);
+            $participation->setEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParticipation(Participation $participation): static
+    {
+        if ($this->participations->removeElement($participation)) {
+            // set the owning side to null (unless already changed)
+            if ($participation->getEvent() === $this) {
+                $participation->setEvent(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getGouvernorat(): ?GouvernoratEnum
+    {
+        return $this->gouvernorat;
+    }
+
+    public function setGouvernorat(?GouvernoratEnum $gouvernorat): self
+    {
+        $this->gouvernorat = $gouvernorat;
+        return $this;
+    }
+
+    /**
+     * Helper method to get gouvernorat as string
+     */
+    public function getGouvernoratAsString(): ?string
+    {
+        return $this->gouvernorat ? $this->gouvernorat->value : null;
+    }
+    
+    /**
+     * Helper method to get lieu as string
+     */
+    public function getLieuAsString(): ?string
+    {
+        return $this->lieu ? $this->lieu->value : null;
+    }
+    
+    /**
+     * Make sure the lieu can be properly converted to string
+     */
+    public function __toString(): string
+    {
+        return $this->getLieuAsString() ?? '';
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Entity/Utilisateur.php -----
+<?php
+
+namespace App\Entity;
+
+use App\Repository\UtilisateurRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
+#[ORM\Table(name: 'utilisateurs')]
+class Utilisateur
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 180, unique: true)]
+    private ?string $email = null;
+
+    #[ORM\Column(name: "role")]
+    private ?string $role = 'client';
+
+    #[ORM\Column(name: "mot_de_passe_hash")]
+    private ?string $password = null;
+
+    #[ORM\Column(name: "mot_de_passe_sel")]
+    private ?string $salt = '';
+
+    #[ORM\Column(length: 255, name: "nom")]
+    private ?string $nom = null;
+
+    #[ORM\Column(length: 255, name: "prenom")]
+    private ?string $prenom = null;
+
+    #[ORM\Column(length: 50, name: "telephone")]
+    private ?string $telephone = null;
+
+    #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Participation::class)]
+    private Collection $participations;
+
+    public function __construct()
+    {
+        $this->participations = new ArrayCollection();
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function getRoles(): array
+    {
+        // Map the role string to an array of roles
+        $roleMap = [
+            'admin' => ['ROLE_ADMIN', 'ROLE_USER'],
+            'client' => ['ROLE_USER'],
+            'partenaire' => ['ROLE_PARTNER', 'ROLE_USER']
+        ];
+
+        $roleKey = $this->getRole() ?? 'client';
+        return $roleMap[$roleKey] ?? ['ROLE_USER']; // Default to ROLE_USER
+    }
+
+    public function setRoles(array $roles): static
+    {
+        // Convert array to string role
+        if (in_array('ROLE_ADMIN', $roles)) {
+            $this->role = 'admin';
+        } elseif (in_array('ROLE_PARTNER', $roles)) {
+            $this->role = 'partenaire';
+        } else {
+            $this->role = 'client';
+        }
+        
+        return $this;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
+    public function setRole(string $role): static
+    {
+        $this->role = $role;
+        return $this;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): static
+    {
+        // In a real application, you'd hash the password here
+        $this->password = $password;
+        // You might also set the salt
+        $this->salt = bin2hex(random_bytes(16));
+        return $this;
+    }
+
+    public function getSalt(): ?string
+    {
+        return $this->salt;
+    }
+
+    public function setSalt(string $salt): static
+    {
+        $this->salt = $salt;
+        return $this;
+    }
+
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
+
+    public function setNom(string $nom): static
+    {
+        $this->nom = $nom;
+        return $this;
+    }
+
+    public function getPrenom(): ?string
+    {
+        return $this->prenom;
+    }
+
+    public function setPrenom(string $prenom): static
+    {
+        $this->prenom = $prenom;
+        return $this;
+    }
+
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
+
+    public function setTelephone(?string $telephone): static
+    {
+        $this->telephone = $telephone;
+        return $this;
+    }
+
+    public function getParticipations(): Collection
+    {
+        return $this->participations;
+    }
+
+    public function addParticipation(Participation $participation): static
+    {
+        if (!$this->participations->contains($participation)) {
+            $this->participations->add($participation);
+            $participation->setUtilisateur($this);
+        }
+        return $this;
+    }
+
+    public function removeParticipation(Participation $participation): static
+    {
+        if ($this->participations->removeElement($participation)) {
+            if ($participation->getUtilisateur() === $this) {
+                $participation->setUtilisateur(null);
+            }
+        }
+        return $this;
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Entity/Participation.php -----
+<?php
+
+namespace App\Entity;
+
+use App\Repository\ParticipationRepository;
+use App\Enum\ParticipationStatus;
+use Doctrine\ORM\Mapping as ORM;
+use DateTime;
+use DateTimeInterface;
+
+#[ORM\Entity(repositoryClass: ParticipationRepository::class)]
+#[ORM\Table(name: 'participation')]
+class Participation
+{
+    #[ORM\Id]
+    #[ORM\Column(name: 'id')]
+    private ?string $id = null;
+
+    #[ORM\Id]
+    #[ORM\ManyToOne(targetEntity: Event::class, inversedBy: 'participations')]
+    #[ORM\JoinColumn(name: 'eventId', referencedColumnName: 'id', nullable: false)]
+    private ?Event $event = null;
+
+    #[ORM\Column(name: 'dateInscription', type: 'datetime', nullable: true)]
+    private ?DateTimeInterface $dateInscription = null;
+
+    #[ORM\Column(name: 'statut', type: 'string', enumType: ParticipationStatus::class)]
+    private ?ParticipationStatus $statut = null;
+
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
+    #[ORM\JoinColumn(name: 'utilisateurId', referencedColumnName: 'id', nullable: true)]
+    private ?Utilisateur $utilisateur = null;
+
+    public function getId(): ?string
+    {
+        return $this->id;
+    }
+
+    public function setId(string $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getEvent(): ?Event
+    {
+        return $this->event;
+    }
+
+    public function setEvent(?Event $event): static
+    {
+        $this->event = $event;
+        return $this;
+    }
+
+    public function getDateInscription(): ?DateTimeInterface
+    {
+        return $this->dateInscription;
+    }
+
+    public function setDateInscription(?DateTimeInterface $dateInscription): static
+    {
+        $this->dateInscription = $dateInscription;
+        return $this;
+    }
+
+    public function getStatut(): ?ParticipationStatus
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(ParticipationStatus $statut): static
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+    public function getUtilisateur(): ?Utilisateur
+    {
+        return $this->utilisateur;
+    }
+
+    public function setUtilisateur(?Utilisateur $utilisateur): static
+    {
+        $this->utilisateur = $utilisateur;
+        return $this;
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Enum/ParticipationStatus.php -----
+<?php
+
+namespace App\Enum;
+
+enum ParticipationStatus: string
+{
+    case INSCRIT = 'INSCRIT';
+    case ANNULE = 'ANNULE';
+}
+
+
+----- /Users/mac/Downloads/Events/src/Enum/GouvernoratEnum.php -----
+<?php
+
+namespace App\Enum;
+
+enum GouvernoratEnum: string
+{
+    case ARIANA = 'Ariana';
+    case BEJA = 'Béja';
+    case BEN_AROUS = 'Ben Arous';
+    case BIZERTE = 'Bizerte';
+    case GABES = 'Gabès';
+    case GAFSA = 'Gafsa';
+    case JENDOUBA = 'Jendouba';
+    case KAIROUAN = 'Kairouan';
+    case KASSERINE = 'Kasserine';
+    case KEBILI = 'Kébili';
+    case KEF = 'Le Kef';
+    case MAHDIA = 'Mahdia';
+    case MANOUBA = 'La Manouba';
+    case MEDENINE = 'Médenine';
+    case MONASTIR = 'Monastir';
+    case NABEUL = 'Nabeul';
+    case SFAX = 'Sfax';
+    case SIDI_BOUZID = 'Sidi Bouzid';
+    case SILIANA = 'Siliana';
+    case SOUSSE = 'Sousse';
+    case TATAOUINE = 'Tataouine';
+    case TOZEUR = 'Tozeur';
+    case TUNIS = 'Tunis';
+    case ZAGHOUAN = 'Zaghouan';
+    
+    /**
+     * Returns all available choices as an array
+     * @return array<string, string>
+     */
+    public static function getChoicesForForm(): array
+    {
+        $choices = [];
+        foreach (self::cases() as $case) {
+            $choices[$case->value] = $case->name;
+        }
+        return $choices;
+    }
+    
+    /**
+     * Returns the string representation of this enum (its value)
+     * @return string
+     */
+    public function toString(): string
+    {
+        return $this->value;
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Controller/AdminController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Event;
+use App\Form\EventType;
+use App\Repository\EventRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route('/admin')]
+class AdminController extends AbstractController
+{
+    #[Route('/', name: 'app_admin')]
+    public function index(): Response
+    {
+        return $this->redirectToRoute('app_admin_dashboard');
+    }
+
+    #[Route('/dashboard', name: 'app_admin_dashboard')]
+    public function dashboard(EventRepository $eventRepository): Response
+    {
+        $events = $eventRepository->findAll();
+        
+        $eventData = [];
+        foreach ($events as $event) {
+            $eventData[] = [
+                'event' => $event,
+                'participantCount' => $event->getParticipations()->count()
+            ];
+        }
+        
+        return $this->render('admin/dashboard.html.twig', [
+            'eventData' => $eventData,
+        ]);
+    }
+    
+    #[Route('/events', name: 'app_admin_events')]
+    public function events(EventRepository $eventRepository): Response
+    {
+        $events = $eventRepository->findAll();
+        
+        return $this->render('admin/events.html.twig', [
+            'events' => $events,
+        ]);
+    }
+    
+    #[Route('/events/{id}/participants', name: 'app_admin_event_participants')]
+    public function eventParticipants(Event $event): Response
+    {
+        return $this->render('admin/event_participants.html.twig', [
+            'event' => $event
+        ]);
+    }
+    
+    #[Route('/events/new', name: 'app_admin_event_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $event = new Event();
+        $event->setState('Active');
+        $event->setStatut('A_VENIR');
+        
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($event);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Event created successfully!');
+            return $this->redirectToRoute('app_admin_events');
+        }
+
+        return $this->render('admin/event_new.html.twig', [
+            'event' => $event,
+            'form' => $form,
+        ]);
+    }
+    
+    #[Route('/events/{id}/edit', name: 'app_admin_event_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Event updated successfully!');
+            return $this->redirectToRoute('app_admin_events');
+        }
+
+        return $this->render('admin/event_edit.html.twig', [
+            'event' => $event,
+            'form' => $form,
+        ]);
+    }
+    
+    #[Route('/events/{id}', name: 'app_admin_event_delete', methods: ['POST'])]
+    public function delete(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$event->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($event);
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Event deleted successfully!');
+        }
+
+        return $this->redirectToRoute('app_admin_events');
+    }
+}
+
+
+
+----- /Users/mac/Downloads/Events/src/Controller/EventController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Event;
+use App\Entity\Participation;
+use App\Entity\Utilisateur;
+use App\Enum\ParticipationStatus;
+use App\Form\EventType;
+use App\Repository\EventRepository;
+use App\Repository\ParticipationRepository;
+use App\Repository\UtilisateurRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route('/event')]
+class EventController extends AbstractController
+{
+    #[Route('/', name: 'app_event_index', methods: ['GET'])]
+    public function index(EventRepository $eventRepository): Response
+    {
+        return $this->render('event/index.html.twig', [
+            'events' => $eventRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/new', name: 'app_event_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $event = new Event();
+        // Initialize required state field
+        $event->setState('active');
+        
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($event);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_public_events');
+        }
+
+        return $this->render('event/new.html.twig', [
+            'event' => $event,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}/participate', name: 'app_event_participate', methods: ['POST'])]
+    public function participate(Request $request, Event $event, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            $user = $utilisateurRepository->findByEmail('test@example.com');
+            if (!$user) {
+                // Create a default test user for participation testing
+                $user = new Utilisateur();
+                $user->setEmail('test@example.com');
+                $user->setNom('Test');
+                $user->setPrenom('User');
+                $user->setPassword('test123'); // This will set both password hash and salt
+                $user->setRole('client');
+                $user->setTelephone('0123456789'); // Required field in database
+                $entityManager->persist($user);
+                $entityManager->flush();
+            }
+        }
+
+        // Check if user already registered
+        foreach ($event->getParticipations() as $participation) {
+            if ($participation->getUtilisateur() === $user && $participation->getStatut() === ParticipationStatus::INSCRIT) {
+                $this->addFlash('error', 'You are already registered for this event!');
+                return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+            }
+        }
+
+        $participation = new Participation();
+        $participation->setId(uniqid());
+        $participation->setEvent($event);
+        $participation->setUtilisateur($user);
+        $participation->setDateInscription(new \DateTime());
+        $participation->setStatut(ParticipationStatus::INSCRIT);
+        $entityManager->persist($participation);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'You have successfully registered for this event!');
+        return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+    }
+
+    #[Route('/{id}', name: 'app_event_show', methods: ['GET'])]
+    public function show(Event $event): Response
+    {
+        return $this->render('event/show.html.twig', [
+            'event' => $event,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_event_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            return $this->redirectToRoute('app_event_index');
+        }
+
+        return $this->render('event/edit.html.twig', [
+            'event' => $event,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_event_delete', methods: ['POST'])]
+    public function delete(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete_event_'.$event->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($event);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_admin_dashboard');
+    }
+
+    #[Route('/{id}/participants', name: 'app_event_participants', methods: ['GET'])]
+    public function participants(Event $event, ParticipationRepository $participationRepository): Response
+    {
+        $participants = $participationRepository->findByEvent($event);
+        
+        return $this->render('event/participants.html.twig', [
+            'event' => $event,
+            'participants' => $participants,
+        ]);
+    }
+}
+
+
+----- /Users/mac/Downloads/Events/src/Controller/PublicEventController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Event;
+use App\Entity\Participation;
+use App\Entity\Utilisateur;
+use App\Enum\ParticipationStatus;
+use App\Repository\EventRepository;
+use App\Repository\UtilisateurRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class PublicEventController extends AbstractController
+{
+    #[Route('/', name: 'app_home')]
+    public function index(): Response
+    {
+        return $this->redirectToRoute('app_public_events');
+    }
+
+    #[Route('/events', name: 'app_public_events')]
+    public function events(EventRepository $eventRepository): Response
+    {
+        $upcomingEvents = $eventRepository->findUpcomingEvents();
+        $allEvents = $eventRepository->findAll();
+        
+        return $this->render('public/events.html.twig', [
+            'upcomingEvents' => $upcomingEvents,
+            'allEvents' => $allEvents,
+        ]);
+    }
+
+    #[Route('/events/{id}', name: 'app_public_event_show')]
+    public function show(Event $event): Response
+    {
+        return $this->render('public/event_show.html.twig', [
+            'event' => $event,
+        ]);
+    }
+
+    #[Route('/events/{id}/participate', name: 'app_public_event_participate', methods: ['POST'])]
+    public function participate(Request $request, Event $event, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            // Look for an existing test user
+            $user = $utilisateurRepository->findByEmail('test@example.com');
+            
+            if (!$user) {
+                // Create a default test user for participation testing
+                $user = new Utilisateur();
+                $user->setEmail('test@example.com');
+                $user->setNom('Test');
+                $user->setPrenom('User');
+                $user->setPassword('test123');
+                $user->setRole('client');
+                $user->setTelephone('0123456789');
+                $entityManager->persist($user);
+                $entityManager->flush();
+            }
+        }
+
+        // Check if user already registered
+        foreach ($event->getParticipations() as $participation) {
+            if ($participation->getUtilisateur() === $user && 
+                $participation->getStatut() === ParticipationStatus::INSCRIT) {
+                $this->addFlash('error', 'You are already registered for this event!');
+                return $this->redirectToRoute('app_public_event_show', ['id' => $event->getId()]);
+            }
+        }
+
+        $participation = new Participation();
+        $participation->setId(uniqid());
+        $participation->setEvent($event);
+        $participation->setUtilisateur($user);
+        $participation->setDateInscription(new \DateTime());
+        $participation->setStatut(ParticipationStatus::INSCRIT);
+
+        $entityManager->persist($participation);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'You have successfully registered for this event!');
+        return $this->redirectToRoute('app_public_event_show', ['id' => $event->getId()]);
+    }
+}
+
+
+
+----- /Users/mac/Downloads/Events/src/Twig/AppExtension.php -----
+<?php
+
+namespace App\Twig;
+
+use App\Enum\GouvernoratEnum;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
+
+class AppExtension extends AbstractExtension
+{
+    public function getFilters()
+    {
+        return [
+            new TwigFilter('enum_value', [$this, 'getEnumValue']),
+        ];
+    }
+
+    public function getEnumValue($enum)
+    {
+        if ($enum instanceof GouvernoratEnum) {
+            return $enum->value;
+        }
+        
+        if (is_object($enum) && property_exists($enum, 'value')) {
+            return $enum->value;
+        }
+        
+        return (string) $enum;
+    }
+}
+
+
+
+----- /Users/mac/Downloads/Events/src/Kernel.php -----
+<?php
+
+namespace App;
+
+use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Component\HttpKernel\Kernel as BaseKernel;
+
+class Kernel extends BaseKernel
+{
+    use MicroKernelTrait;
+}
+
+

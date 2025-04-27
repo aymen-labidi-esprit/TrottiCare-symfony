@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Réservations{% endblock %}
+
+{% block body %}
+
+<div class="container mt-4">
+    <h1>Réservations</h1>
+
+    {# ✅ Flash messages #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <a href="{{ path('reservation_new') }}" class="btn btn-primary mb-3" data-turbo="false">
+        Nouvelle réservation
+    </a>
+
+    {% if reservations is empty %}
+        <div class="alert alert-info">Aucune réservation trouvée.</div>
+    {% else %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date début</th>
+                    <th>Date fin</th>
+                    <th>Montant</th>
+                    <th>Status</th>
+                    <th>Paiement</th>
+                    <th>Date Creation</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                    <tr>
+                        <td>{{ reservation.id }}</td>
+                        <td>{{ reservation.dateDebut ? reservation.dateDebut|date('Y-m-d') : '' }}</td>
+                        <td>{{ reservation.dateFin ? reservation.dateFin|date('Y-m-d') : '' }}</td>
+                        <td>{{ reservation.montant }}</td>
+                        <td>{{ reservation.status.label() }}</td>
+                        <td>{{ reservation.paiement.label() }}</td>
+                        <td>{{ reservation.dateCreation ? reservation.dateCreation|date('Y-m-d') : '' }}</td>
+
+                        <td>
+                            <a href="{{ path('reservation_show', {id: reservation.id}) }}" class="btn btn-sm btn-info">Voir</a>
+                            <a href="{{ path('reservation_edit', {id: reservation.id}) }}" class="btn btn-sm btn-secondary">Modifier</a>
+
+                            <button 
+                                type="button"
+                                class="btn btn-sm btn-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteModal"
+                                data-action="{{ path('reservation_delete', {id: reservation.id}) }}"
+                                data-token="{{ csrf_token('delete' ~ reservation.id) }}"
+                            >
+                                Supprimer
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+{# ✅ Delete Confirmation Modal #}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" id="deleteForm">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          Êtes-vous sûr de vouloir supprimer cette réservation ?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-danger">Supprimer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const action = button.getAttribute('data-action');
+            const token = button.getAttribute('data-token');
+
+            const form = deleteModal.querySelector('form');
+            form.setAttribute('action', action);
+
+            let tokenInput = form.querySelector('input[name="_token"]');
+            if (!tokenInput) {
+                tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '_token';
+                form.appendChild(tokenInput);
+            }
+            tokenInput.value = token;
+        });
+    </script>
+{% endblock %}

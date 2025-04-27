@@ -1,0 +1,29 @@
+{# templates/reservation/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Réservation{% endblock %}
+
+{% block body %}
+  <h1>Créer une Nouvelle Réservation</h1>
+
+  {# Display form errors if any occurred during processing #}
+  {{ form_errors(form) }}
+
+  {{ form_start(form) }}
+  {# Render the fields defined in ReservationType #}
+  {{ form_row(form.trottinette) }}
+  {{ form_row(form.dateDebut) }} {# USE THIS #}
+  {{ form_row(form.dateFin) }}   {# USE THIS #}
+  {{ form_row(form.montant) }}
+  {{ form_row(form.paiement) }}
+
+  {# Only render status if it's an admin edit form - likely not needed in 'new' #}
+  {# {% if form.status is defined %}
+            {{ form_row(form.status) }}
+        {% endif %} #}
+
+  <button class="btn btn-primary mt-3" type="submit">Confirmer la Réservation</button>
+  <a href="{{ path('reservation_index') }}" class="btn btn-secondary mt-3">Annuler</a> {# Adjust route name if necessary #}
+  {{ form_end(form) }}
+
+{% endblock %}

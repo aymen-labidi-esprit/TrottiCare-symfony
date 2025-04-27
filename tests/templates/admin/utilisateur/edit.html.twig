@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Utilisateur {{ utilisateur.prenom }} {{ utilisateur.nom }}{% endblock %}
+
+{% block body %}
+    <h1>Modifier Utilisateur #{{ utilisateur.id }}</h1>
+
+    {{ include('admin/utilisateur/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
+
+    <a href="{{ path('admin_utilisateur_show', {'id': utilisateur.id}) }}" class="btn btn-info mt-3">Voir</a>
+    <a href="{{ path('admin_utilisateur_index') }}" class="btn btn-secondary mt-3">Retour à la liste</a>
+
+    {# Optional: Place delete form here as well or instead of show page #}
+    {# {{ include('admin/utilisateur/_delete_form.html.twig', {'utilisateur': utilisateur}) }} #}
+{% endblock %}

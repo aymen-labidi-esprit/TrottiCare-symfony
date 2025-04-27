@@ -1,0 +1,127 @@
+{# templates/admin/dashboard/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de Bord Admin - TrottiCare{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1><i class="fas fa-user-shield"></i> Tableau de Bord Administrateur</h1>
+        <p class="lead">Vue d'ensemble et gestion de la plateforme TrottiCare.</p>
+        <hr>
+
+        {# Key Statistics #}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fs-4 fw-bold">{{ user_count|default('N/A') }}</div>
+                                <div>Utilisateurs Inscrits</div>
+                            </div>
+                            <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                    <a href="{{ path('admin_user_index') }}" class="card-footer text-white d-flex justify-content-between text-decoration-none"> {# Adjust route name #}
+                        <span>Voir Détails</span>
+                        <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fs-4 fw-bold">{{ trottinette_count|default('N/A') }}</div>
+                                <div>Trottinettes Actives</div>
+                            </div>
+                            <i class="fas fa-motorcycle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                    <a href="{{ path('admin_trottinette_index') }}" class="card-footer text-white d-flex justify-content-between text-decoration-none"> {# Adjust route name #}
+                        <span>Voir Détails</span>
+                        <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            {# Add more stats cards (e.g., Active Rentals, Open Reclamations) - requires controller updates #}
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fs-4 fw-bold">0</div> {# TODO: Add Reservation Count #}
+                                <div>Réservations (Total)</div>
+                            </div>
+                            <i class="fas fa-receipt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                    <a href="{{ path('admin_reservation_index') }}" class="card-footer text-white d-flex justify-content-between text-decoration-none"> {# Adjust route name #}
+                        <span>Voir Détails</span>
+                        <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fs-4 fw-bold">0</div> {# TODO: Add Reclamation Count #}
+                                <div>Réclamations Ouvertes</div>
+                            </div>
+                            <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                    <a href="{{ path('admin_reclamation_index') }}" class="card-footer text-white d-flex justify-content-between text-decoration-none"> {# Adjust route name #}
+                        <span>Voir Détails</span>
+                        <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {# Management Links #}
+        <h2>Gestion</h2>
+        <div class="list-group">
+            <a href="{{ path('admin_user_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-users-cog me-2"></i>Gestion des Utilisateurs (Clients, Partenaires, Admins)
+            </a>
+            <a href="{{ path('admin_trottinette_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-motorcycle me-2"></i>Gestion des Trottinettes
+            </a>
+            <a href="{{ path('admin_pointrelais_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-map-pin me-2"></i>Gestion des Points Relais
+            </a>
+            <a href="{{ path('admin_maintenance_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-tools me-2"></i>Gestion des Maintenances
+            </a>
+            <a href="{{ path('admin_reservation_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-file-invoice-dollar me-2"></i>Gestion des Réservations
+            </a>
+            <a href="{{ path('admin_reclamation_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-bullhorn me-2"></i>Gestion des Réclamations
+            </a>
+            <a href="{{ path('admin_event_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-calendar-check me-2"></i>Gestion des Événements
+            </a>
+            <a href="{{ path('admin_participation_index') }}" class="list-group-item list-group-item-action"> {# Adjust route name #}
+                <i class="fas fa-user-check me-2"></i>Gestion des Participations
+            </a>
+        </div>
+
+        {# Optional: Add Admin Map View Section #}
+        {# <h2 class="mt-4">Carte Globale</h2> #}
+        {# <div id="admin-map" style="height: 400px; width: 100%;"></div> #}
+
+    </div>
+{% endblock %}
+
+ {% block javascripts_bottom %}
+    {# Include map JS if admin map is added #}
+    {# {{ parent() }}
+    <script>
+        // JS for admin map initialization
+    </script> #}
+{# {% endblock %} #}

@@ -1,0 +1,111 @@
+{# templates/client/dashboard/index.html.twig #}
+{% extends 'base.html.twig' %}
+{% block title %}Mon Tableau de Bord{% endblock %}
+{% block body %}
+    <h1>Bienvenue, {{ utilisateur.prenom }}!</h1>
+    <ul>
+        <li><a href="{{ path('client_qr_scan') }}">Scanner un QR Code</a></li>
+        <li><a href="{{ path('client_map_display') }}">Afficher la carte des trottinettes</a></li>
+
+
+        {% block content %}
+            <h2>Upcoming Events</h2>
+
+            <div class="row">
+                {% for event in events %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ event.titre }}</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-calendar"></i> {{ event.dateDebut|date('d M Y H:i') }}<br>
+                                    <i class="fas fa-map-marker"></i> {{ event.state.label }}
+                                </p>
+
+                                {% if event.id in participatingEventIds %}
+                                    <button class="btn btn-success" disabled>
+                                        <i class="fas fa-check"></i> Registered
+                                    </button>
+                                {% else %}
+                                    <form action="{{ path('app_event_participate', {'id': event.id}) }}" method="POST">
+                                        <input type="hidden" name="token" value="{{ csrf_token('participate') }}">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-sign-in-alt"></i> Participate
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">No upcoming events available</div>
+                    </div>
+                {% endfor %}
+            </div>
+        
+            <h2>Available trottinette</h2>
+
+            <div class="row">
+                {% for trottinette in trottinettes %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ trottinette.modele }}</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-calendar"></i> {{ trottinette.dateAjout|date('d M Y H:i') }}<br>
+                                    <i class="fas fa-map-marker"></i> {{ trottinette.numeroSerie }}
+                                </p>
+                                
+                                {% if trottinette.id in registerTrottIds %}
+                                    <button class="btn btn-success" disabled>
+                                        <i class="fas fa-check"></i> Registered
+                                    </button>
+                                {% else %}
+                                    <form action="{{ path('reservation_create', {'trottinette_id': trottinette.id}) }}" method="POST">
+                                        <input type="hidden" name="token" value="{{ csrf_token('participate') }}">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-sign-in-alt"></i> Réserver
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">No trottinette available</div>
+                    </div>
+                {% endfor %}
+            </div>
+
+
+        <h2>Available point relais</h2>
+
+            <div class="row">
+                {% for pointRelais in pointRelais %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ pointRelais.nom }}</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-calendar"></i> {{ pointRelais.horaireOuverture|date('d M Y H:i') }}<br>
+                                    <i class="fas fa-map-marker"></i> {{ pointRelais.addresse }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">No trottinette available</div>
+                    </div>
+                {% endfor %}
+            </div>
+        
+
+
+        {% endblock %}
+
+    </ul>
+{% endblock %}

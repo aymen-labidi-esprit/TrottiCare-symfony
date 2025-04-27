@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Réclamation{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Créer une Nouvelle Réclamation</h2>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+
+                        <div class="mb-3">
+                            {{ form_label(form.type_reclamation, 'Type de Réclamation', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.type_reclamation, {'attr': {'class': 'form-select'}}) }}
+                            {{ form_errors(form.type_reclamation) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.user_email, 'Email', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.user_email, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.user_email) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.trottinette, 'Trottinette Concernée', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.trottinette, {'attr': {'class': 'form-select'}}) }}
+                            {{ form_errors(form.trottinette) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.titre, 'Sujet', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.titre) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 5}}) }}
+                            {{ form_errors(form.description) }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Envoyer la Réclamation</button>
+                            <a href="{{ path('reclamation_index') }}" class="btn btn-secondary">Retour à la liste</a>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

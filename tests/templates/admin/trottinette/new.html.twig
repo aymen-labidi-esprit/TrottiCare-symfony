@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Trottinette{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <h1>Créer une nouvelle Trottinette</h1>
+
+    {# Display global error if form is not valid after submission #}
+    {% if not form.vars.valid and form.vars.submitted %}
+        <div class="alert alert-danger">
+            <h4 class="alert-heading">Veuillez corriger les erreurs ci-dessous</h4>
+        </div>
+    {% endif %}
+
+    {{ form_start(form, {
+        'attr': {
+            'class': 'needs-validation' ~ (form.vars.submitted ? ' was-validated' : ''),
+            'novalidate': 'novalidate'
+        },
+        'method': 'POST',
+        'action': path('admin_trottinette_new')
+    }) }}
+
+    {% for field in [
+        'modele',
+        'numeroSerie',
+        'etat',
+        'batterie',
+        'localisation',
+        'autonomie',
+        'pointRelais'
+    ] %}
+        <div class="mb-3">
+            {{ form_label(attribute(form, field)) }}
+            {{ form_widget(attribute(form, field), {
+                'attr': {
+                    'class': 'form-control' ~ (form.vars.submitted and attribute(form, field).vars.valid ? ' is-valid' : '') ~ 
+                            (form.vars.submitted and not attribute(form, field).vars.valid ? ' is-invalid' : '')
+                }
+            }) }}
+            <div class="invalid-feedback">
+                {{ form_errors(attribute(form, field)) }}
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-2"></i>Créer
+        </button>
+        <a href="{{ path('admin_trottinette_index') }}" class="btn btn-secondary ms-2">
+            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+        </a>
+    </div>
+
+    {{ form_end(form) }}
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Guide de saisie</h5>
+            <ul class="mb-0">
+                <li>Le modèle doit contenir au moins 2 caractères</li>
+                <li>Le numéro de série doit contenir au moins 4 caractères (lettres, chiffres et tirets uniquement)</li>
+                <li>Le niveau de batterie doit être entre 0 et 100%</li>
+                <li>Une trottinette disponible doit avoir au moins 10% de batterie</li>
+                <li>Le format d'autonomie doit être comme "25 km" ou "2 heures"</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
