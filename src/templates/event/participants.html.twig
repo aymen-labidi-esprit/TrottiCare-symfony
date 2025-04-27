@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Participants - {{ event.titre }}{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('app_event_index') }}">Événements</a></li>
+                <li class="breadcrumb-item"><a href="{{ path('app_event_show', {'id': event.id}) }}">{{ event.titre }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Participants</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><i class="fas fa-users me-2"></i>Participants pour : {{ event.titre }}</h2>
+                <span class="badge bg-light text-dark fs-5">{{ pagination.getTotalItemCount }} Participants</span>
+            </div>
+            <div class="card-body">
+                {% if pagination|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Téléphone</th>
+                                    <th>Date d'inscription</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participant in pagination %}
+                                    <tr>
+                                        <td>{{ participant.utilisateur.nom }}</td>
+                                        <td>{{ participant.utilisateur.email }}</td>
+                                        <td>{{ participant.utilisateur.telephone }}</td>
+                                        <td>{{ participant.dateInscription|date('d/m/Y H:i') }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if participant.statut.value == 'INSCRIT' %}
+                                                    bg-success
+                                                {% elseif participant.statut.value == 'ANNULE' %}
+                                                    bg-danger
+                                                {% else %}
+                                                    bg-warning
+                                                {% endif %}
+                                            ">
+                                                {{ participant.statut.value|capitalize }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                {{ include('event/_delete_form.html.twig', { 'participant': participant }) }}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Navigation pagination -->
+                    <div class="d-flex justify-content-center mt-4">
+                        {{ knp_pagination_render(pagination) }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i> Aucun participant inscrit pour cet événement.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

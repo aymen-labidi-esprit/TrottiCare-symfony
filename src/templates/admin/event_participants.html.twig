@@ -1,0 +1,85 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Participants - {{ event.titre }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('app_admin_dashboard') }}">Tableau de bord</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Participants de l'événement</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0"><i class="fas fa-users me-2"></i>Participants pour : {{ event.titre }}</h2>
+            <span class="badge bg-light text-dark fs-5">{{ event.participations|length }} Participants</span>
+        </div>
+        <div class="card-body">
+            {% if event.participations|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Téléphone</th>
+                                <th>Date d'inscription</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for participant in event.participations %}
+                                <tr>
+                                    <td>
+                                        {% if participant.utilisateur %}
+                                            {{ participant.utilisateur.prenom }} {{ participant.utilisateur.nom }}
+                                        {% else %}
+                                            <em>Inconnu</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if participant.utilisateur %}
+                                            {{ participant.utilisateur.email }}
+                                        {% else %}
+                                            <em>Inconnu</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if participant.utilisateur %}
+                                            {{ participant.utilisateur.telephone }}
+                                        {% else %}
+                                            <em>Inconnu</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ participant.dateInscription ? participant.dateInscription|date('Y-m-d H:i') : 'Unknown' }}</td>
+                                    <td>
+                                        {% if participant.statut.value == 'INSCRIT' %}
+                                            <span class="badge bg-success">Inscrit</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Annulé</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>Aucun participant pour cet événement.
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <a href="{{ path('app_admin_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
+            </a>
+            <a href="{{ path('app_event_show', {'id': event.id}) }}" class="btn btn-primary">
+                <i class="fas fa-eye me-2"></i>Voir les détails de l'événement
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
