@@ -1,0 +1,125 @@
+<?php //this.getEtat%2528%2529%2520%2521%253D%2520%2527DISPONIBLE%2527%2520%257C%257C%2520this.getBatterie%2528%2529%2520%253E%253D%252010%252F%252Fcontext%257Cthis%257Cvalue
+
+return [PHP_INT_MAX, static fn () => \Symfony\Component\VarExporter\Internal\Hydrator::hydrate(
+    $o = [
+        clone (($p = &\Symfony\Component\VarExporter\Internal\Registry::$prototypes)['Symfony\\Component\\ExpressionLanguage\\ParsedExpression'] ?? \Symfony\Component\VarExporter\Internal\Registry::p('Symfony\\Component\\ExpressionLanguage\\ParsedExpression')),
+        clone ($p['Symfony\\Component\\ExpressionLanguage\\Node\\BinaryNode'] ?? \Symfony\Component\VarExporter\Internal\Registry::p('Symfony\\Component\\ExpressionLanguage\\Node\\BinaryNode')),
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\BinaryNode'],
+        clone ($p['Symfony\\Component\\ExpressionLanguage\\Node\\GetAttrNode'] ?? \Symfony\Component\VarExporter\Internal\Registry::p('Symfony\\Component\\ExpressionLanguage\\Node\\GetAttrNode')),
+        clone ($p['Symfony\\Component\\ExpressionLanguage\\Node\\NameNode'] ?? \Symfony\Component\VarExporter\Internal\Registry::p('Symfony\\Component\\ExpressionLanguage\\Node\\NameNode')),
+        clone ($p['Symfony\\Component\\ExpressionLanguage\\Node\\ConstantNode'] ?? \Symfony\Component\VarExporter\Internal\Registry::p('Symfony\\Component\\ExpressionLanguage\\Node\\ConstantNode')),
+        clone ($p['Symfony\\Component\\ExpressionLanguage\\Node\\ArgumentsNode'] ?? \Symfony\Component\VarExporter\Internal\Registry::p('Symfony\\Component\\ExpressionLanguage\\Node\\ArgumentsNode')),
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\ConstantNode'],
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\BinaryNode'],
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\GetAttrNode'],
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\NameNode'],
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\ConstantNode'],
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\ArgumentsNode'],
+        clone $p['Symfony\\Component\\ExpressionLanguage\\Node\\ConstantNode'],
+    ],
+    null,
+    [
+        'Symfony\\Component\\ExpressionLanguage\\Expression' => [
+            'expression' => [
+                'this.getEtat() != \'DISPONIBLE\' || this.getBatterie() >= 10',
+            ],
+        ],
+        'Symfony\\Component\\ExpressionLanguage\\ParsedExpression' => [
+            'nodes' => [
+                $o[1],
+            ],
+        ],
+        'stdClass' => [
+            'nodes' => [
+                1 => [
+                    'left' => $o[2],
+                    'right' => $o[8],
+                ],
+                [
+                    'left' => $o[3],
+                    'right' => $o[7],
+                ],
+                8 => [
+                    'left' => $o[9],
+                    'right' => $o[13],
+                ],
+            ],
+            'attributes' => [
+                1 => [
+                    'operator' => '||',
+                ],
+                [
+                    'operator' => '!=',
+                ],
+                4 => [
+                    'name' => 'this',
+                ],
+                [
+                    'value' => 'getEtat',
+                ],
+                7 => [
+                    'value' => 'DISPONIBLE',
+                ],
+                [
+                    'operator' => '>=',
+                ],
+                10 => [
+                    'name' => 'this',
+                ],
+                [
+                    'value' => 'getBatterie',
+                ],
+                13 => [
+                    'value' => 10,
+                ],
+            ],
+        ],
+        'Symfony\\Component\\ExpressionLanguage\\Node\\ConstantNode' => [
+            'isNullSafe' => [
+                5 => false,
+                7 => false,
+                11 => false,
+                13 => false,
+            ],
+            'isIdentifier' => [
+                5 => true,
+                7 => false,
+                11 => true,
+                13 => false,
+            ],
+        ],
+        'Symfony\\Component\\ExpressionLanguage\\Node\\ArrayNode' => [
+            'index' => [
+                6 => -1,
+                12 => -1,
+            ],
+        ],
+    ],
+    $o[0],
+    [
+        -3 => [
+            'nodes' => [
+                'node' => $o[4],
+                'attribute' => $o[5],
+                'arguments' => $o[6],
+            ],
+            'attributes' => [
+                'type' => 2,
+                'is_null_coalesce' => false,
+                'is_short_circuited' => false,
+            ],
+        ],
+        -9 => [
+            'nodes' => [
+                'node' => $o[10],
+                'attribute' => $o[11],
+                'arguments' => $o[12],
+            ],
+            'attributes' => [
+                'type' => 2,
+                'is_null_coalesce' => false,
+                'is_short_circuited' => false,
+            ],
+        ],
+    ]
+)];
