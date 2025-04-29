@@ -19,6 +19,7 @@ class EventRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
+
         parent::__construct($registry, Event::class);
     }
 

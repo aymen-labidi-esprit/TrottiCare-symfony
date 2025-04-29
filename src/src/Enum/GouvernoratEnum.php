@@ -41,6 +41,8 @@ enum GouvernoratEnum: string
         }
         return $choices;
     }
+
+
     
     /**
      * Returns the string representation of this enum (its value)
@@ -48,7 +50,44 @@ enum GouvernoratEnum: string
      */
     public function toString(): string
     {
+
         return $this->value;
     }
-    
+
+    /**
+     * Retourne une étiquette lisible (label) pour chaque case.
+     */
+    public function label(): string
+    {
+
+        return match ($this) {
+            self::ARIANA => 'Ariana',
+            self::BEJA => 'Béja',
+            self::BEN_AROUS => 'Ben Arous',
+            self::BIZERTE => 'Bizerte',
+            self::GABES => 'Gabès',
+            self::GAFSA => 'Gafsa',
+            self::JENDOUBA => 'Jendouba',
+            self::KAIROUAN => 'Kairouan',
+            self::KASSERINE => 'Kasserine',
+            self::KEBILI => 'Kébili',
+            self::KEF => 'Le Kef',
+            self::MAHDIA => 'Mahdia',
+            self::MANOUBA => 'La Manouba',
+            self::MEDENINE => 'Médenine',
+            self::MONASTIR => 'Monastir',
+            self::NABEUL => 'Nabeul',
+            self::SFAX => 'Sfax',
+            self::SIDI_BOUZID => 'Sidi Bouzid',
+            self::SILIANA => 'Siliana',
+            self::SOUSSE => 'Sousse',
+            self::TATAOUINE => 'Tataouine',
+            self::TOZEUR => 'Tozeur',
+            self::TUNIS => 'Tunis',
+            self::ZAGHOUAN => 'Zaghouan',
+        };
+    }
+
+
+
 }
