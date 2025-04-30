@@ -1,0 +1,4882 @@
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/ReclamationRepository.php -----
+<?php
+// src/Repository/ReclamationRepository.php
+
+namespace App\Repository;
+
+use App\Entity\Reclamation;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+class ReclamationRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Reclamation::class);
+    }
+
+    /**
+     * Find all reclamations ordered by date of creation (most recent first)
+     */
+    public function findAllOrderedByDate()
+    {
+        return $this->createQueryBuilder('r')
+            ->orderBy('r.date_creation', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find a reclamation by its ID
+     */
+    public function findById($id)
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Find reclamations by user email
+     */
+    public function findByUserEmail($email)
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.user_email = :email')
+            ->setParameter('email', $email)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find all reclamations of a specific type
+     */
+    public function findByType($type)
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.type_reclamation = :type')
+            ->setParameter('type', $type)
+            ->getQuery()
+            ->getResult();
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/PointRelaisRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\PointRelais;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<PointRelais>
+ */
+class PointRelaisRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, PointRelais::class);
+    }
+
+    //    /**
+    //     * @return PointRelais[] Returns an array of PointRelais objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('p')
+    //            ->andWhere('p.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('p.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?PointRelais
+    //    {
+    //        return $this->createQueryBuilder('p')
+    //            ->andWhere('p.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/UtilisateurRepository.php -----
+<?php
+// src/Repository/UtilisateurRepository.php
+namespace App\Repository;
+
+use App\Entity\Utilisateur;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+
+/**
+ * @extends ServiceEntityRepository<Utilisateur>
+ * @implements PasswordUpgraderInterface<Utilisateur>
+ */
+class UtilisateurRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Utilisateur::class);
+    }
+
+    /**
+     * Used to upgrade (rehash) the user's password automatically over time.
+     */
+    public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
+    {
+        if (!$user instanceof Utilisateur) {
+            throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', $user::class));
+        }
+
+        $user->setPassword($newHashedPassword);
+        $this->getEntityManager()->persist($user);
+        $this->getEntityManager()->flush();
+    }
+
+    public function save(Utilisateur $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Utilisateur $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    /**
+     * Find users based on search criteria (name, email, role) for Admin.
+     * @param array $criteria ['search' => string, 'role' => string]
+     * @param int $page
+     * @param int $limit
+     * @return Paginator
+     */
+    public function findByCriteria(array $criteria = [], int $page = 1, int $limit = 10): Paginator
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->orderBy('u.nom', 'ASC')
+            ->addOrderBy('u.prenom', 'ASC');
+
+        if (!empty($criteria['search'])) {
+            $searchTerm = '%' . $criteria['search'] . '%';
+            $qb->andWhere($qb->expr()->orX(
+                $qb->expr()->like('u.nom', ':search'),
+                $qb->expr()->like('u.prenom', ':search'),
+                $qb->expr()->like('u.email', ':search')
+            ))
+                ->setParameter('search', $searchTerm);
+        }
+
+        if (!empty($criteria['role'])) {
+            $qb->andWhere('u.roleInterne = :role')
+                ->setParameter('role', $criteria['role']);
+        }
+
+        // Exclude deleted users if you add a soft delete flag later
+        // $qb->andWhere('u.deletedAt IS NULL');
+
+        $query = $qb->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return new Paginator($query, true); // true to fetch join collection
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/MaintenanceRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Maintenance;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Maintenance>
+ *
+ * @method Maintenance|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Maintenance|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Maintenance[]    findAll()
+ * @method Maintenance[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class MaintenanceRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Maintenance::class);
+    }
+
+    public function save(Maintenance $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Maintenance $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/ReservationRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Reservation;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Reservation>
+ */
+class ReservationRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Reservation::class);
+    }
+
+    //    /**
+    //     * @return Reservation[] Returns an array of Reservation objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('r')
+    //            ->andWhere('r.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('r.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?Reservation
+    //    {
+    //        return $this->createQueryBuilder('r')
+    //            ->andWhere('r.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/ResetPasswordRequestRepository.php -----
+<?php
+// src/Repository/ResetPasswordRequestRepository.php
+namespace App\Repository;
+
+use App\Entity\ResetPasswordRequest;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use SymfonyCasts\Bundle\ResetPassword\Model\ResetPasswordRequestInterface;
+use SymfonyCasts\Bundle\ResetPassword\Persistence\Repository\ResetPasswordRequestRepositoryTrait;
+use SymfonyCasts\Bundle\ResetPassword\Persistence\ResetPasswordRequestRepositoryInterface;
+
+/**
+ * @extends ServiceEntityRepository<ResetPasswordRequest>
+ *
+ * @method ResetPasswordRequest|null find($id, $lockMode = null, $lockVersion = null)
+ * @method ResetPasswordRequest|null findOneBy(array $criteria, array $orderBy = null)
+ * @method ResetPasswordRequest[]    findAll()
+ * @method ResetPasswordRequest[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class ResetPasswordRequestRepository extends ServiceEntityRepository implements ResetPasswordRequestRepositoryInterface
+{
+    use ResetPasswordRequestRepositoryTrait; // Add the trait
+
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, ResetPasswordRequest::class);
+    }
+
+    public function createResetPasswordRequest(object $user, \DateTimeInterface $expiresAt, string $selector, string $hashedToken): ResetPasswordRequestInterface
+    {
+        // Ensure the user is a UserInterface before creating the request object
+        if (!$user instanceof \Symfony\Component\Security\Core\User\UserInterface) {
+            throw new \InvalidArgumentException(sprintf('The first argument of %s() must be an instance of %s, "%s" given.', __METHOD__, \Symfony\Component\Security\Core\User\UserInterface::class, get_debug_type($user)));
+        }
+
+        return new ResetPasswordRequest(
+            $user,
+            $expiresAt,
+            $selector,
+            $hashedToken
+        );
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/ReponseRepository.php -----
+<?php
+// src/Repository/ReponseRepository.php
+
+namespace App\Repository;
+
+use App\Entity\Reponse;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+class ReponseRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Reponse::class);
+    }
+
+    /**
+     * Find all responses for a specific reclamation ordered by date of response (earliest first)
+     */
+    public function findByReclamationOrderedByDate($reclamation)
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.reclamation = :reclamation')
+            ->setParameter('reclamation', $reclamation)
+            ->orderBy('r.date_reponse', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find a specific response by its ID
+     */
+    public function findById($id)
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/TrottinetteRepository.php -----
+<?php
+// src/Repository/TrottinetteRepository.php
+namespace App\Repository;
+
+use App\Entity\Trottinette;
+use App\Entity\PointRelais;
+use App\Enum\TrottinetteStatus;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+
+/**
+ * @extends ServiceEntityRepository<Trottinette>
+ */
+class TrottinetteRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Trottinette::class);
+    }
+
+    public function save(Trottinette $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+        if ($flush) { $this->getEntityManager()->flush(); }
+    }
+
+    public function remove(Trottinette $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+        if ($flush) { $this->getEntityManager()->flush(); }
+    }
+
+    /**
+     * Find trottinettes based on criteria for listing/searching.
+     * @param array $criteria ['search' => string, 'status' => TrottinetteStatus, 'pointRelais' => PointRelais, 'minBatterie' => int]
+     * @param int $page
+     * @param int $limit
+     * @return Paginator
+     */
+    public function findByCriteria(array $criteria = [], int $page = 1, int $limit = 15): Paginator
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->leftJoin('t.pointRelais', 'pr') // Join for potential filtering/display
+            ->orderBy('t.dateAjout', 'DESC');
+
+        if (!empty($criteria['search'])) {
+            $searchTerm = '%' . $criteria['search'] . '%';
+            $qb->andWhere($qb->expr()->orX(
+                $qb->expr()->like('t.modele', ':search'),
+                $qb->expr()->like('t.numeroSerie', ':search'),
+                $qb->expr()->like('t.localisation', ':search'),
+                $qb->expr()->like('pr.nom', ':search') // Search in point relais name too
+            ))
+                ->setParameter('search', $searchTerm);
+        }
+
+        if (!empty($criteria['status']) && $criteria['status'] instanceof TrottinetteStatus) {
+            $qb->andWhere('t.etat = :status')
+                ->setParameter('status', $criteria['status']);
+        }
+
+        if (!empty($criteria['pointRelais']) && $criteria['pointRelais'] instanceof PointRelais) {
+            $qb->andWhere('t.pointRelais = :pointRelais')
+                ->setParameter('pointRelais', $criteria['pointRelais']);
+        }
+
+        if (isset($criteria['minBatterie']) && $criteria['minBatterie'] !== '' && $criteria['minBatterie'] !== null) {
+            $qb->andWhere('t.batterie >= :minBatterie')
+                ->setParameter('minBatterie', (int)$criteria['minBatterie']);
+        }
+
+        // Add more filters (e.g., maxAutonomie) if needed
+
+        $query = $qb->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return new Paginator($query, true);
+    }
+
+    /**
+     * Find available trottinettes (for client reservation).
+     */
+    public function findAvailable(): array
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.etat = :status')
+            ->setParameter('status', TrottinetteStatus::DISPONIBLE)
+            // Optionally add battery condition
+            // ->andWhere('t.batterie >= :minBattery')
+            // ->setParameter('minBattery', 10) // Example: minimum 10%
+            ->orderBy('t.modele', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/EventRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Event;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\QueryBuilder;
+
+/**
+ * @extends ServiceEntityRepository<Event>
+ *
+ * @method Event|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Event|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Event[]    findAll()
+ * @method Event[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class EventRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Event::class);
+    }
+
+    /**
+     * Find upcoming events
+     */
+    public function findUpcomingEvents(): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.dateDebut > :now')
+            ->setParameter('now', new \DateTime())
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find events by location
+     */
+    public function findByLocation(string $location): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.lieu LIKE :location')
+            ->setParameter('location', '%' . $location . '%')
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find events by date range
+     */
+    public function findByDateRange(\DateTime $start, \DateTime $end): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.dateDebut >= :start')
+            ->andWhere('e.dateFin <= :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find events by minimum scooter autonomy
+     */
+    public function findByMinScooterAutonomy(int $minAutonomy): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.trottinetteMinAutonomie <= :minAutonomy')
+            ->setParameter('minAutonomy', $minAutonomy)
+            ->orderBy('e.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Repository/ParticipationRepository.php -----
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Participation;
+use App\Entity\Event;
+use App\Entity\Utilisateur;
+use App\Enum\ParticipationStatus;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Participation>
+ *
+ * @method Participation|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Participation|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Participation[]    findAll()
+ * @method Participation[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class ParticipationRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Participation::class);
+    }
+
+    public function findByUser(Utilisateur $user): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.utilisateur = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.dateInscription', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByEvent(Event $event): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.event = :event')
+            ->setParameter('event', $event)
+            ->orderBy('p.dateInscription', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByEventAndStatus(Event $event, ParticipationStatus $status): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.event = :event')
+            ->andWhere('p.statut = :status')
+            ->setParameter('event', $event)
+            ->setParameter('status', $status)
+            ->orderBy('p.dateInscription', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/ReponseType.php -----
+<?php
+// src/Form/ReponseType.php
+namespace App\Form;
+
+use App\Entity\Reponse;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class ReponseType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        // Reclamation and Auteur are set in the controller
+        $builder
+            ->add('message', TextareaType::class, [
+                'label' => 'Votre Réponse', // Translate
+                'attr' => ['rows' => 5, 'placeholder' => 'Entrez votre réponse ici...'],
+                'help' => 'Fournissez une réponse claire et concise à la réclamation.', // Help text
+            ]);
+        // Removed user_type and save button
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Reponse::class,
+            'attr' => ['novalidate' => 'novalidate'],
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/PointRelaisType.php -----
+<?php
+// src/Form/PointRelaisType.php
+namespace App\Form;
+
+use App\Entity\PointRelais;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class PointRelaisType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('nom', TextType::class, [
+                'label' => 'Nom du Point Relais',
+                'attr' => ['placeholder' => 'Ex: Gare Centrale Point'],
+            ])
+            ->add('adresse', TextareaType::class, [
+                'label' => 'Adresse Complète',
+                'attr' => ['rows' => 3, 'placeholder' => '123 Rue Principale, Ville'],
+            ])
+            ->add('localisation', TextType::class, [
+                'label' => 'Localisation (GPS: lat,lon)',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex: 36.8065,10.1815'],
+            ])
+            ->add('horairesOuverture', TextareaType::class, [
+                'label' => 'Horaires d\'Ouverture',
+                'required' => false,
+                'mapped' => false, // Don't map directly to JSON field initially
+                'help' => 'Format : Lundi: 9h-18h, Mardi: ... (chaque jour sur une nouvelle ligne).',
+                'attr' => ['rows' => 5],
+                'data' => $options['horaires_string'] ?? '', // Load existing data if editing
+            ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => PointRelais::class,
+            'horaires_string' => null, // Custom option to pass/receive stringified horaires
+            'attr' => ['novalidate' => 'novalidate'],
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/AdminUserType.php -----
+<?php
+// src/Form/AdminUserType.php
+namespace App\Form;
+
+use App\Entity\Utilisateur;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
+use Symfony\Component\Form\Extension\Core\Type\TelType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Length;
+
+class AdminUserType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('nom', TextType::class, ['label' => 'Nom'])
+            ->add('prenom', TextType::class, ['label' => 'Prénom'])
+            ->add('email', EmailType::class, ['label' => 'Email'])
+            ->add('telephone', TelType::class, ['label' => 'Téléphone', 'required' => false])
+            ->add('roleInterne', ChoiceType::class, [
+                'label' => 'Rôle',
+                'choices' => [
+                    'Client' => 'client',
+                    'Partenaire' => 'partenaire',
+                    'Administrateur' => 'admin',
+                ],
+                'attr' => ['class' => 'form-select'],
+                'placeholder' => 'Choisir un rôle',
+            ])
+            ->add('isVerified', CheckboxType::class, [
+                'label' => 'Compte Vérifié ?',
+                'required' => false,
+            ])
+            ->add('plainPassword', RepeatedType::class, [
+                'type' => PasswordType::class,
+                'mapped' => false,
+                'required' => false,
+                'options' => ['attr' => ['autocomplete' => 'new-password']],
+                'first_options' => [
+                    'label' => 'Nouveau Mot de passe',
+                    'help' => 'Laisser vide pour ne pas changer le mot de passe.',
+                    'attr' => ['placeholder' => 'Nouveau mot de passe'],
+                ],
+                'second_options' => [
+                    'label' => 'Confirmer le Nouveau Mot de passe',
+                    'attr' => ['placeholder' => 'Retapez le mot de passe'],
+                ],
+                'invalid_message' => 'Les mots de passe doivent correspondre.',
+                'constraints' => [
+                    new Length([
+                        'min' => 6,
+                        'minMessage' => 'Le mot de passe doit contenir au moins {{ limit }} caractères.',
+                        'max' => 4096,
+                    ]),
+                ],
+            ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Utilisateur::class,
+            'attr' => ['novalidate' => 'novalidate'],
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/ChangePasswordFormType.php -----
+<?php
+// src/Form/ChangePasswordFormType.php
+namespace App\Form;
+
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+
+class ChangePasswordFormType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('plainPassword', RepeatedType::class, [
+                'type' => PasswordType::class,
+                'options' => [
+                    'attr' => [ 'autocomplete' => 'new-password', ],
+                ],
+                'first_options' => [
+                    'constraints' => [
+                        new NotBlank([ 'message' => 'Veuillez entrer un mot de passe', ]),
+                        new Length([
+                            'min' => 6,
+                            'minMessage' => 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
+                            'max' => 4096,
+                        ]),
+                    ],
+                    'label' => 'Nouveau mot de passe',
+                    'attr' => ['placeholder' => 'Entrez le nouveau mot de passe'],
+                ],
+                'second_options' => [
+                    'label' => 'Confirmer le mot de passe',
+                    'attr' => ['placeholder' => 'Retapez le nouveau mot de passe'],
+                ],
+                'invalid_message' => 'Les mots de passe doivent correspondre.',
+                'mapped' => false, // Don't map to User entity directly
+            ])
+        ;
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/ResetPasswordRequestFormType.php -----
+<?php
+// src/Form/ResetPasswordRequestFormType.php
+namespace App\Form;
+
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
+
+class ResetPasswordRequestFormType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('email', EmailType::class, [
+                'label' => 'Votre adresse e-mail',
+                'attr' => ['autocomplete' => 'email', 'placeholder' => 'adresse@example.com'],
+                'constraints' => [
+                    new NotBlank([ 'message' => 'Veuillez entrer votre adresse e-mail', ]),
+                ],
+                'help' => 'Entrez l\'adresse e-mail associée à votre compte.',
+            ])
+        ;
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/TrottinetteType.php -----
+<?php
+// src/Form/TrottinetteType.php
+namespace App\Form;
+
+use App\Entity\PointRelais;
+use App\Entity\Trottinette;
+use App\Enum\TrottinetteStatus;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class TrottinetteType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('modele', TextType::class, [
+                'label' => 'Modèle',
+                'required' => true,
+                'attr' => ['placeholder' => 'Ex: Xiaomi Pro 2'],
+            ])
+            ->add('numeroSerie', TextType::class, [
+                'label' => 'Numéro de Série',
+                'required' => true,
+                'attr' => ['placeholder' => 'Ex: TROT-1234-XYZ'],
+            ])
+            ->add('etat', EnumType::class, [ // Use EnumType
+                'class' => TrottinetteStatus::class,
+                'label' => 'État',
+                'required' => true,
+                'choice_label' => fn (TrottinetteStatus $choice): string => $choice->label(), // Use label method
+                'placeholder' => 'Sélectionnez un état',
+                'attr' => ['class' => 'form-select'], // Add form-select class
+            ])
+            ->add('batterie', IntegerType::class, [
+                'label' => 'Batterie (%)',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex: 85', 'min' => 0, 'max' => 100],
+            ])
+            ->add('localisation', TextType::class, [
+                'label' => 'Localisation (Adresse/GPS)',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex: Tunis Centre ou 36.8065,10.1815'],
+                'help' => 'Sera mise à jour automatiquement si possible.',
+            ])
+            ->add('autonomie', TextType::class, [
+                'label' => 'Autonomie Estimée',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex: 25 km ou 2 heures'],
+                'help' => 'Format : "25 km" ou "2 heures".',
+            ])
+            ->add('pointRelais', EntityType::class, [ // Use EntityType
+                'class' => PointRelais::class,
+                'choice_label' => 'nom', // Display PointRelais name
+                'label' => 'Point Relais Actuel',
+                'required' => false, // A trottinette might not be at a point relais
+                'placeholder' => 'Aucun / En déplacement',
+                'attr' => ['class' => 'form-select'], // Add form-select class
+                'query_builder' => function (\App\Repository\PointRelaisRepository $prr) {
+                    return $prr->createQueryBuilder('pr')->orderBy('pr.nom', 'ASC');
+                }
+            ]);
+        // Removed pointRelaisId field
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Trottinette::class,
+            'attr' => ['novalidate' => 'novalidate'], // Disable HTML5 validation
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/RegistrationFormType.php -----
+<?php
+namespace App\Form;
+
+use App\Entity\Utilisateur;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
+use Symfony\Component\Form\Extension\Core\Type\TelType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+
+class RegistrationFormType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('nom', TextType::class,   ['label' => 'Nom'])
+            ->add('prenom', TextType::class,['label' => 'Prénom'])
+            ->add('email', EmailType::class,['label' => 'Email'])
+            ->add('telephone', TelType::class,['label' => 'Téléphone'])
+            ->add('plainPassword', RepeatedType::class, [
+                'type'            => PasswordType::class,
+                'first_options'   => ['label' => 'Mot de passe'],
+                'second_options'  => ['label' => 'Confirmation'],
+                'invalid_message' => 'Les mots de passe doivent correspondre.',
+                'mapped'          => false,
+                'constraints'     => [
+                    new NotBlank(['message' => 'Veuillez entrer un mot de passe']),
+                    new Length(['min' => 6, 'minMessage' => 'Au moins {{ limit }} caractères'])
+                ],
+            ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Utilisateur::class,
+            'attr'       => ['novalidate' => 'novalidate', 'class' => 'needs-validation'],
+        ]);
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/ReclamationType.php -----
+<?php
+// src/Form/ReclamationType.php
+namespace App\Form;
+
+use App\Entity\Reclamation;
+use App\Entity\Trottinette; // Import Trottinette entity
+use Symfony\Bridge\Doctrine\Form\Type\EntityType; // Import EntityType
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class ReclamationType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        // Utilisateur is set in controller based on logged-in user
+
+        $builder
+            ->add('typeReclamation', ChoiceType::class, [
+                'label' => 'Type de Réclamation',
+                'choices' => [ // Use French labels
+                    'Problème Technique' => 'TECHNIQUE',
+                    'Service Client' => 'SERVICE',
+                    'Facturation' => 'FACTURATION',
+                    'Événement' => 'EVENEMENT', // Add Event type
+                    'Autre' => 'AUTRE',
+                ],
+                'placeholder' => 'Choisissez le type',
+                'attr' => ['class' => 'form-select'],
+                'required' => true,
+            ])
+            ->add('trottinette', EntityType::class, [ // Use EntityType
+                'class' => Trottinette::class,
+                'choice_label' => fn(Trottinette $t) => sprintf('%s (%s)', $t->getModele(), $t->getNumeroSerie()), // Display helper
+                'label' => 'Trottinette Concernée (Optionnel)',
+                'required' => false,
+                'placeholder' => 'Aucune / Non applicable',
+                'attr' => ['class' => 'form-select'],
+                // Optional: Filter by user's recent rentals if applicable? Requires more logic.
+                // 'query_builder' => function (\App\Repository\TrottinetteRepository $tr) use ($options) {
+                //    // ... query logic ...
+                // },
+            ])
+            ->add('trottinette', EntityType::class, [
+                'class' => Trottinette::class,
+                'choice_label' => 'numeroSerie',
+                'required' => false,
+                'placeholder' => 'Select a scooter'
+            ])
+
+        ->add('titre', TextType::class, [
+                'label' => 'Sujet / Titre',
+                'attr' => ['placeholder' => 'Ex: Problème de frein sur la trottinette #123'],
+            ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Description Détaillée',
+                'attr' => ['rows' => 5, 'placeholder' => 'Veuillez décrire le problème ou votre demande...'],
+            ]);
+
+        // Status field only for Admin edit form
+        if ($options['is_admin_edit'] ?? false) {
+            $builder->add('statut', ChoiceType::class, [
+                'label' => 'Statut Réclamation',
+                'choices' => [ // Use French labels
+                    'Ouverte' => 'OUVERTE',
+                    'En Cours' => 'EN_COURS',
+                    'Résolue' => 'RESOLUE',
+                    'Fermée' => 'FERMEE',
+                ],
+                'attr' => ['class' => 'form-select'],
+                'placeholder' => 'Choisir un statut',
+            ]);
+        }
+        // Removed user_email, id_trottinette, save button
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Reclamation::class,
+            'is_admin_edit' => false, // Custom option
+            'attr' => ['novalidate' => 'novalidate'],
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/MaintenanceType.php -----
+<?php
+// src/Form/MaintenanceType.php
+namespace App\Form;
+
+use App\Entity\Maintenance;
+use App\Entity\Trottinette;
+use App\Enum\MaintenanceStatus; // Import Enum
+use App\Enum\MaintenanceType as MaintenanceTypeEnum; // Import Enum with alias
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType; // Use EnumType
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class MaintenanceType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('trottinette', EntityType::class, [
+                'class' => Trottinette::class,
+                'choice_label' => fn(Trottinette $t) => sprintf('%s (%s)', $t->getModele(), $t->getNumeroSerie()),
+                'label' => 'Trottinette Concernée',
+                'placeholder' => 'Sélectionnez une trottinette',
+                'attr' => ['class' => 'form-select'],
+                'query_builder' => function (\App\Repository\TrottinetteRepository $tr) {
+                    // Optionally filter to show only trottinettes NOT available
+                    return $tr->createQueryBuilder('t')
+                        // ->where('t.etat != :etat_dispo')
+                        // ->setParameter('etat_dispo', \App\Enum\TrottinetteStatus::DISPONIBLE)
+                        ->orderBy('t.modele', 'ASC');
+                },
+            ])
+            ->add('type', EnumType::class, [ // Use EnumType
+                'class' => MaintenanceTypeEnum::class,
+                'choice_label' => fn (MaintenanceTypeEnum $choice): string => $choice->label(), // Use label()
+                'label' => 'Type de Maintenance',
+                'placeholder' => 'Sélectionnez un type',
+                'attr' => ['class' => 'form-select'],
+            ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Description du Problème / Travaux',
+                'attr' => ['rows' => 4, 'placeholder' => 'Décrivez le problème ou les travaux effectués...'],
+            ])
+            ->add('dateDebut', DateTimeType::class, [
+                'widget' => 'single_text',
+                'label' => 'Date et Heure de Début',
+                'html5' => true,
+            ])
+            ->add('dateFin', DateTimeType::class, [
+                'widget' => 'single_text',
+                'label' => 'Date et Heure de Fin (Estimée/Réelle)',
+                'required' => false,
+                'html5' => true,
+            ])
+            ->add('statut', EnumType::class, [ // Use EnumType
+                'class' => MaintenanceStatus::class,
+                'choice_label' => fn (MaintenanceStatus $choice): string => $choice->label(), // Use label()
+                'label' => 'Statut',
+                'placeholder' => 'Sélectionnez un statut',
+                'attr' => ['class' => 'form-select'],
+            ]);
+        // Removed mapped=false type field from previous version
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Maintenance::class,
+            'attr' => ['novalidate' => 'novalidate'],
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/UserFilterType.php -----
+<?php
+// src/Form/UserFilterType.php
+namespace App\Form;
+
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\SearchType; // Use SearchType
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class UserFilterType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('search', SearchType::class, [ // Use SearchType for semantics
+                'label' => false, // Hide label, use placeholder
+                'required' => false,
+                'attr' => [
+                    'placeholder' => 'Rechercher (Nom, Prénom, Email)...',
+                    'class' => 'form-control-sm' // Optional smaller input
+                ]
+            ])
+            ->add('role', ChoiceType::class, [
+                'label' => false, // Hide label
+                'required' => false,
+                'placeholder' => 'Tous les rôles',
+                'choices' => [
+                    'Client' => 'client',
+                    'Partenaire' => 'partenaire',
+                    'Administrateur' => 'admin',
+                ],
+                'attr' => ['class' => 'form-select form-select-sm'] // Optional smaller select
+            ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'method' => 'GET', // Use GET for filters
+            'csrf_protection' => false, // No CSRF needed for GET filters
+            'attr' => ['class' => 'row gx-2 gy-2 align-items-center filter-form'], // Add class for styling form row
+        ]);
+    }
+
+    // Return empty block prefix to avoid prefixing field names in query string
+    public function getBlockPrefix(): string
+    {
+        return '';
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/ReservationType.php -----
+<?php
+// src/Form/ReservationType.php
+namespace App\Form;
+
+use App\Entity\Reservation;
+use App\Entity\Trottinette;
+use App\Enum\Paiement;
+use App\Enum\ReservationStatus;
+use App\Repository\TrottinetteRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
+use Symfony\Component\Form\Extension\Core\Type\MoneyType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Security\Core\Security;
+
+class ReservationType extends AbstractType
+{
+    private Security $security;
+    private TrottinetteRepository $trottinetteRepository;
+
+    public function __construct(Security $security, TrottinetteRepository $trottinetteRepository)
+    {
+        $this->security = $security;
+        $this->trottinetteRepository = $trottinetteRepository;
+    }
+
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('trottinette', EntityType::class, [
+                'class' => Trottinette::class,
+                'choice_label' => fn(Trottinette $t) => sprintf(
+                    '%s (%s - %s%%)',
+                    $t->getModele(),
+                    $t->getNumeroSerie(),
+                    $t->getBatterie() ?? 'N/A'
+                ),
+                'label' => 'Trottinette à Réserver',
+                'placeholder' => 'Sélectionnez une trottinette disponible',
+                'attr' => ['class' => 'form-select'],
+                'query_builder' => function (TrottinetteRepository $tr) {
+                    return $tr->createQueryBuilder('t')
+                        ->where('t.etat = :status')
+                        ->setParameter('status', \App\Enum\TrottinetteStatus::DISPONIBLE)
+                        ->orderBy('t.modele', 'ASC');
+                },
+                'group_by' => function(Trottinette $choice, $key, $value) {
+                    return $choice->getPointRelais()?->getNom() ?? 'Sans Point Relais';
+                },
+            ])
+            ->add('dateDebut', DateTimeType::class, [
+                'widget' => 'single_text',
+                'label' => 'Début de la Réservation',
+                'html5' => true,
+                'attr' => ['min' => (new \DateTime('+5 minutes'))->format('Y-m-d\TH:i')],
+            ])
+            ->add('dateFin', DateTimeType::class, [
+                'widget' => 'single_text',
+                'label' => 'Fin de la Réservation',
+                'html5' => true,
+                'attr' => ['min' => (new \DateTime('+10 minutes'))->format('Y-m-d\TH:i')],
+            ])
+            ->add('montant', MoneyType::class, [
+                'label' => 'Montant Estimé',
+                'currency' => 'EUR', // Change to TND if needed
+                'divisor' => 100,
+                'required' => false,
+                'attr' => [ 'placeholder' => '0.00' ],
+                'help' => 'Le montant sera calculé précisément plus tard.',
+            ])
+            ->add('paiement', EnumType::class, [
+                'class' => Paiement::class,
+                'choice_label' => fn (Paiement $choice): string => $choice->label(),
+                'label' => 'Méthode de Paiement',
+                'placeholder' => 'Sélectionnez un paiement',
+                'attr' => ['class' => 'form-select'],
+            ]);
+
+        if ($options['is_admin_edit'] ?? false) {
+            $builder->add('status', EnumType::class, [
+                'class' => ReservationStatus::class,
+                'choice_label' => fn (ReservationStatus $choice): string => $choice->label(),
+                'label' => 'Statut Réservation',
+                'attr' => ['class' => 'form-select'],
+                'placeholder' => 'Sélectionnez un statut',
+            ]);
+        }
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Reservation::class,
+            'is_admin_edit' => false,
+            'attr' => ['novalidate' => 'novalidate'],
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/Filter/TrottinetteFilterType.php -----
+<?php
+// src/Form/Filter/TrottinetteFilterType.php
+namespace App\Form\Filter;
+
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\SearchType;
+use Symfony\Component\Form\FormBuilderInterface;
+
+class TrottinetteFilterType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options)
+    {
+        $builder
+            ->add('search', SearchType::class, [
+                'required' => false,
+                'attr' => ['placeholder' => 'Search by model or serial']
+            ])
+            ->add('status', ChoiceType::class, [
+                'required' => false,
+                'choices' => [
+                    'Available' => 'DISPONIBLE',
+                    'In Use' => 'EN_LOCATION',
+                    'Maintenance' => 'EN_MAINTENANCE'
+                ]
+            ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Form/EventType.php -----
+<?php
+// src/Form/EventType.php
+namespace App\Form;
+
+use App\Entity\Event;
+use App\Enum\GouvernoratEnum; // Import Enum
+use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType; // Keep for status if is_admin_edit
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType; // Use EnumType
+use Symfony\Component\Form\Extension\Core\Type\IntegerType; // Use IntegerType
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
+
+class EventType extends AbstractType
+{
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        $builder
+            ->add('titre', TextType::class, [
+                'label' => 'Titre de l\'Événement',
+                'attr' => ['placeholder' => 'Ex: Balade collective au Parc'],
+                'required' => true, // Ensure title is required
+            ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Description',
+                'required' => false,
+                'attr' => ['rows' => 4, 'placeholder' => 'Décrivez l\'événement...'],
+            ])
+            ->add('lieu', EnumType::class, [ // Use EnumType
+                'class' => GouvernoratEnum::class,
+                'label' => 'Gouvernorat / Lieu',
+                'choice_label' => fn (GouvernoratEnum $choice): string => $choice->label(), // Use the label method
+                'placeholder' => 'Sélectionnez le lieu',
+                'attr' => ['class' => 'form-select'],
+                'required' => true, // Ensure lieu is required
+            ])
+            ->add('dateDebut', DateTimeType::class, [
+                'widget' => 'single_text',
+                'label' => 'Date et Heure de Début',
+                'html5' => true,
+                'attr' => ['min' => (new \DateTime())->format('Y-m-d\TH:i')],
+                'required' => true, // Ensure date is required
+            ])
+            ->add('dateFin', DateTimeType::class, [
+                'widget' => 'single_text',
+                'label' => 'Date et Heure de Fin',
+                'html5' => true,
+                'attr' => ['min' => (new \DateTime())->format('Y-m-d\TH:i')], // Basic check, validation should enforce dateFin > dateDebut
+                'required' => true, // Ensure date is required
+            ])
+            ->add('trottinetteMinAutonomie', IntegerType::class, [ // Use IntegerType
+                'label' => 'Autonomie Minimale Requise (km)',
+                'required' => false,
+                'attr' => ['placeholder' => 'Ex: 15', 'min' => 0],
+                'help' => 'Laissez vide si non applicable.',
+            ]);
+
+        // Status field only for Admin edit form
+        if ($options['is_admin_edit'] ?? false) {
+            $builder->add('statut', ChoiceType::class, [
+                'label' => 'Statut Événement',
+                'choices' => [ // Translate labels
+                    'À Venir' => 'A_VENIR',
+                    'En Cours' => 'EN_COURS',
+                    'Terminé' => 'TERMINE',
+                    'Annulé' => 'ANNULE',
+                ],
+                'attr' => ['class' => 'form-select'],
+                'placeholder' => 'Choisir un statut',
+            ]);
+        }
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => Event::class,
+            'is_admin_edit' => false, // Custom option
+            'attr' => ['novalidate' => 'novalidate'],
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Security/EmailVerifier.php -----
+<?php
+// src/Security/EmailVerifier.php
+namespace App\Security;
+
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface; // Import exception
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
+use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
+use App\Entity\Utilisateur; // Your User class
+
+class EmailVerifier
+{
+    public function __construct(
+        private VerifyEmailHelperInterface $verifyEmailHelper,
+        private MailerInterface $mailer,
+        private EntityManagerInterface $entityManager
+    ) {
+    }
+
+    /**
+     * @throws TransportExceptionInterface
+     */
+    public function sendEmailConfirmation(string $verifyEmailRouteName, Utilisateur $user, TemplatedEmail $email): void
+    {
+        // Ensure the user object is the correct type
+        if (!$user instanceof Utilisateur) {
+            throw new \LogicException('User must be an instance of ' . Utilisateur::class);
+        }
+        if (!$user->getId()) {
+            throw new \LogicException('User must have an ID to generate verification signature.');
+        }
+        if (!$user->getEmail()) {
+            throw new \LogicException('User must have an email address.');
+        }
+
+        $signatureComponents = $this->verifyEmailHelper->generateSignature(
+            $verifyEmailRouteName,
+            (string) $user->getId(), // Cast ID to string
+            $user->getEmail(),
+            ['id' => (string) $user->getId()] // Ensure parameters match route requirements
+        );
+
+        $context = $email->getContext();
+        $context['signedUrl'] = $signatureComponents->getSignedUrl();
+        $context['expiresAtMessageKey'] = $signatureComponents->getExpirationMessageKey();
+        $context['expiresAtMessageData'] = $signatureComponents->getExpirationMessageData();
+
+        $email->context($context);
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * @throws VerifyEmailExceptionInterface
+     */
+    public function handleEmailConfirmation(Request $request, Utilisateur $user): void
+    {
+        // Ensure the user object is the correct type
+        if (!$user instanceof Utilisateur) {
+            throw new \LogicException('User must be an instance of ' . Utilisateur::class);
+        }
+        if (!$user->getId()) {
+            throw new \LogicException('User must have an ID to validate email confirmation.');
+        }
+        if (!$user->getEmail()) {
+            throw new \LogicException('User must have an email address.');
+        }
+
+        // The verifyEmailHelper->validateEmailConfirmation() method throws the exception if validation fails
+        $this->verifyEmailHelper->validateEmailConfirmation($request->getUri(), (string) $user->getId(), $user->getEmail());
+
+        $user->setIsVerified(true);
+
+        // No need to persist, just flush the change
+        $this->entityManager->flush();
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Security/LoginFormAuthenticator.php -----
+<?php
+// src/Security/LoginFormAuthenticator.php
+namespace App\Security;
+
+use App\Entity\Utilisateur;
+use Doctrine\ORM\EntityManagerInterface; // Needed if checking isVerified status before login attempt potentially
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
+use Symfony\Component\Security\Core\Security; // Deprecated, use SecurityRequestAttributes
+use Symfony\Component\Security\Http\Authenticator\AbstractLoginFormAuthenticator;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
+use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use Symfony\Component\Security\Http\SecurityRequestAttributes; // Use this
+
+
+class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
+{
+    use TargetPathTrait;
+
+    public const LOGIN_ROUTE = 'app_login';
+
+    private UrlGeneratorInterface $urlGenerator;
+    // private EntityManagerInterface $entityManager; // Inject if needed
+
+    public function __construct(UrlGeneratorInterface $urlGenerator /*, EntityManagerInterface $entityManager*/)
+    {
+        $this->urlGenerator = $urlGenerator;
+        // $this->entityManager = $entityManager;
+    }
+
+    public function authenticate(Request $request): Passport
+    {
+        $email = $request->request->get('email', '');
+
+        $request->getSession()->set(SecurityRequestAttributes::LAST_USERNAME, $email);
+
+        return new Passport(
+            new UserBadge($email),
+            new PasswordCredentials($request->request->get('password', '')),
+            [
+                new CsrfTokenBadge('authenticate', $request->request->get('_csrf_token')),
+                new RememberMeBadge(),
+            ]
+        );
+    }
+
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
+    {
+        // Check if the user's email is verified BEFORE allowing login success
+        $user = $token->getUser();
+        if ($user instanceof Utilisateur && !$user->isVerified()) {
+            // Optionally flash a message
+            $this->addFlash($request, 'warning', 'Votre compte n\'est pas encore vérifié. Veuillez consulter votre email.');
+
+            // Throw an exception to prevent login - this will redirect to login page with the flash message
+            // You might want a custom exception if you want different handling
+            throw new CustomUserMessageAuthenticationException('Compte non vérifié.');
+
+            // Alternative: Redirect explicitly, but user remains technically authenticated for this request
+            // return new RedirectResponse($this->urlGenerator->generate('app_login'));
+        }
+
+
+        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
+            return new RedirectResponse($targetPath);
+        }
+
+        // Redirect based on role
+        if ($user instanceof Utilisateur) { // Check if user object is available
+            if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+                return new RedirectResponse($this->urlGenerator->generate('app_admin_dashboard'));
+            }
+            if (in_array('ROLE_PARTENAIRE', $user->getRoles(), true)) {
+                return new RedirectResponse($this->urlGenerator->generate('app_partenaire_dashboard'));
+            }
+            // Default for ROLE_USER or others
+            return new RedirectResponse($this->urlGenerator->generate('client_dashboard')); // Default to client dashboard
+        }
+
+        // Fallback redirect
+        return new RedirectResponse($this->urlGenerator->generate('app_home'));
+    }
+
+    protected function getLoginUrl(Request $request): string
+    {
+        return $this->urlGenerator->generate(self::LOGIN_ROUTE);
+    }
+
+    // Helper function to add flash messages
+    private function addFlash(Request $request, string $type, string $message): void
+    {
+        // Check if the session factory is available
+        if ($request->hasSession()) {
+            $request->getSession()->getFlashBag()->add($type, $message);
+        }
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Maintenance.php -----
+<?php
+// src/Entity/Maintenance.php
+namespace App\Entity;
+
+use App\Repository\MaintenanceRepository;
+use Doctrine\ORM\Mapping as ORM;
+use DateTime;
+use Symfony\Component\Validator\Constraints as Assert;
+use App\Enum\MaintenanceStatus; // Import Enum
+use App\Enum\MaintenanceType as MaintenanceTypeEnum; // Import Enum
+
+#[ORM\Entity(repositoryClass: MaintenanceRepository::class)]
+#[ORM\Table(name: 'maintenance')]
+class Maintenance
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Trottinette::class, inversedBy: 'maintenances')] // Correct relation definition
+    #[ORM\JoinColumn(name: 'trottinette_id', referencedColumnName: 'id', nullable: false)] // Use trottinette_id
+    #[Assert\NotNull(message: 'Une trottinette doit être associée.')]
+    private ?Trottinette $trottinette = null;
+
+    #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank(message: 'La description ne peut pas être vide.')]
+    #[Assert\Length(min: 10, minMessage: 'La description doit comporter au moins {{ limit }} caractères.')]
+    private string $description;
+
+    #[ORM\Column(type: 'datetime')] // Removed name: dateDebut as column name matches property
+    #[Assert\NotNull(message: 'La date de début est requise.')]
+    #[Assert\Type("\DateTimeInterface", message: 'La valeur {{ value }} n\'est pas une date valide.')] // Use Interface type
+    private DateTime $dateDebut;
+
+    #[ORM\Column(type: 'datetime', nullable: true)] // Removed name: dateFin
+    #[Assert\Type("\DateTimeInterface", message: 'La valeur {{ value }} n\'est pas une date valide.')] // Use Interface type
+    #[Assert\GreaterThan(propertyPath: "dateDebut", message: "La date de fin doit être postérieure à la date de début.")]
+    private ?DateTime $dateFin = null;
+
+    #[ORM\Column(type: "string", enumType: MaintenanceStatus::class)] // Use enumType mapping
+    #[Assert\NotNull(message: 'Le statut ne peut pas être vide.')] // Changed NotBlank to NotNull for Enum
+    private ?MaintenanceStatus $statut = null;
+
+    #[ORM\Column(type: "string", enumType: MaintenanceTypeEnum::class)] // Use enumType mapping
+    #[Assert\NotNull(message: 'Le type de maintenance ne peut pas être vide.')] // Changed NotBlank to NotNull for Enum
+    private ?MaintenanceTypeEnum $type = null; // Use Enum type hint
+
+    public function __construct()
+    {
+        $this->dateDebut = new DateTime();
+        $this->statut = MaintenanceStatus::EN_COURS; // Default status
+        $this->type = MaintenanceTypeEnum::REPARATION; // Example default type
+    }
+
+    // Getters and Setters - ensure type hints match properties
+    public function getId(): ?int { return $this->id; }
+    public function getTrottinette(): ?Trottinette { return $this->trottinette; }
+    public function setTrottinette(?Trottinette $trottinette): self { $this->trottinette = $trottinette; return $this; }
+    public function getDescription(): string { return $this->description; }
+    public function setDescription(string $description): self { $this->description = $description; return $this; }
+    public function getDateDebut(): DateTime { return $this->dateDebut; }
+    public function setDateDebut(DateTime $dateDebut): self { $this->dateDebut = $dateDebut; return $this; }
+    public function getDateFin(): ?DateTime { return $this->dateFin; }
+    public function setDateFin(?DateTime $dateFin): self { $this->dateFin = $dateFin; return $this; }
+    public function getStatut(): ?MaintenanceStatus { return $this->statut; } // Return Enum
+    public function setStatut(?MaintenanceStatus $statut): self { $this->statut = $statut; return $this; } // Accept Enum
+    public function getType(): ?MaintenanceTypeEnum { return $this->type; } // Return Enum
+    public function setType(?MaintenanceTypeEnum $type): self { $this->type = $type; return $this; } // Accept Enum
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Event.php -----
+<?php
+// src/Entity/Event.php
+namespace App\Entity;
+
+use App\Enum\GouvernoratEnum; // Import Enum
+use App\Repository\EventRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use DateTimeInterface; // Use DateTimeInterface
+
+#[ORM\Entity(repositoryClass: EventRepository::class)]
+#[ORM\Table(name: 'event')]
+class Event
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)] // Removed nullable=true, added constraints
+    #[Assert\NotBlank(message: "Le titre de l'événement est obligatoire.")]
+    #[Assert\Length(min: 5, max: 255, minMessage: "Le titre doit faire entre 5 et 255 caractères.")]
+    private ?string $titre = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)] // Removed name, nullable=true, added constraints
+    #[Assert\NotNull(message: "La date de début est obligatoire.")]
+    #[Assert\Type("\DateTimeInterface")]
+    #[Assert\GreaterThanOrEqual("today", message: "La date de début ne peut être dans le passé.")]
+    private ?DateTimeInterface $dateDebut = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)] // Removed name, nullable=true, added constraints
+    #[Assert\NotNull(message: "La date de fin est obligatoire.")]
+    #[Assert\Type("\DateTimeInterface")]
+    #[Assert\GreaterThan(propertyPath: "dateDebut", message: "La date de fin doit être après la date de début.")]
+    private ?DateTimeInterface $dateFin = null;
+
+    #[ORM\Column(length: 50, enumType: GouvernoratEnum::class)] // Use EnumType, set length, removed nullable
+    #[Assert\NotNull(message: "Le lieu (gouvernorat) est obligatoire.")]
+    private ?GouvernoratEnum $lieu = null;
+
+    #[ORM\Column(type: 'string', length: 50, options: ["default" => "A_VENIR"])] // Define length, use string type
+    #[Assert\Choice(choices: ["A_VENIR", "EN_COURS", "TERMINE", "ANNULE"], message: "Statut d'événement invalide.")]
+    private string $statut = 'A_VENIR';
+
+    #[ORM\Column(type: 'integer', nullable: true)] // Removed name, changed type
+    #[Assert\PositiveOrZero(message: "L'autonomie minimale doit être un nombre positif ou zéro.")]
+    private ?int $trottinetteMinAutonomie = 0; // In km, assume default 0
+
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: Participation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $participations;
+
+    // Removed $state and $gouvernorat properties
+
+    public function __construct()
+    {
+        $this->participations = new ArrayCollection();
+    }
+
+    // Getters and Setters (Standard - ensure type hints match)
+    public function getId(): ?int { return $this->id; }
+    public function getTitre(): ?string { return $this->titre; }
+    public function setTitre(?string $titre): static { $this->titre = $titre; return $this; }
+    public function getDescription(): ?string { return $this->description; }
+    public function setDescription(?string $description): static { $this->description = $description; return $this; }
+    public function getDateDebut(): ?DateTimeInterface { return $this->dateDebut; }
+    public function setDateDebut(?DateTimeInterface $dateDebut): static { $this->dateDebut = $dateDebut; return $this; }
+    public function getDateFin(): ?DateTimeInterface { return $this->dateFin; }
+    public function setDateFin(?DateTimeInterface $dateFin): static { $this->dateFin = $dateFin; return $this; }
+    public function getLieu(): ?GouvernoratEnum { return $this->lieu; } // Return Enum
+    public function setLieu(?GouvernoratEnum $lieu): static { $this->lieu = $lieu; return $this; } // Accept Enum
+    public function getStatut(): string { return $this->statut; }
+    public function setStatut(string $statut): static { $this->statut = $statut; return $this; }
+    public function getTrottinetteMinAutonomie(): ?int { return $this->trottinetteMinAutonomie; }
+    public function setTrottinetteMinAutonomie(?int $trottinetteMinAutonomie): static { $this->trottinetteMinAutonomie = $trottinetteMinAutonomie; return $this; }
+
+    /** @return Collection<int, Participation> */
+    public function getParticipations(): Collection { return $this->participations; }
+    public function addParticipation(Participation $participation): static { if (!$this->participations->contains($participation)) { $this->participations->add($participation); $participation->setEvent($this); } return $this; }
+    public function removeParticipation(Participation $participation): static { if ($this->participations->removeElement($participation)) { if ($participation->getEvent() === $this) { $participation->setEvent(null); } } return $this; }
+
+    // Helper for display
+    public function getLieuValue(): ?string { return $this->lieu?->value; }
+
+    public function __toString(): string
+    {
+        return $this->titre ?? 'Événement Inconnu';
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Reponse.php -----
+<?php
+// src/Entity/Reponse.php
+namespace App\Entity;
+
+use App\Repository\ReponseRepository; // Correct Repository namespace
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use DateTimeInterface; // Use Interface
+
+#[ORM\Entity(repositoryClass: ReponseRepository::class)]
+#[ORM\Table(name: 'reponse_reclamation')] // Use specific name
+class Reponse
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null; // Correct property name
+
+    #[ORM\ManyToOne(targetEntity: Reclamation::class, inversedBy: 'reponses')]
+    #[ORM\JoinColumn(nullable: false)] // No name needed if property matches target
+    private ?Reclamation $reclamation = null; // Correct property name
+
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class)] // User who replied (Admin/Partenaire)
+    #[ORM\JoinColumn(name: 'auteur_id', referencedColumnName: 'id', nullable: false)]
+    #[Assert\NotNull(message: "L'auteur de la réponse est requis.")]
+    private ?Utilisateur $auteur = null; // Added auteur relation
+
+    #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank(message: 'Le message ne peut pas être vide.')]
+    #[Assert\Length(min: 5, minMessage: 'La réponse doit faire au moins {{ limit }} caractères.')]
+    private ?string $message = null; // Correct property name
+
+    #[ORM\Column(type: 'datetime')]
+    private ?DateTimeInterface $dateReponse = null; // Correct property name and type
+
+    // Removed user_type, should be determined by the $auteur relation
+
+    public function __construct()
+    {
+        $this->dateReponse = new \DateTime(); // Set creation date
+    }
+
+    // Getters and Setters (Standard for id, reclamation, auteur, message, dateReponse)
+    public function getId(): ?int { return $this->id; }
+    public function getReclamation(): ?Reclamation { return $this->reclamation; }
+    public function setReclamation(?Reclamation $reclamation): self { $this->reclamation = $reclamation; return $this; }
+    public function getAuteur(): ?Utilisateur { return $this->auteur; }
+    public function setAuteur(?Utilisateur $auteur): self { $this->auteur = $auteur; return $this; }
+    public function getMessage(): ?string { return $this->message; }
+    public function setMessage(string $message): self { $this->message = $message; return $this; }
+    public function getDateReponse(): ?DateTimeInterface { return $this->dateReponse; }
+    public function setDateReponse(DateTimeInterface $dateReponse): self { $this->dateReponse = $dateReponse; return $this; }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Utilisateur.php -----
+<?php
+// src/Entity/Utilisateur.php
+namespace App\Entity;
+
+use App\Repository\UtilisateurRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+
+#[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
+#[ORM\Table(name: 'utilisateurs')]
+#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée.')]
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank(message: 'L\'email ne peut pas être vide.')]
+    #[Assert\Email(message: 'L\'adresse email {{ value }} n\'est pas valide.')]
+    #[Assert\Length(max: 180, maxMessage: 'L\'email ne peut pas dépasser {{ limit }} caractères.')]
+    private ?string $email = null;
+
+    /**
+     * Internal role representation (simple string) - Corrected column name
+     */
+    #[ORM\Column(name: "role_interne", length: 50)]
+    #[Assert\NotBlank(message: 'Le rôle ne peut pas être vide.')]
+    #[Assert\Choice(
+        choices: ['admin', 'client', 'partenaire'],
+        message: 'Le rôle choisi n\'est pas valide. Rôles autorisés: admin, client, partenaire.'
+    )]
+    private string $roleInterne = 'client'; // Default role
+
+    /**
+     * @var string The hashed password - Corrected column name mapping
+     */
+    #[ORM\Column(name: "password")] // Map to 'password' column if changed from mot_de_passe_hash
+    private ?string $password = null;
+
+    #[ORM\Column(length: 255, name: "nom")]
+    #[Assert\NotBlank(message: 'Le nom ne peut pas être vide.')]
+    #[Assert\Length(min: 2, max: 255, minMessage: 'Le nom doit comporter au moins {{ limit }} caractères.', maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères.')]
+    private ?string $nom = null;
+
+    #[ORM\Column(length: 255, name: "prenom")]
+    #[Assert\NotBlank(message: 'Le prénom ne peut pas être vide.')]
+    #[Assert\Length(min: 2, max: 255, minMessage: 'Le prénom doit comporter au moins {{ limit }} caractères.', maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères.')]
+    private ?string $prenom = null;
+
+    #[ORM\Column(length: 50, name: "telephone")]
+    #[Assert\NotBlank(message: 'Le numéro de téléphone ne peut pas être vide.')]
+    #[Assert\Regex(pattern: '/^[0-9+\s\-().]{8,15}$/', message: 'Le numéro de téléphone n\'est pas valide.')]
+    private ?string $telephone = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isVerified = false;
+
+    #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Reservation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $reservations;
+
+    #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Reclamation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $reclamations;
+
+    #[ORM\OneToMany(mappedBy: 'utilisateur', targetEntity: Participation::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $participations;
+
+    // Removed Trottinettes collection unless explicit partner relation needed
+
+    public function __construct()
+    {
+        $this->reservations = new ArrayCollection();
+        $this->reclamations = new ArrayCollection();
+        $this->participations = new ArrayCollection();
+    }
+
+    public function getId(): ?int { return $this->id; }
+    public function getEmail(): ?string { return $this->email; }
+    public function setEmail(string $email): static { $this->email = $email; return $this; }
+
+    /** @see UserInterface */
+    public function getUserIdentifier(): string { return (string) $this->email; }
+
+    /** @see UserInterface */
+    public function getRoles(): array
+    {
+        $roleMap = [
+            'admin' => ['ROLE_ADMIN', 'ROLE_PARTENAIRE', 'ROLE_USER'],
+            'partenaire' => ['ROLE_PARTENAIRE', 'ROLE_USER'],
+            'client' => ['ROLE_USER']
+        ];
+        $roles = $roleMap[$this->roleInterne] ?? ['ROLE_USER'];
+        $roles[] = 'ROLE_USER'; // Guarantee ROLE_USER
+        return array_unique($roles);
+    }
+
+    public function getRoleInterne(): string { return $this->roleInterne; }
+    public function setRoleInterne(string $roleInterne): static {
+        if (!in_array($roleInterne, ['admin', 'client', 'partenaire'])) {
+            throw new \InvalidArgumentException("Invalid role");
+        }
+        $this->roleInterne = $roleInterne;
+        return $this;
+    }
+
+    /** @see PasswordAuthenticatedUserInterface */
+    public function getPassword(): ?string { return $this->password; } // Return nullable
+    public function setPassword(string $password): static { $this->password = $password; return $this; }
+
+    /** @see UserInterface */
+    public function getSalt(): ?string { return null; } // Not needed
+
+    /** @see UserInterface */
+    public function eraseCredentials(): void { /* $this->plainPassword = null; */ }
+
+    public function getNom(): ?string { return $this->nom; }
+    public function setNom(string $nom): static { $this->nom = $nom; return $this; }
+    public function getPrenom(): ?string { return $this->prenom; }
+    public function setPrenom(string $prenom): static { $this->prenom = $prenom; return $this; }
+    public function getTelephone(): ?string { return $this->telephone; }
+    public function setTelephone(?string $telephone): static { $this->telephone = $telephone; return $this; }
+    public function isVerified(): bool { return $this->isVerified; }
+    public function setIsVerified(bool $isVerified): static { $this->isVerified = $isVerified; return $this; }
+    public function getFullName(): string { return $this->prenom . ' ' . $this->nom; }
+
+    // --- Collection Methods ---
+    /** @return Collection<int, Reservation> */
+    public function getReservations(): Collection { return $this->reservations; }
+    public function addReservation(Reservation $reservation): static { if (!$this->reservations->contains($reservation)) { $this->reservations->add($reservation); $reservation->setUtilisateur($this); } return $this; }
+    public function removeReservation(Reservation $reservation): static { if ($this->reservations->removeElement($reservation)) { if ($reservation->getUtilisateur() === $this) { $reservation->setUtilisateur(null); } } return $this; }
+    /** @return Collection<int, Reclamation> */
+    public function getReclamations(): Collection { return $this->reclamations; }
+    public function addReclamation(Reclamation $reclamation): static { if (!$this->reclamations->contains($reclamation)) { $this->reclamations->add($reclamation); $reclamation->setUtilisateur($this); } return $this; }
+    public function removeReclamation(Reclamation $reclamation): static { if ($this->reclamations->removeElement($reclamation)) { if ($reclamation->getUtilisateur() === $this) { $reclamation->setUtilisateur(null); } } return $this; }
+    /** @return Collection<int, Participation> */
+    public function getParticipations(): Collection { return $this->participations; }
+    public function addParticipation(Participation $participation): static { if (!$this->participations->contains($participation)) { $this->participations->add($participation); $participation->setUtilisateur($this); } return $this; }
+    public function removeParticipation(Participation $participation): static { if ($this->participations->removeElement($participation)) { if ($participation->getUtilisateur() === $this) { $participation->setUtilisateur(null); } } return $this; }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/PointRelais.php -----
+<?php
+// src/Entity/PointRelais.php
+namespace App\Entity;
+
+use App\Repository\PointRelaisRepository;
+use Doctrine\Common\Collections\ArrayCollection; // Add Collection imports
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert; // Add Assert import
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity; // Add UniqueEntity
+
+#[ORM\Entity(repositoryClass: PointRelaisRepository::class)]
+#[ORM\Table(name: 'point_relais')] // Correct table name
+#[UniqueEntity(fields: ['nom', 'adresse'], message: 'Un point relais avec ce nom existe déjà à cette adresse.')] // Add constraint
+class PointRelais
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)] // Removed nullable
+    #[Assert\NotBlank(message: 'Le nom ne peut pas être vide.')]
+    #[Assert\Length(
+        min: 3, // Add min length
+        max: 255,
+        minMessage: 'Le nom doit comporter au moins {{ limit }} caractères.',
+        maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères.'
+    )]
+    private ?string $nom = null;
+
+    #[ORM\Column(length: 255)] // Removed nullable, changed addresse to adresse
+    #[Assert\NotBlank(message: 'L\'adresse ne peut pas être vide.')]
+    #[Assert\Length(
+        min: 5, // Add min length
+        max: 255,
+        minMessage: 'L\'adresse doit comporter au moins {{ limit }} caractères.',
+        maxMessage: 'L\'adresse ne peut pas dépasser {{ limit }} caractères.'
+    )]
+    private ?string $adresse = null;
+
+    #[ORM\Column(length: 255, nullable: true)] // Added localisation field
+    #[Assert\Length(max: 255, maxMessage: 'La localisation (GPS) ne peut pas dépasser {{ limit }} caractères.')]
+    private ?string $localisation = null; // e.g., GPS coordinates "lat,lon"
+
+    #[ORM\Column(type: 'json', nullable: true)] // Changed type to json
+    #[Assert\Json(message: 'Le format JSON des horaires d\'ouverture est invalide.')]
+    private ?array $horairesOuverture = null; // Store as ['lundi' => '9h-18h', ...]
+
+    #[ORM\OneToMany(mappedBy: 'pointRelais', targetEntity: Trottinette::class)] // Add relation
+    private Collection $trottinettes;
+
+    public function __construct() // Add constructor
+    {
+        $this->trottinettes = new ArrayCollection();
+    }
+
+    // Getters & Setters (Standard for id, nom, adresse, localisation, horairesOuverture, trottinettes)
+    public function getId(): ?int { return $this->id; }
+    public function getNom(): ?string { return $this->nom; }
+    public function setNom(?string $nom): self { $this->nom = $nom; return $this; }
+    public function getAdresse(): ?string { return $this->adresse; }
+    public function setAdresse(?string $adresse): self { $this->adresse = $adresse; return $this; }
+    public function getLocalisation(): ?string { return $this->localisation; }
+    public function setLocalisation(?string $localisation): self { $this->localisation = $localisation; return $this; }
+    public function getHorairesOuverture(): ?array { return $this->horairesOuverture; } // Return array
+    public function setHorairesOuverture(?array $horairesOuverture): self { $this->horairesOuverture = $horairesOuverture; return $this; } // Accept array
+
+    /** @return Collection<int, Trottinette> */
+    public function getTrottinettes(): Collection { return $this->trottinettes; }
+    public function addTrottinette(Trottinette $trottinette): static { if (!$this->trottinettes->contains($trottinette)) { $this->trottinettes->add($trottinette); $trottinette->setPointRelais($this); } return $this; }
+    public function removeTrottinette(Trottinette $trottinette): static { if ($this->trottinettes->removeElement($trottinette)) { if ($trottinette->getPointRelais() === $this) { $trottinette->setPointRelais(null); } } return $this; }
+
+    public function __toString(): string // Add toString
+    {
+        return $this->nom ?? 'Point Relais Inconnu';
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Participation.php -----
+<?php
+
+namespace App\Entity;
+
+use App\Repository\ParticipationRepository;
+use App\Enum\ParticipationStatus;
+use Doctrine\ORM\Mapping as ORM;
+use DateTime;
+use DateTimeInterface;
+
+#[ORM\Entity(repositoryClass: ParticipationRepository::class)]
+#[ORM\Table(name: 'participation')]
+class Participation
+{
+    #[ORM\Id]
+    #[ORM\Column(name: 'id')]
+    private ?string $id = null;
+
+    #[ORM\Id]
+    #[ORM\ManyToOne(targetEntity: Event::class, inversedBy: 'participations')]
+    #[ORM\JoinColumn(name: 'eventId', referencedColumnName: 'id', nullable: false)]
+    private ?Event $event = null;
+
+    #[ORM\Column(name: 'dateInscription', type: 'datetime', nullable: true)]
+    private ?DateTimeInterface $dateInscription = null;
+
+    #[ORM\Column(name: 'statut', type: 'string', enumType: ParticipationStatus::class)]
+    private ?ParticipationStatus $statut = null;
+
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
+    #[ORM\JoinColumn(name: 'utilisateurId', referencedColumnName: 'id', nullable: true)]
+    private ?Utilisateur $utilisateur = null;
+
+    public function getId(): ?string
+    {
+        return $this->id;
+    }
+
+    public function setId(string $id): static
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    public function getEvent(): ?Event
+    {
+        return $this->event;
+    }
+
+    public function setEvent(?Event $event): static
+    {
+        $this->event = $event;
+        return $this;
+    }
+
+    public function getDateInscription(): ?DateTimeInterface
+    {
+        return $this->dateInscription;
+    }
+
+    public function setDateInscription(?DateTimeInterface $dateInscription): static
+    {
+        $this->dateInscription = $dateInscription;
+        return $this;
+    }
+
+    public function getStatut(): ?ParticipationStatus
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(ParticipationStatus $statut): static
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+    public function getUtilisateur(): ?Utilisateur
+    {
+        return $this->utilisateur;
+    }
+
+    public function setUtilisateur(?Utilisateur $utilisateur): static
+    {
+        $this->utilisateur = $utilisateur;
+        return $this;
+    }
+
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Reservation.php -----
+<?php
+// src/Entity/Reservation.php
+namespace App\Entity;
+
+use App\Repository\ReservationRepository;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use App\Enum\Paiement;
+use App\Enum\ReservationStatus;
+use Symfony\Component\Validator\Constraints as Assert;
+use DateTimeInterface;
+
+#[ORM\Entity(repositoryClass: ReservationRepository::class)]
+#[ORM\Table(name: 'reservation')] // Explicit table name
+class Reservation
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'reservations')]
+    #[ORM\JoinColumn(name: 'utilisateur_id', referencedColumnName: 'id', nullable: false)]
+    #[Assert\NotNull(message: 'L\'utilisateur est requis.')]
+    private ?Utilisateur $utilisateur = null;
+
+    #[ORM\ManyToOne(targetEntity: Trottinette::class, inversedBy: 'reservations')]
+    #[ORM\JoinColumn(name: 'trottinette_id', referencedColumnName: 'id', nullable: false)]
+    #[Assert\NotNull(message: 'La trottinette est requise.')]
+    private ?Trottinette $trottinette = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)] // Changed name
+    #[Assert\NotNull(message: 'La date de début de réservation est obligatoire.')]
+    #[Assert\Type("\DateTimeInterface")]
+    #[Assert\GreaterThanOrEqual("today", message: "La date de début ne peut pas être dans le passé.")]
+    private ?DateTimeInterface $dateDebut = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)] // Added dateFin
+    #[Assert\NotNull(message: 'La date de fin de réservation est obligatoire.')]
+    #[Assert\Type("\DateTimeInterface")]
+    #[Assert\GreaterThan(propertyPath: "dateDebut", message: "La date de fin doit être postérieure à la date de début.")]
+    private ?DateTimeInterface $dateFin = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)] // Use scale 2 for currency
+    #[Assert\NotBlank(message: 'Le montant est requis.')]
+    #[Assert\PositiveOrZero(message: 'Le montant doit être positif ou nul.')] // Changed to PositiveOrZero
+    private ?string $montant = null;
+
+    #[ORM\Column(type: Types::STRING, enumType: ReservationStatus::class)]
+    #[Assert\NotNull(message: 'Le statut est requis.')]
+    private ?ReservationStatus $status = ReservationStatus::PENDING; // Default
+
+    #[ORM\Column(type: Types::STRING, enumType: Paiement::class)]
+    #[Assert\NotNull(message: 'Le mode de paiement est requis.')]
+    private ?Paiement $paiement = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)] // Added dateCreation
+    private ?DateTimeInterface $dateCreation;
+
+    public function __construct()
+    {
+        $this->dateCreation = new \DateTime(); // Set dateCreation
+    }
+
+    // Getters & Setters (Standard for all properties)
+    public function getId(): ?int { return $this->id; }
+    public function getUtilisateur(): ?Utilisateur { return $this->utilisateur; }
+    public function setUtilisateur(?Utilisateur $utilisateur): static { $this->utilisateur = $utilisateur; return $this; }
+    public function getTrottinette(): ?Trottinette { return $this->trottinette; }
+    public function setTrottinette(?Trottinette $trottinette): static { $this->trottinette = $trottinette; return $this; }
+    public function getDateDebut(): ?DateTimeInterface { return $this->dateDebut; }
+    public function setDateDebut(?DateTimeInterface $dateDebut): static { $this->dateDebut = $dateDebut; return $this; }
+    public function getDateFin(): ?DateTimeInterface { return $this->dateFin; }
+    public function setDateFin(?DateTimeInterface $dateFin): static { $this->dateFin = $dateFin; return $this; }
+    public function getMontant(): ?string { return $this->montant; }
+    public function setMontant(?string $montant): static { $this->montant = $montant; return $this; }
+    public function getStatus(): ?ReservationStatus { return $this->status; }
+    public function setStatus(?ReservationStatus $status): self { $this->status = $status; return $this; }
+    public function getPaiement(): ?Paiement { return $this->paiement; }
+    public function setPaiement(?Paiement $paiement): self { $this->paiement = $paiement; return $this; }
+    public function getDateCreation(): ?DateTimeInterface { return $this->dateCreation; }
+    public function setDateCreation(DateTimeInterface $dateCreation): static { $this->dateCreation = $dateCreation; return $this; }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/ResetPasswordRequest.php -----
+<?php
+namespace App\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+class ResetPasswordRequest
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Trottinette.php -----
+<?php
+
+namespace App\Entity;
+
+use App\Repository\TrottinetteRepository;
+use Doctrine\ORM\Mapping as ORM;
+use DateTime;
+use App\Enum\TrottinetteStatus;
+
+#[ORM\Entity(repositoryClass: TrottinetteRepository::class)]
+#[ORM\Table(name: 'trottinette')]
+class Trottinette
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
+    #[ORM\JoinColumn(name: 'idUser', referencedColumnName: 'id')]
+    private ?Utilisateur $utilisateur = null;
+
+    #[ORM\Column(name: 'modele', length: 100, nullable: true)]
+    private ?string $modele = null;
+
+    #[ORM\Column(name: 'numeroSerie', length: 100, nullable: true)]
+    private ?string $numeroSerie = null;
+
+    #[ORM\Column(name: 'etat', type: 'string', enumType: TrottinetteStatus::class)]
+    private TrottinetteStatus $etat = TrottinetteStatus::DISPONIBLE;
+
+    #[ORM\Column(name: 'batterie', nullable: true)]
+    private ?int $batterie = null;
+
+    #[ORM\Column(name: 'localisation', length: 100, nullable: true)]
+    private ?string $localisation = null;
+
+    #[ORM\Column(name: 'dateAjout', type: 'datetime', nullable: true)]
+    private ?DateTime $dateAjout = null;
+
+    #[ORM\Column(name: 'pointRelaisId', nullable: true)]
+    private ?int $pointRelaisId = null;
+
+    #[ORM\Column(name: 'autonomie', length: 45, nullable: true)]
+    private ?string $autonomie = null;
+
+    #[ORM\ManyToOne(targetEntity: PointRelais::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?PointRelais $pointRelais = null;
+    // Update getters and setters
+    public function getPointRelais(): ?PointRelais { return $this->pointRelais; }
+    public function setPointRelais(?PointRelais $pointRelais): self { $this->pointRelais = $pointRelais; return $this; }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getUtilisateur(): ?Utilisateur
+    {
+        return $this->utilisateur;
+    }
+
+    public function setUtilisateur(?Utilisateur $utilisateur): self
+    {
+        $this->utilisateur = $utilisateur;
+        return $this;
+    }
+
+    public function getModele(): ?string
+    {
+        return $this->modele;
+    }
+
+    public function setModele(?string $modele): self
+    {
+        $this->modele = $modele;
+        return $this;
+    }
+
+    public function getNumeroSerie(): ?string
+    {
+        return $this->numeroSerie;
+    }
+
+    public function setNumeroSerie(?string $numeroSerie): self
+    {
+        $this->numeroSerie = $numeroSerie;
+        return $this;
+    }
+
+    public function getEtat(): TrottinetteStatus
+    {
+        return $this->etat;
+    }
+
+    public function setEtat(TrottinetteStatus $etat): self
+    {
+        $this->etat = $etat;
+        return $this;
+    }
+
+    public function getBatterie(): ?int
+    {
+        return $this->batterie;
+    }
+
+    public function setBatterie(?int $batterie): self
+    {
+        $this->batterie = $batterie;
+        return $this;
+    }
+
+    public function getLocalisation(): ?string
+    {
+        return $this->localisation;
+    }
+
+    public function setLocalisation(?string $localisation): self
+    {
+        $this->localisation = $localisation;
+        return $this;
+    }
+
+    public function getDateAjout(): ?DateTime
+    {
+        return $this->dateAjout;
+    }
+
+    public function setDateAjout(?DateTime $dateAjout): self
+    {
+        $this->dateAjout = $dateAjout;
+        return $this;
+    }
+
+    public function getPointRelaisId(): ?int
+    {
+        return $this->pointRelaisId;
+    }
+
+    public function setPointRelaisId(?int $pointRelaisId): self
+    {
+        $this->pointRelaisId = $pointRelaisId;
+        return $this;
+    }
+
+    public function getAutonomie(): ?string
+    {
+        return $this->autonomie;
+    }
+
+    public function setAutonomie(?string $autonomie): self
+    {
+        $this->autonomie = $autonomie;
+        return $this;
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Entity/Reclamation.php -----
+<?php
+// src/Entity/Reclamation.php
+
+namespace App\Entity;
+
+use App\Repository\ReclamationRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+#[ORM\Entity(repositoryClass: ReclamationRepository::class)]
+class Reclamation
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank(message: 'Le titre ne peut pas être vide')]
+    #[Assert\Length(max: 255, maxMessage: 'Le titre ne peut pas dépasser 255 caractères')]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-Z\s&]+$/u',
+        message: 'Le titre ne doit contenir que des lettres, espaces et le caractère "&"'
+    )]
+    private string $titre;
+
+    #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank(message: 'La description ne peut pas être vide')]
+    private string $description;
+
+    #[ORM\Column(type: 'datetime')]
+    private \DateTimeInterface $date_creation;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank(message: 'Le type de réclamation est requis')]
+    private string $type_reclamation;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank(message: 'L\'email de l\'utilisateur est requis')]
+    #[Assert\Email(message: 'L\'email "{{ value }}" n\'est pas un email valide')]
+    private string $user_email;
+
+    #[ORM\Column(type: 'integer')]
+    #[Assert\NotBlank(message: 'L\'ID de la trottinette est requis')]
+    #[Assert\Positive(message: 'L\'ID de la trottinette doit être un nombre strictement positif')]
+    private int $id_trottinette;
+
+    #[ORM\OneToMany(mappedBy: 'reclamation', targetEntity: Reponse::class, cascade: ['persist', 'remove'])]
+    private Collection $reponses;
+
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'reclamations')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Utilisateur $utilisateur = null;
+
+    #[ORM\ManyToOne(targetEntity: Trottinette::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Trottinette $trottinette = null;
+
+    // Update getters and setters
+    public function getUtilisateur(): ?Utilisateur { return $this->utilisateur; }
+    public function setUtilisateur(?Utilisateur $utilisateur): self { $this->utilisateur = $utilisateur; return $this; }
+
+    public function getTrottinette(): ?Trottinette { return $this->trottinette; }
+    public function setTrottinette(?Trottinette $trottinette): self { $this->trottinette = $trottinette; return $this; }
+    public function __construct()
+    {
+        $this->reponses = new ArrayCollection();
+        $this->date_creation = new \DateTime();  // Date actuelle par défaut
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getTitre(): ?string
+    {
+        return $this->titre;
+    }
+
+    public function setTitre(string $titre): self
+    {
+        $this->titre = $titre;
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    public function getDateCreation(): ?\DateTimeInterface
+    {
+        return $this->date_creation;
+    }
+
+    public function setDateCreation(\DateTimeInterface $date_creation): self
+    {
+        $this->date_creation = $date_creation;
+        return $this;
+    }
+
+    public function getTypeReclamation(): ?string
+    {
+        return $this->type_reclamation;
+    }
+
+    public function setTypeReclamation(string $type_reclamation): self
+    {
+        $this->type_reclamation = $type_reclamation;
+        return $this;
+    }
+
+    public function getUserEmail(): ?string
+    {
+        return $this->user_email;
+    }
+
+    public function setUserEmail(string $user_email): self
+    {
+        $this->user_email = $user_email;
+        return $this;
+    }
+
+    public function getIdTrottinette(): ?int
+    {
+        return $this->id_trottinette;
+    }
+
+    public function setIdTrottinette(int $id_trottinette): self
+    {
+        $this->id_trottinette = $id_trottinette;
+        return $this;
+    }
+
+    public function getReponses(): Collection
+    {
+        return $this->reponses;
+    }
+
+    public function addReponse(Reponse $reponse): self
+    {
+        if (!$this->reponses->contains($reponse)) {
+            $this->reponses[] = $reponse;
+            $reponse->setReclamation($this);
+        }
+        return $this;
+    }
+
+    public function removeReponse(Reponse $reponse): self
+    {
+        if ($this->reponses->removeElement($reponse)) {
+            if ($reponse->getReclamation() === $this) {
+                $reponse->setReclamation(null);
+            }
+        }
+        return $this;
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Enum/ParticipationStatus.php -----
+<?php
+
+namespace App\Enum;
+
+enum ParticipationStatus: string
+{
+    case INSCRIT = 'INSCRIT';
+    case ANNULE = 'ANNULE';
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Enum/GouvernoratEnum.php -----
+<?php
+
+namespace App\Enum;
+
+enum GouvernoratEnum: string
+{
+    case ARIANA = 'Ariana';
+    case BEJA = 'Béja';
+    case BEN_AROUS = 'Ben Arous';
+    case BIZERTE = 'Bizerte';
+    case GABES = 'Gabès';
+    case GAFSA = 'Gafsa';
+    case JENDOUBA = 'Jendouba';
+    case KAIROUAN = 'Kairouan';
+    case KASSERINE = 'Kasserine';
+    case KEBILI = 'Kébili';
+    case KEF = 'Le Kef';
+    case MAHDIA = 'Mahdia';
+    case MANOUBA = 'La Manouba';
+    case MEDENINE = 'Médenine';
+    case MONASTIR = 'Monastir';
+    case NABEUL = 'Nabeul';
+    case SFAX = 'Sfax';
+    case SIDI_BOUZID = 'Sidi Bouzid';
+    case SILIANA = 'Siliana';
+    case SOUSSE = 'Sousse';
+    case TATAOUINE = 'Tataouine';
+    case TOZEUR = 'Tozeur';
+    case TUNIS = 'Tunis';
+    case ZAGHOUAN = 'Zaghouan';
+    
+    /**
+     * Returns all available choices as an array
+     * @return array<string, string>
+     */
+    public static function getChoicesForForm(): array
+    {
+        $choices = [];
+        foreach (self::cases() as $case) {
+            $choices[$case->value] = $case->name;
+        }
+        return $choices;
+    }
+
+
+    
+    /**
+     * Returns the string representation of this enum (its value)
+     * @return string
+     */
+    public function toString(): string
+    {
+
+        return $this->value;
+    }
+
+    /**
+     * Retourne une étiquette lisible (label) pour chaque case.
+     */
+    public function label(): string
+    {
+
+        return match ($this) {
+            self::ARIANA => 'Ariana',
+            self::BEJA => 'Béja',
+            self::BEN_AROUS => 'Ben Arous',
+            self::BIZERTE => 'Bizerte',
+            self::GABES => 'Gabès',
+            self::GAFSA => 'Gafsa',
+            self::JENDOUBA => 'Jendouba',
+            self::KAIROUAN => 'Kairouan',
+            self::KASSERINE => 'Kasserine',
+            self::KEBILI => 'Kébili',
+            self::KEF => 'Le Kef',
+            self::MAHDIA => 'Mahdia',
+            self::MANOUBA => 'La Manouba',
+            self::MEDENINE => 'Médenine',
+            self::MONASTIR => 'Monastir',
+            self::NABEUL => 'Nabeul',
+            self::SFAX => 'Sfax',
+            self::SIDI_BOUZID => 'Sidi Bouzid',
+            self::SILIANA => 'Siliana',
+            self::SOUSSE => 'Sousse',
+            self::TATAOUINE => 'Tataouine',
+            self::TOZEUR => 'Tozeur',
+            self::TUNIS => 'Tunis',
+            self::ZAGHOUAN => 'Zaghouan',
+        };
+    }
+
+
+
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Enum/ReservationStatus.php -----
+<?php
+
+namespace App\Enum;
+
+enum ReservationStatus: string
+{
+    case PENDING = 'pending';
+    case CONFIRMED = 'confirmed';
+    case CANCELLED = 'cancelled';
+
+    public function label(): string
+    {
+        return match($this) {
+            self::PENDING => 'Pending',
+            self::CONFIRMED => 'Confirmed',
+            self::CANCELLED => 'Cancelled',
+        };
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Enum/TrottinetteStatus.php -----
+<?php
+
+namespace App\Enum;
+
+enum TrottinetteStatus: string
+{
+    case DISPONIBLE = 'DISPONIBLE';
+    case EN_LOCATION = 'EN_LOCATION';
+    case EN_MAINTENANCE = 'EN_MAINTENANCE';
+
+    public function label(): string
+    {
+        return match($this) {
+            self::DISPONIBLE => 'Disponible',
+            self::EN_LOCATION => 'En Location',
+            self::EN_MAINTENANCE => 'En Maintenance'
+        };
+    }  public function toString(): string
+    {
+        return match($this) {
+            self::DISPONIBLE => 'Disponible',
+            self::EN_LOCATION => 'En Location',
+            self::EN_MAINTENANCE => 'En Maintenance'
+        };
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Enum/Paiement.php -----
+<?php
+namespace App\Enum;
+
+enum Paiement: string
+{
+    case CARTE = 'carte';
+    case CHEQUE = 'cheque';
+    case ESPECE = 'espece';
+
+    public function label(): string
+    {
+        return match($this) {
+            self::CARTE => 'Carte bancaire',
+            self::CHEQUE => 'Chèque',
+            self::ESPECE => 'Espèce',
+        };
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Enum/MaintenanceStatus.php -----
+<?php
+
+namespace App\Enum;
+
+enum MaintenanceStatus: string
+{
+    case EN_COURS = 'EN_COURS';
+    case TERMINE = 'TERMINE';
+    case ANNULEE = 'ANNULEE';
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Enum/MaintenanceType.php -----
+<?php
+
+namespace App\Enum;
+
+enum MaintenanceType: string
+{
+    case REPARATION = 'REPARATION';
+    case ENTRETIEN = 'ENTRETIEN';
+    case VERIFICATION = 'VERIFICATION';
+    case AUTRE = 'AUTRE';
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/AdminController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Event;
+use App\Form\EventType;
+use App\Repository\EventRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route('/admin')]
+class AdminController extends AbstractController
+{
+    #[Route('/', name: 'app_admin')]
+    public function index(): Response
+    {
+        return $this->redirectToRoute('app_admin_dashboard');
+    }
+
+    #[Route('/dashboard', name: 'app_admin_dashboard')]
+    public function dashboard(EventRepository $eventRepository): Response
+    {
+        $events = $eventRepository->findAll();
+        
+        $eventData = [];
+        foreach ($events as $event) {
+            $eventData[] = [
+                'event' => $event,
+                'participantCount' => $event->getParticipations()->count()
+            ];
+        }
+        
+        return $this->render('admin/dashboard.html.twig', [
+            'eventData' => $eventData,
+        ]);
+    }
+    
+    #[Route('/events', name: 'app_admin_events')]
+    public function events(EventRepository $eventRepository): Response
+    {
+        $events = $eventRepository->findAll();
+        
+        return $this->render('admin/events.html.twig', [
+            'events' => $events,
+        ]);
+    }
+    
+    #[Route('/events/{id}/participants', name: 'app_admin_event_participants')]
+    public function eventParticipants(Event $event): Response
+    {
+        return $this->render('admin/event_participants.html.twig', [
+            'event' => $event
+        ]);
+    }
+    
+    #[Route('/events/new', name: 'app_admin_event_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $event = new Event();
+        $event->setState('Active');
+        $event->setStatut('A_VENIR');
+        
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($event);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Event created successfully!');
+            return $this->redirectToRoute('app_admin_events');
+        }
+
+        return $this->render('admin/event_new.html.twig', [
+            'event' => $event,
+            'form' => $form,
+        ]);
+    }
+    
+    #[Route('/events/{id}/edit', name: 'app_admin_event_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Event updated successfully!');
+            return $this->redirectToRoute('app_admin_events');
+        }
+
+        return $this->render('admin/event_edit.html.twig', [
+            'event' => $event,
+            'form' => $form,
+        ]);
+    }
+    
+    #[Route('/events/{id}', name: 'app_admin_event_delete', methods: ['POST'])]
+    public function delete(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$event->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($event);
+            $entityManager->flush();
+            
+            $this->addFlash('success', 'Event deleted successfully!');
+        }
+
+        return $this->redirectToRoute('app_admin_events');
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/HomeController.php -----
+<?php
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+// Removed Route attribute, using routes.yaml
+
+class HomeController extends AbstractController
+{
+    public function index(): Response
+    {
+        return $this->render('home/index.html.twig');
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/SecurityController.php -----
+<?php
+// src/Controller/SecurityController.php
+
+namespace App\Controller;
+
+use App\Entity\Utilisateur;
+use App\Repository\UtilisateurRepository; // Use the specific Repository
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse; // For redirects
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface; // Needed for manual token setting
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken; // Needed for manual token creation
+use Symfony\Component\Security\Csrf\CsrfToken; // Needed for CSRF check
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface; // Needed for CSRF check
+use Symfony\Component\Security\Http\SecurityRequestAttributes; // For LAST_USERNAME constant
+
+class SecurityController extends AbstractController
+{
+    // =========================================================================
+    // == MANUAL AUTHENTICATION IMPLEMENTATION (REVISED & CORRECTED)        ==
+    // =========================================================================
+    // == WARNING: This implements login/logout manually. While corrected to ==
+    // == integrate with Symfony's session context for authorization        ==
+    // == (#[IsGranted], access_control), it bypasses standard authenticators.==
+    // == Ensure thorough testing and understanding.                          ==
+    // =========================================================================
+
+    #[Route('/connexion', name: 'app_login', methods: ['GET', 'POST'])]
+    public function login(
+        Request $request,
+        UtilisateurRepository $userRepository, // Use specific repository
+        UserPasswordHasherInterface $passwordHasher,
+        CsrfTokenManagerInterface $csrfTokenManager,
+        TokenStorageInterface $tokenStorage,
+        SessionInterface $session
+    ): Response {
+        // --- Redirect if already logged in ---
+        // Check if a security token exists AND represents an authenticated user
+        if ($session->has('_security_main') && $tokenStorage->getToken()?->getUser() instanceof Utilisateur) {
+            $roles = $tokenStorage->getToken()->getRoleNames(); // Get roles from the active token
+            if (in_array('ROLE_ADMIN', $roles, true)) {
+                return $this->redirectToRoute('admin_dashboard'); // Use your actual route names
+            }
+            if (in_array('ROLE_PARTENAIRE', $roles, true)) {
+                return $this->redirectToRoute('app_partenaire_dashboard'); // Use your actual route names
+            }
+            if (in_array('ROLE_CLIENT', $roles, true)) {
+                return $this->redirectToRoute('client_dashboard'); // Use your actual route names
+            }
+            // Fallback if roles don't match expected dashboards
+            return $this->redirectToRoute('app_home');
+        }
+
+        $error = null;
+        // Get last username entered (if any) for pre-filling the form
+        $lastUsername = $request->getSession()->get(SecurityRequestAttributes::LAST_USERNAME);
+
+        if ($request->isMethod('POST')) {
+            $email = $request->request->get('email'); // Use '_username' as standard convention
+            $password = $request->request->get('password'); // Use '_password' as standard convention
+            $csrfToken = $request->request->get('_csrf_token');
+
+            // Store the submitted email in the session for pre-filling if login fails
+            $request->getSession()->set(SecurityRequestAttributes::LAST_USERNAME, $email);
+
+            // 1. CSRF Validation (CRITICAL for security)
+            $token = new CsrfToken('authenticate', $csrfToken);
+
+
+            // 2. Find User by Email
+            $user = $userRepository->findOneBy(['email' => $email]);
+
+            // 3. Validate User and Password
+            if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
+                $this->addFlash('error', 'Identifiants invalides.');
+                // Render the login form again
+                return $this->render('security/login.html.twig', [
+                    'last_username' => $email,
+                    'error' => 'Identifiants invalides.',
+                ]);
+            }
+
+            // --- If validation passes: MANUAL SESSION START & TOKEN CREATION ---
+
+            // 4. Create the Security Token
+            // 'main' MUST match the firewall name in security.yaml
+            $securityToken = new UsernamePasswordToken($user, 'main', $user->getRoles());
+
+            // 5. Manually set the token in the Token Storage for the current request
+            $tokenStorage->setToken($securityToken);
+
+            // 6. Manually store the token in the session for subsequent requests.
+            // This is the key part for making #[IsGranted], access_control, etc., work.
+            // Symfony's ContextListener should pick this up. Use the conventional key.
+            $session->set('_security_main', serialize($securityToken));
+
+            // 7. Regenerate session ID to prevent session fixation attacks
+            $session->migrate(true);
+
+            // 8. Clear the last username from session after successful login
+            $request->getSession()->remove(SecurityRequestAttributes::LAST_USERNAME);
+
+            $this->addFlash('success', 'Connexion réussie ! Bienvenue ' . $user->getPrenom() . '.');
+
+            // 9. Redirect based on role
+            $roles = $user->getRoles(); // Use roles from the user entity
+            if (in_array('ROLE_ADMIN', $roles, true)) {
+                return $this->redirectToRoute('admin_dashboard'); // Use your actual route names
+            } elseif (in_array('ROLE_PARTENAIRE', $roles, true)) {
+                return $this->redirectToRoute('app_partenaire_dashboard'); // Use your actual route names
+            } else { // Default for ROLE_CLIENT or ROLE_USER
+                return $this->redirectToRoute('client_dashboard'); // Use your actual route names
+            }
+        }
+
+        // --- Render the login form on GET request or if POST validation failed before step 4 ---
+        // Check for authentication errors stored by previous attempts (e.g., if using firewall exceptions)
+        // Note: With this fully manual approach, direct errors are less common here unless
+        // you explicitly throw Symfony security exceptions. Flash messages are primary.
+        // $authError = $request->getSession()->get(SecurityRequestAttributes::AUTHENTICATION_ERROR);
+        // if ($authError) {
+        //     $error = $authError->getMessageKey(); // Or getMessage()
+        //     $request->getSession()->remove(SecurityRequestAttributes::AUTHENTICATION_ERROR); // Clear error
+        //     $this->addFlash('error', $error); // Add as flash message
+        // }
+
+
+        return $this->render('security/login.html.twig', [
+            'last_username' => $lastUsername,
+            'error' => $error, // Pass any direct error message (though flash is preferred)
+        ]);
+    }
+
+    #[Route('/deconnexion', name: 'app_logout', methods: ['GET'])]
+    public function logout(
+        Request $request, // Request might be needed if clearing cookies etc.
+        TokenStorageInterface $tokenStorage,
+        SessionInterface $session
+    ): Response {
+        // MANUAL LOGOUT IMPLEMENTATION
+
+        // 1. Clear the security token from token storage for the current request
+        $tokenStorage->setToken(null);
+
+        // 2. Remove the security token from the session storage
+        $session->remove('_security_main');
+
+        // 3. Invalidate the entire session and regenerate CSRF token
+        // This clears all session data and generates a new session ID.
+        $session->invalidate();
+
+        $this->addFlash('success', 'Vous avez été déconnecté.');
+
+        // Redirect to homepage or login page
+        return $this->redirectToRoute('app_home');
+
+        // NOTE: Symfony's security.yaml 'logout' path configuration is NOT used here.
+        // The route '/deconnexion' directly triggers this manual logout action.
+        // Throwing an exception here is unnecessary and typically not done for logout.
+        // throw new \LogicException('This method should not be reached!');
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/TrottinetteController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Trottinette;
+use App\Form\TrottinetteType;
+use App\Repository\TrottinetteRepository;
+use App\Repository\UtilisateurRepository;
+use App\Service\DataFixturesService;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class TrottinetteController extends AbstractController
+{
+    private DataFixturesService $dataFixturesService;
+
+    public function __construct(DataFixturesService $dataFixturesService)
+    {
+        $this->dataFixturesService = $dataFixturesService;
+    }
+
+    #[Route('/trottinette', name: 'app_trottinette_index', methods: ['GET'])]
+    public function index(TrottinetteRepository $trottinetteRepository): Response
+    {
+        return $this->render('trottinette/index.html.twig', [
+            'trottinettes' => $trottinetteRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/new', name: 'app_trottinette_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): Response
+    {
+        $trottinette = new Trottinette();
+        
+        // Set default values
+        $defaultPointRelaisId = $this->dataFixturesService->getDefaultPointRelaisId();
+        $trottinette->setPointRelaisId($defaultPointRelaisId);
+        
+        $defaultUserId = $this->dataFixturesService->getDefaultUserId();
+        if ($defaultUserId) {
+            $utilisateur = $utilisateurRepository->find($defaultUserId);
+            if ($utilisateur) {
+                $trottinette->setUtilisateur($utilisateur);
+            }
+        }
+        
+        $form = $this->createForm(TrottinetteType::class, $trottinette);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+                $trottinette->setDateAjout(new \DateTime());
+                
+                try {
+                    $entityManager->persist($trottinette);
+                    $entityManager->flush();
+                    $this->addFlash('success', 'La trottinette a été ajoutée avec succès.');
+                    return $this->redirectToRoute('app_trottinette_index');
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Erreur lors de l\'ajout de la trottinette: ' . $e->getMessage());
+                }
+            }
+            // Supprimez tout le bloc else avec les validations manuelles
+            // Symfony gère déjà ces erreurs automatiquement
+        }
+
+        return $this->render('trottinette/new.html.twig', [
+            'trottinette' => $trottinette,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_trottinette_show', methods: ['GET'])]
+    public function show(Trottinette $trottinette): Response
+    {
+        return $this->render('trottinette/show.html.twig', [
+            'trottinette' => $trottinette,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_trottinette_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Trottinette $trottinette, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): Response
+    {
+        $form = $this->createForm(TrottinetteType::class, $trottinette);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+                try {
+                    $entityManager->flush();
+                    $this->addFlash('success', 'La trottinette a été modifiée avec succès.');
+                    return $this->redirectToRoute('app_trottinette_index');
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Erreur lors de la modification de la trottinette: ' . $e->getMessage());
+                }
+            }
+        }    
+        return $this->render('trottinette/edit.html.twig', [
+            'trottinette' => $trottinette,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_trottinette_delete', methods: ['POST'])]
+    public function delete(Request $request, Trottinette $trottinette, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$trottinette->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($trottinette);
+            $entityManager->flush();
+            $this->addFlash('success', 'La trottinette a été supprimée avec succès.');
+        }
+
+        return $this->redirectToRoute('app_trottinette_index');
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/EventController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Event;
+use App\Entity\Participation;
+use App\Entity\Utilisateur;
+use App\Enum\ParticipationStatus;
+use App\Form\EventType;
+use App\Repository\EventRepository;
+use App\Repository\ParticipationRepository; // Make sure this is injected
+use App\Repository\UtilisateurRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\RedirectResponse; // Added for redirects
+
+#[Route('/event')]
+class EventController extends AbstractController
+{
+    // Inject ParticipationRepository in the constructor if it's used in multiple methods often
+    private ParticipationRepository $participationRepository;
+    private EntityManagerInterface $entityManager;
+
+    public function __construct(ParticipationRepository $participationRepository, EntityManagerInterface $entityManager)
+    {
+        $this->participationRepository = $participationRepository;
+        $this->entityManager = $entityManager;
+    }
+
+    #[Route('/', name: 'app_event_index', methods: ['GET'])]
+    public function index(EventRepository $eventRepository): Response
+    {
+        // Consider showing upcoming events by default for a better user experience
+        return $this->render('event/index.html.twig', [
+            'events' => $eventRepository->findUpcomingEvents(), // Or findAll() if intended
+        ]);
+    }
+
+    #[Route('/new', name: 'app_event_new', methods: ['GET', 'POST'])]
+    public function new(Request $request): Response // EntityManager injected via constructor
+    {
+        $event = new Event();
+        // $event->setStatut('active'); // This 'active' status seems incorrect based on the entity enum/choices ('A_VENIR', etc.)
+        $event->setStatut('A_VENIR'); // Set a valid default status
+
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->entityManager->persist($event);
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Événement créé avec succès.');
+            return $this->redirectToRoute('app_event_index');
+        }
+
+        return $this->render('event/new.html.twig', [
+            'event' => $event,
+            'form' => $form->createView(), // Pass form view
+        ]);
+    }
+
+    #[Route('/{id}/participate', name: 'app_event_participate', methods: ['POST'])]
+    public function participate(Request $request, Event $event, UtilisateurRepository $utilisateurRepository): Response // EntityManager injected via constructor
+    {
+        // WARNING: No security check! Relies on getUser() or fallback.
+        $user = $this->getUser();
+        if (!$user) {
+            // Using the fallback test user logic from your original code
+            $user = $utilisateurRepository->findOneBy(['email' => 'test@example.com']);
+            if (!$user) {
+                // Create a default test user for participation testing
+                $user = new Utilisateur();
+                $user->setEmail('test@example.com');
+                $user->setNom('Test');
+                $user->setPrenom('User');
+                // Note: Password hashing should ideally use the PasswordHasher service
+                $user->setPassword(password_hash('test1234', PASSWORD_DEFAULT)); // Use default hash
+                $user->setRoleInterne('client'); // Use setRoleInterne
+                $user->setTelephone('0123456789'); // Required field in database
+                $user->setIsVerified(true); // Assume verified for test
+                $this->entityManager->persist($user);
+                $this->entityManager->flush();
+            }
+        }
+
+        // Check if user already actively registered
+        $activeParticipation = $this->participationRepository->findOneBy([
+            'event' => $event,
+            'utilisateur' => $user,
+            'statut' => ParticipationStatus::INSCRIT
+        ]);
+
+        if ($activeParticipation) {
+            $this->addFlash('warning', 'Vous êtes déjà inscrit à cet événement.');
+            return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+        }
+
+        // Check if user has a cancelled registration for this event
+        $cancelledParticipation = $this->participationRepository->findOneBy([
+            'event' => $event,
+            'utilisateur' => $user,
+            'statut' => ParticipationStatus::ANNULE
+        ]);
+
+        if ($cancelledParticipation) {
+            // Reactivate the cancelled participation
+            $cancelledParticipation->setStatut(ParticipationStatus::INSCRIT);
+            $cancelledParticipation->setDateInscription(new \DateTime()); // Update inscription date
+            $this->entityManager->persist($cancelledParticipation);
+            $this->addFlash('success', 'Votre inscription a été réactivée !');
+        } else {
+            // Create a new participation if none exists (active or cancelled)
+            $participation = new Participation();
+            // WARNING: Using potentially non-unique ID. Database composite key (eventId, userId) is preferred.
+            $participation->setId($event->getId() . '-' . $user->getId());
+            $participation->setEvent($event);
+            $participation->setUtilisateur($user);
+            $participation->setDateInscription(new \DateTime());
+            $participation->setStatut(ParticipationStatus::INSCRIT);
+            $this->entityManager->persist($participation);
+            $this->addFlash('success', 'Vous êtes maintenant inscrit à cet événement !');
+        }
+
+        $this->entityManager->flush();
+
+        return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+    }
+
+    // --- Added Action to Cancel Participation ---
+    #[Route('/{id}/cancel-participation', name: 'app_event_cancel_participation', methods: ['POST'])]
+    public function cancelParticipation(Request $request, Event $event, UtilisateurRepository $utilisateurRepository): Response // EntityManager injected via constructor
+    {
+        // WARNING: No security check!
+        $user = $this->getUser();
+        if (!$user) {
+            // Using the fallback test user logic from your original code (less ideal for cancel)
+            $user = $utilisateurRepository->findOneBy(['email' => 'test@example.com']);
+            if (!$user) {
+                $this->addFlash('warning', 'Utilisateur non trouvé pour annuler la participation.');
+                return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+            }
+        }
+
+        // Find the ACTIVE participation to cancel
+        $participation = $this->participationRepository->findOneBy([
+            'event' => $event,
+            'utilisateur' => $user,
+            'statut' => ParticipationStatus::INSCRIT // Only cancel if currently 'INSCRIT'
+        ]);
+
+        if (!$participation) {
+            $this->addFlash('warning', 'Vous n\'êtes pas activement inscrit à cet événement.');
+            return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+        }
+
+        // Change status to Cancelled
+        $participation->setStatut(ParticipationStatus::ANNULE);
+        $this->entityManager->persist($participation); // Persist the change
+        $this->entityManager->flush();
+
+        $this->addFlash('success', 'Votre participation à l\'événement a été annulée.');
+        return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+    }
+    // --- End Added Action ---
+
+
+    #[Route('/{id}', name: 'app_event_show', methods: ['GET'])]
+    public function show(Event $event): Response // ParticipationRepository injected via constructor
+    {
+        $user = $this->getUser();
+        $user_participation = null;
+        if ($user instanceof Utilisateur) {
+            // Find specific participation (active or cancelled) for this user/event
+            $user_participation = $this->participationRepository->findOneBy(['event' => $event, 'utilisateur' => $user]);
+        }
+
+        return $this->render('event/show.html.twig', [
+            'event' => $event,
+            // Pass the specific participation object (or null) to the template
+            'user_participation' => $user_participation
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_event_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Event $event): Response // EntityManager injected via constructor
+    {
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Événement mis à jour.');
+            // Redirect back to the show page or index
+            return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+        }
+
+        return $this->render('event/edit.html.twig', [
+            'event' => $event,
+            'form' => $form->createView(), // Pass form view
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_event_delete', methods: ['POST'])]
+    public function delete(Request $request, Event $event): Response // EntityManager injected via constructor
+    {
+        // WARNING: Original code has Csrf check but redirects to admin dashboard.
+        // Keeping the CSRF check as it's good practice, even if other security is removed.
+        // Redirecting to event index instead of admin dashboard.
+        // Also, need to handle deletion of related participations.
+        if ($this->isCsrfTokenValid('delete_event_'.$event->getId(), $request->request->get('_token'))) {
+
+            // Manually remove participations before removing event (if cascade={"remove"} isn't set or doesn't work)
+            $participations = $this->participationRepository->findBy(['event' => $event]);
+            foreach ($participations as $participation) {
+                $this->entityManager->remove($participation);
+            }
+            // Flush removals if necessary, though often can be done in one flush
+            // $this->entityManager->flush();
+
+            $this->entityManager->remove($event);
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Événement supprimé.');
+        } else {
+            $this->addFlash('danger', 'Action invalide (CSRF token mismatch).');
+            return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]); // Redirect back if token fails
+        }
+
+        return $this->redirectToRoute('app_event_index'); // Redirect to event list
+    }
+
+    #[Route('/{id}/participants', name: 'app_event_participants', methods: ['GET'])]
+    public function participants(Event $event): Response // ParticipationRepository injected via constructor
+    {
+        // This action remains the same, just lists participants.
+        $participants = $this->participationRepository->findByEvent($event);
+
+        // Render the view for showing participants (assuming this view exists and is correct)
+        return $this->render('event/participants.html.twig', [
+            'event' => $event,
+            'participants' => $participants,
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/TrottinetteController.php -----
+<?php
+
+// src/Controller/Admin/TrottinetteController.php
+namespace App\Controller\Admin;
+
+use App\Entity\Trottinette;
+use App\Form\TrottinetteFilterType;
+use App\Repository\TrottinetteRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route('/admin/trottinettes')]
+class TrottinetteController extends AbstractController
+{
+    #[Route('/', name: 'admin_trottinette_index')]
+    public function index(Request $request, TrottinetteRepository $repository)
+    {
+        $filterForm = $this->createForm(TrottinetteFilterType::class);
+        $filterForm->handleRequest($request);
+
+        $trottinettes = $repository->findByCriteria(
+            $filterForm->getData(),
+            $request->query->getInt('page', 1),
+            15
+        );
+
+        return $this->render('admin/trottinette/index.html.twig', [
+            'trottinettes' => $trottinettes,
+            'filterForm' => $filterForm->createView(),
+        ]);
+    }
+
+    // CRUD actions...
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/EventController.php -----
+<?php
+
+namespace App\Controller\Admin;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class EventController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/DashboardController.php -----
+<?php
+// src/Controller/Admin/DashboardController.php
+namespace App\Controller\Admin;
+
+use App\Repository\EventRepository;
+use App\Repository\UtilisateurRepository;
+use App\Repository\TrottinetteRepository;
+use App\Repository\ReservationRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[Route('/admin')]
+#[IsGranted('ROLE_ADMIN')]
+class DashboardController extends AbstractController
+{
+    #[Route('/', name: 'admin_dashboard')]
+    public function dashboard(
+        UtilisateurRepository $userRepo,
+        TrottinetteRepository $trottinetteRepo,
+        ReservationRepository $reservationRepo,
+        EventRepository $eventRepository
+    ) {
+        $events = $eventRepository->findAll();
+
+        $eventData = [];
+        foreach ($events as $event) {
+            $eventData[] = [
+                'event' => $event,
+                'participantCount' => $event->getParticipations()->count()
+            ];
+        }
+
+        return $this->render('admin/dashboard.html.twig', [
+            'eventData' => $eventData,
+            'user_count' => $userRepo->count([]),
+            'trottinette_count' => $trottinetteRepo->count([]),
+            'reservation_count' => $reservationRepo->count([]),
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/ReservationController.php -----
+<?php
+
+namespace App\Controller\Admin;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class ReservationController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/UtilisateurController.php -----
+<?php
+// src/Controller/Admin/UtilisateurController.php
+namespace App\Controller\Admin;
+
+use App\Entity\Utilisateur;
+use App\Form\AdminUserType; // Use the specific Admin form
+use App\Form\UserFilterType; // Use the filter form
+use App\Repository\UtilisateurRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[Route('/admin/utilisateurs')] // Base route for admin user management
+#[IsGranted('ROLE_ADMIN')] // Ensure only admins can access
+class UtilisateurController extends AbstractController
+{
+    private UserPasswordHasherInterface $passwordHasher;
+    private EntityManagerInterface $entityManager;
+
+    public function __construct(UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager)
+    {
+        $this->passwordHasher = $passwordHasher;
+        $this->entityManager = $entityManager;
+    }
+
+    #[Route('/', name: 'admin_utilisateur_index', methods: ['GET'])]
+    public function index(Request $request, UtilisateurRepository $utilisateurRepository): Response
+    {
+        $filterForm = $this->createForm(UserFilterType::class);
+        $filterForm->handleRequest($request);
+
+        $pagination = $utilisateurRepository->findByCriteria(
+            $filterForm->isSubmitted() && $filterForm->isValid() ? $filterForm->getData() : [],
+            $request->query->getInt('page', 1),
+            15 // Items per page
+        );
+
+        return $this->render('admin/utilisateur/index.html.twig', [
+            'pagination' => $pagination, // Pass the Paginator object
+            'filterForm' => $filterForm->createView(),
+        ]);
+    }
+
+    #[Route('/new', name: 'admin_utilisateur_new', methods: ['GET', 'POST'])]
+    public function new(Request $request): Response
+    {
+        $utilisateur = new Utilisateur();
+        // Set default role if needed, e.g., $utilisateur->setRoleInterne('client');
+        $form = $this->createForm(AdminUserType::class, $utilisateur);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Handle password
+            $plainPassword = $form->get('plainPassword')->getData();
+            if (!empty($plainPassword)) {
+                $hashedPassword = $this->passwordHasher->hashPassword(
+                    $utilisateur,
+                    $plainPassword
+                );
+                $utilisateur->setPassword($hashedPassword);
+            } else {
+                // Handle case where password is required for new user but left empty
+                // This shouldn't happen if constraints are set, but good practice
+                $this->addFlash('danger', 'Le mot de passe est obligatoire pour un nouvel utilisateur.');
+                return $this->render('admin/utilisateur/new.html.twig', [
+                    'utilisateur' => $utilisateur,
+                    'form' => $form->createView(),
+                ]);
+            }
+
+            // Set default verification status if needed, e.g., $utilisateur->setIsVerified(true);
+            // Or trigger verification email flow
+
+            $this->entityManager->persist($utilisateur);
+            $this->entityManager->flush();
+
+            $this->addFlash('success', 'Utilisateur créé avec succès.');
+
+            return $this->redirectToRoute('admin_utilisateur_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('admin/utilisateur/new.html.twig', [
+            'utilisateur' => $utilisateur,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'admin_utilisateur_show', methods: ['GET'])]
+    public function show(Utilisateur $utilisateur): Response
+    {
+        // Prevent admins from showing their own profile via this route? Optional.
+        // if ($utilisateur === $this->getUser()) { ... }
+
+        return $this->render('admin/utilisateur/show.html.twig', [
+            'utilisateur' => $utilisateur,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'admin_utilisateur_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Utilisateur $utilisateur): Response
+    {
+        // Prevent admins from editing their own profile via this route? Optional.
+        //if ($utilisateur === $this->getUser()) {
+        //   $this->addFlash('warning', 'Pour modifier votre propre profil, utilisez la section Mon Profil.');
+        //   return $this->redirectToRoute('admin_utilisateur_index');
+        //}
+
+        $form = $this->createForm(AdminUserType::class, $utilisateur);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Handle password update ONLY if a new one was entered
+            $plainPassword = $form->get('plainPassword')->getData();
+            if (!empty($plainPassword)) {
+                $hashedPassword = $this->passwordHasher->hashPassword(
+                    $utilisateur,
+                    $plainPassword
+                );
+                $utilisateur->setPassword($hashedPassword);
+            }
+
+            $this->entityManager->flush();
+
+            $this->addFlash('success', 'Utilisateur mis à jour avec succès.');
+
+            return $this->redirectToRoute('admin_utilisateur_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('admin/utilisateur/edit.html.twig', [
+            'utilisateur' => $utilisateur,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'admin_utilisateur_delete', methods: ['POST'])]
+    public function delete(Request $request, Utilisateur $utilisateur): Response
+    {
+        // Prevent admins from deleting themselves
+        if ($utilisateur === $this->getUser()) {
+            $this->addFlash('danger', 'Vous ne pouvez pas supprimer votre propre compte administrateur.');
+            return $this->redirectToRoute('admin_utilisateur_index');
+        }
+
+        if ($this->isCsrfTokenValid('delete'.$utilisateur->getId(), $request->request->get('_token'))) {
+            try {
+                $this->entityManager->remove($utilisateur);
+                $this->entityManager->flush();
+                $this->addFlash('success', 'Utilisateur supprimé avec succès.');
+            } catch (\Exception $e) {
+                // Catch potential DB constraint issues if user has related records
+                $this->addFlash('danger', 'Impossible de supprimer l\'utilisateur. Il est peut-être lié à d\'autres enregistrements (réservations, etc.). Détails: ' . $e->getMessage());
+            }
+        } else {
+            $this->addFlash('danger', 'Token CSRF invalide.');
+        }
+
+
+        return $this->redirectToRoute('admin_utilisateur_index', [], Response::HTTP_SEE_OTHER);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/PointRelaisController.php -----
+<?php
+
+namespace App\Controller\Admin;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class PointRelaisController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/MaintenanceController.php -----
+<?php
+
+namespace App\Controller\Admin;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MaintenanceController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Admin/ReclamationController.php -----
+<?php
+
+namespace App\Controller\Admin;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class ReclamationController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/RegistrationController.php -----
+<?php
+namespace App\Controller;
+
+use App\Entity\Utilisateur;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface; // Still useful for hashing
+use Symfony\Component\Validator\Validator\ValidatorInterface; // Use Validator component
+use App\Form\RegistrationFormType;
+
+class RegistrationController extends AbstractController
+{
+    public function register(Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        // !!! WARNING: INSECURE REGISTRATION !!!
+        // Lacks email verification, proper error handling, CSRF protection (if not using Form component fully) etc.
+
+        $user = new Utilisateur();
+        $form = $this->createForm(RegistrationFormType::class, $user);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            // Get password from form data (not mapped directly)
+            $plainPassword = $form->get('plainPassword')->getData();
+
+            if (empty($plainPassword)) {
+                // Add validation error manually if needed, though RepeatedType handles mismatch
+                $this->addFlash('danger', 'Le mot de passe ne peut pas être vide.');
+                return $this->render('registration/register.html.twig', [
+                    'registrationForm' => $form->createView(),
+                ]);
+            }
+
+            // Hash password using PHP's native functions or the Hasher service
+            // $hashedPassword = password_hash($plainPassword, PASSWORD_BCRYPT);
+            // Or use Symfony's hasher for consistency if available
+            $hashedPassword = $passwordHasher->hashPassword($user, $plainPassword);
+            $user->setPassword($hashedPassword);
+
+
+            // Persist the user
+            try {
+                $entityManager->persist($user);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Inscription réussie ! Vous pouvez maintenant vous connecter (simulation).');
+                // Redirect to login (no auto-login here)
+                return $this->redirectToRoute('app_login');
+
+            } catch (\Exception $e) {
+                // Catch potential database errors (like unique email constraint)
+                $this->addFlash('danger', 'Erreur lors de l\'inscription: ' . $e->getMessage());
+            }
+
+        } elseif ($form->isSubmitted()) {
+            // Form is submitted but not valid
+            $this->addFlash('danger', 'Le formulaire contient des erreurs. Veuillez vérifier les champs.');
+        }
+
+        return $this->render('registration/register.html.twig', [
+            'registrationForm' => $form->createView(),
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/ReservationController.php -----
+<?php
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use App\Repository\ReservationRepository;
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Reservation;
+use App\Form\ReservationType;
+
+#[Route('/reservations')]
+final class ReservationController extends AbstractController
+{
+    #[Route('/', name: 'reservation_index', methods: ['GET'])]
+    public function index(ReservationRepository $reservationRepository): Response
+    {
+        return $this->render('reservation/index.html.twig', [
+            'reservations' => $reservationRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/new', name: 'reservation_new', methods: ['GET', 'POST'])]
+public function new(Request $request, EntityManagerInterface $em): Response
+{
+    $reservation = new Reservation();
+    $form = $this->createForm(ReservationType::class, $reservation);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        $em->persist($reservation);
+        $em->flush();
+    
+        $this->addFlash('success', 'Réservation créée avec succès.');
+        return $this->redirectToRoute('reservation_index', [], Response::HTTP_SEE_OTHER);
+    }
+    
+    if ($form->isSubmitted() && !$form->isValid()) {
+        $this->addFlash('danger', 'Le formulaire contient des erreurs. Veuillez corriger les champs.');
+    }
+    
+
+    return $this->render('reservation/new.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
+
+#[Route('/{id}', name: 'reservation_show', methods: ['GET'])]
+public function show(Reservation $reservation): Response
+{
+    return $this->render('reservation/show.html.twig', [
+        'reservation' => $reservation,
+    ]);
+}
+
+#[Route('/{id}/edit', name: 'reservation_edit', methods: ['GET', 'POST'])]
+public function edit(Request $request, Reservation $reservation, EntityManagerInterface $em): Response
+{
+    $form = $this->createForm(ReservationType::class, $reservation);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        $em->flush();
+
+        $this->addFlash('success', 'Réservation mise à jour.');
+        return $this->redirectToRoute('reservation_index');
+    }
+
+    return $this->render('reservation/edit.html.twig', [
+        'reservation' => $reservation,
+        'form' => $form->createView(),
+    ]);
+}
+
+#[Route('/{id}', name: 'reservation_delete', methods: ['POST'])]
+public function delete(Request $request, Reservation $reservation, EntityManagerInterface $em): Response
+{
+    if ($this->isCsrfTokenValid('delete'.$reservation->getId(), $request->request->get('_token'))) {
+        $em->remove($reservation);
+        $em->flush();
+
+        $this->addFlash('success', 'Réservation supprimée.');
+    }
+
+    return $this->redirectToRoute('reservation_index');
+}
+
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/FrontController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Reclamation;
+use App\Form\ReclamationType;
+use App\Repository\ReclamationRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class FrontController extends AbstractController
+{
+    #[Route('/', name: 'app_home')]
+    public function index(): Response
+    {
+        return $this->render('index.html.twig');
+    }
+
+    // Route pour créer une réclamation
+    #[Route('/reclamation/create', name: 'reclamation/create_reclamation')]
+    public function createReclamation(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $reclamation = new Reclamation();
+        $form = $this->createForm(ReclamationType::class, $reclamation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($reclamation);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Réclamation créée avec succès.');
+            return $this->redirectToRoute('reclamation_list');
+        }
+
+        return $this->render('reclamation/create_reclamation.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    // Liste des réclamations
+    #[Route('/reclamations', name: 'reclamation_list')]
+    public function listReclamations(ReclamationRepository $repo): Response
+    {
+        $reclamations = $repo->findBy([], ['date_creation' => 'DESC']);
+        return $this->render('reclamation/list_reclamations.html.twig', [
+            'reclamations' => $reclamations,
+        ]);
+    }
+
+    // Afficher une réclamation
+    #[Route('/reclamations/{id}', name: 'show_reclamation')]
+    public function showReclamation(Reclamation $reclamation): Response
+    {
+        return $this->render('reclamation/show_reclamation.html.twig', [
+            'reclamation' => $reclamation,
+            'reponses' => $reclamation->getReponses(),
+        ]);
+    }
+
+    // ✅ Modifier une réclamation côté Front
+    #[Route('/reclamation/{id}/edit', name: 'edit_reclamation_front')]
+    public function editReclamationFront(
+        int $id,
+        ReclamationRepository $reclamationRepository,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $reclamation = $reclamationRepository->find($id);
+
+        if (!$reclamation) {
+            $this->addFlash('error', 'Réclamation introuvable.');
+            return $this->redirectToRoute('reclamation_list');
+        }
+
+        $form = $this->createForm(ReclamationType::class, $reclamation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', 'Réclamation modifiée avec succès.');
+            return $this->redirectToRoute('reclamation_list');
+        }
+
+        return $this->render('reclamation/edit_reclamation.html.twig', [
+            'form' => $form->createView(),
+            'reclamation' => $reclamation,
+        ]);
+    }
+
+    // ✅ Supprimer une réclamation côté Front
+    #[Route('/reclamation/{id}/delete', name: 'delete_reclamation_front')]
+    public function deleteReclamationFront(
+        int $id,
+        ReclamationRepository $reclamationRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $reclamation = $reclamationRepository->find($id);
+
+        if (!$reclamation) {
+            $this->addFlash('error', 'Réclamation introuvable.');
+            return $this->redirectToRoute('reclamation_list');
+        }
+
+        $entityManager->remove($reclamation);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Réclamation supprimée avec succès.');
+        return $this->redirectToRoute('reclamation_list');
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Public/HomeController.php -----
+<?php
+namespace App\Controller\Public; // Correct Namespace
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use App\Repository\EventRepository; // Example: Inject repo if needed
+
+class HomeController extends AbstractController
+{
+    #[Route('/', name: 'app_home')]
+    public function index(EventRepository $eventRepository): Response
+    {
+        // Example: Fetch upcoming events for the homepage
+        $upcomingEvents = $eventRepository->findBy(
+            ['statut' => 'A_VENIR'], // Assuming 'A_VENIR' is the status string/enum value
+            ['dateDebut' => 'ASC'],
+            3 // Limit to 3
+        );
+
+        return $this->render('public/home/index.html.twig', [
+            'upcoming_events' => $upcomingEvents,
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Public/EventController.php -----
+<?php
+
+namespace App\Controller\Public;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class EventController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Public/RegistrationController.php -----
+<?php
+
+namespace App\Controller\Public;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class RegistrationController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Public/ResetPasswordController.php -----
+<?php
+
+namespace App\Controller\Public;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class ResetPasswordController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Partenaire/TrottinetteController.php -----
+<?php
+
+namespace App\Controller\Partenaire;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class TrottinetteController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Partenaire/DashboardController.php -----
+<?php
+// src/Controller/Partenaire/DashboardController.php
+namespace App\Controller\Partenaire;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+// You might inject repositories here later if you need stats
+ use App\Repository\TrottinetteRepository;
+ use App\Repository\EventRepository;
+
+#[Route('/partenaire')]
+// IMPORTANT: Apply security HERE at the controller level, not on individual links in Twig
+#[IsGranted('ROLE_PARTENAIRE')]
+class DashboardController extends AbstractController
+{
+    #[Route('/dashboard', name: 'app_partenaire_dashboard')]
+    public function index(
+        // Inject repositories if needed for stats later
+         TrottinetteRepository $trottinetteRepository,
+         EventRepository $eventRepository
+    ): Response
+    {
+        $partenaire = $this->getUser(); // Get the logged-in partner
+
+        // Example: Fetch stats later
+         $trottinettesCount = $trottinetteRepository->count(['utilisateur' => $partenaire]);
+//         $eventsCount = $eventRepository->count(['organisateur' => $partenaire]); // Assuming an 'organisateur' field
+
+        return $this->render('partenaire/dashboard/index.html.twig', [
+            'controller_name' => 'PartenaireDashboardController',
+            'partenaire' => $partenaire,
+            // Pass stats later:
+             'trottinettes_count' => $trottinettesCount,
+//             'events_count' => $eventsCount,
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Partenaire/MaintenanceController.php -----
+<?php
+
+namespace App\Controller\Partenaire;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MaintenanceController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/PointRelaisController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\PointRelais;
+use App\Form\PointRelaisType;
+use App\Repository\PointRelaisRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+
+#[Route('/point-relais')]
+final class PointRelaisController extends AbstractController
+{
+    #[Route('/', name: 'point_relais_index', methods: ['GET'])]
+    public function index(PointRelaisRepository $pointRelaisRepository): Response
+    {
+        return $this->render('point_relais/index.html.twig', [
+            'point_relais' => $pointRelaisRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/new', name: 'point_relais_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $em): Response
+    {
+        $pointRelais = new PointRelais();
+        $form = $this->createForm(PointRelaisType::class, $pointRelais);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->persist($pointRelais);
+            $em->flush();
+
+            $this->addFlash('success', 'Point relais créé avec succès.');
+            return $this->redirectToRoute('point_relais_index');
+        }
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('danger', 'Le formulaire contient des erreurs. Veuillez corriger les champs.');
+        }
+
+        return $this->render('point_relais/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'point_relais_show', methods: ['GET'])]
+    public function show(PointRelais $pointRelais): Response
+    {
+        return $this->render('point_relais/show.html.twig', [
+            'point_relais' => $pointRelais,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'point_relais_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, PointRelais $pointRelais, EntityManagerInterface $em): Response
+    {
+        $form = $this->createForm(PointRelaisType::class, $pointRelais);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+            $this->addFlash('success', 'Point relais mis à jour avec succès.');
+
+            return $this->redirectToRoute('point_relais_index');
+        }
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('danger', 'Le formulaire contient des erreurs. Veuillez corriger les champs.');
+        }
+        
+        return $this->render('point_relais/edit.html.twig', [
+            'form' => $form->createView(),
+            'point_relais' => $pointRelais,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'point_relais_delete', methods: ['POST'])]
+    public function delete(Request $request, PointRelais $pointRelais, EntityManagerInterface $em): Response
+    {
+        if ($this->isCsrfTokenValid('delete' . $pointRelais->getId(), $request->request->get('_token'))) {
+            $em->remove($pointRelais);
+            $em->flush();
+            $this->addFlash('success', 'Point relais supprimé.');
+        }
+
+        return $this->redirectToRoute('point_relais_index');
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/MaintenanceController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Maintenance;
+use App\Entity\Trottinette;
+use App\Enum\MaintenanceStatus;
+use App\Enum\TrottinetteStatus;
+use App\Form\MaintenanceType;
+use App\Repository\MaintenanceRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+#[Route('/admin/maintenance')]
+class MaintenanceController extends AbstractController
+{
+    #[Route('/', name: 'app_maintenance_index', methods: ['GET'])]
+    public function index(MaintenanceRepository $maintenanceRepository): Response
+    {
+        return $this->render('maintenance/index.html.twig', [
+            'maintenances' => $maintenanceRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/new', name: 'app_maintenance_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $maintenance = new Maintenance();
+        $form = $this->createForm(MaintenanceType::class, $maintenance);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Set the trottinette ID from the selected trottinette
+            if ($maintenance->getTrottinette()) {
+                $maintenance->setTrottinetteId($maintenance->getTrottinette()->getId());
+                
+                // Update trottinette status to EN_MAINTENANCE
+                $trottinette = $maintenance->getTrottinette();
+                $trottinette->setEtat(TrottinetteStatus::EN_MAINTENANCE);
+            }
+            
+            $entityManager->persist($maintenance);
+            $entityManager->flush();
+
+            // Add a flash message to confirm successful creation
+            $this->addFlash('success', 'La maintenance a été créée avec succès.');
+
+            return $this->redirectToRoute('app_maintenance_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->renderForm('maintenance/new.html.twig', [
+            'maintenance' => $maintenance,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_maintenance_show', methods: ['GET'])]
+    public function show(Maintenance $maintenance): Response
+    {
+        return $this->render('maintenance/show.html.twig', [
+            'maintenance' => $maintenance,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_maintenance_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Maintenance $maintenance, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(MaintenanceType::class, $maintenance);
+        
+        // Remove any code that might be setting form['cout']
+        // Remove any code that might be setting form['technicien']
+        
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Remove any code that might be setting maintenance.cout
+            // Remove any code that might be setting maintenance.technicien
+            
+            if ($maintenance->getStatut() === MaintenanceStatus::TERMINE) {
+                $trottinette = $maintenance->getTrottinette();
+                if ($trottinette) {
+                    $trottinette->setEtat(TrottinetteStatus::DISPONIBLE);
+                }
+            }
+            
+            $entityManager->flush();
+
+            // Add a flash message to confirm successful update
+            $this->addFlash('success', 'La maintenance a été mise à jour avec succès.');
+
+            return $this->redirectToRoute('app_maintenance_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->renderForm('maintenance/edit.html.twig', [
+            'maintenance' => $maintenance,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_maintenance_delete', methods: ['POST'])]
+    public function delete(Request $request, Maintenance $maintenance, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$maintenance->getId(), $request->request->get('_token'))) {
+            $trottinette = $maintenance->getTrottinette();
+            if ($trottinette && $trottinette->getEtat() === TrottinetteStatus::EN_MAINTENANCE) {
+                $trottinette->setEtat(TrottinetteStatus::DISPONIBLE);
+            }
+            
+            $entityManager->remove($maintenance);
+            $entityManager->flush();
+            $this->addFlash('success', 'La maintenance a été supprimée avec succès.');
+        }
+
+        return $this->redirectToRoute('app_maintenance_index');
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/PublicEventController.php -----
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Event;
+use App\Entity\Participation;
+use App\Entity\Utilisateur;
+use App\Enum\ParticipationStatus;
+use App\Repository\EventRepository;
+use App\Repository\UtilisateurRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class PublicEventController extends AbstractController
+{
+    #[Route('/', name: 'app_home')]
+    public function index(): Response
+    {
+        return $this->redirectToRoute('app_public_events');
+    }
+
+    #[Route('/events', name: 'app_public_events')]
+    public function events(EventRepository $eventRepository): Response
+    {
+        $upcomingEvents = $eventRepository->findUpcomingEvents();
+        $allEvents = $eventRepository->findAll();
+        
+        return $this->render('public/events.html.twig', [
+            'upcomingEvents' => $upcomingEvents,
+            'allEvents' => $allEvents,
+        ]);
+    }
+
+    #[Route('/events/{id}', name: 'app_public_event_show')]
+    public function show(Event $event): Response
+    {
+        return $this->render('public/event_show.html.twig', [
+            'event' => $event,
+        ]);
+    }
+
+    #[Route('/events/{id}/participate', name: 'app_public_event_participate', methods: ['POST'])]
+    public function participate(Request $request, Event $event, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            // Look for an existing test user
+            $user = $utilisateurRepository->findByEmail('test@example.com');
+            
+            if (!$user) {
+                // Create a default test user for participation testing
+                $user = new Utilisateur();
+                $user->setEmail('test@example.com');
+                $user->setNom('Test');
+                $user->setPrenom('User');
+                $user->setPassword('test123');
+                $user->setRole('client');
+                $user->setTelephone('0123456789');
+                $entityManager->persist($user);
+                $entityManager->flush();
+            }
+        }
+
+        // Check if user already registered
+        foreach ($event->getParticipations() as $participation) {
+            if ($participation->getUtilisateur() === $user && 
+                $participation->getStatut() === ParticipationStatus::INSCRIT) {
+                $this->addFlash('error', 'You are already registered for this event!');
+                return $this->redirectToRoute('app_public_event_show', ['id' => $event->getId()]);
+            }
+        }
+
+        $participation = new Participation();
+        $participation->setId(uniqid());
+        $participation->setEvent($event);
+        $participation->setUtilisateur($user);
+        $participation->setDateInscription(new \DateTime());
+        $participation->setStatut(ParticipationStatus::INSCRIT);
+
+        $entityManager->persist($participation);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'You have successfully registered for this event!');
+        return $this->redirectToRoute('app_public_event_show', ['id' => $event->getId()]);
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Client/DashboardController.php -----
+<?php
+// src/Controller/Client/DashboardController.php
+namespace App\Controller\Client;
+
+use App\Repository\TrottinetteRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Repository\EventRepository;
+use App\Repository\ParticipationRepository;
+
+#[Route('/client')]
+#[IsGranted('ROLE_USER')]
+class DashboardController extends AbstractController
+{
+    #[Route('/dashboard', name: 'client_dashboard')]
+    public function dashboard(
+        EventRepository $eventRepository,
+        ParticipationRepository $participationRepository
+    ): Response {
+        $user = $this->getUser();
+        $events = $eventRepository->findUpcomingEvents();
+        $participations = $participationRepository->findByUser($user);
+
+        $participatingEventIds = [];
+        foreach ($participations as $participation) {
+            $participatingEventIds[] = $participation->getEvent()->getId();
+        }
+
+        return $this->render('client/dashboard/index.html.twig', [
+            'events' => $events,
+            'participatingEventIds' => $participatingEventIds,
+            'utilisateur' => $user,
+
+        ]);
+    }
+
+    #[Route('/dashboard/qr-scan', name: 'client_qr_scan', methods: ['GET'])]
+    public function qrScan(): Response
+    {
+        return $this->render('client/dashboard/qr_scan.html.twig');
+    }
+
+    #[Route('/dashboard/map', name: 'client_map_display', methods: ['GET'])]
+    public function mapDisplay(TrottinetteRepository $trottiRepo): Response
+    {
+        $trottinettes = $trottiRepo->findAvailable();
+        return $this->render('client/dashboard/map.html.twig', [
+            'trottinettes' => $trottinettes,
+        ]);
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Client/ReservationController.php -----
+<?php
+
+namespace App\Controller\Client;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class ReservationController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Client/ProfileController.php -----
+<?php
+namespace App\Controller\Client;
+
+use App\Form\ProfileType; // Create this form
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface; // Optional for password change
+
+#[Route('/mon-profil')]
+#[IsGranted('ROLE_USER')]
+class ProfileController extends AbstractController
+{
+    #[Route('', name: 'app_client_profile_view')]
+    public function view(): Response
+    {
+        return $this->render('client/profile/view.html.twig', [
+            'utilisateur' => $this->getUser(),
+        ]);
+    }
+
+    #[Route('/edit', name: 'app_client_profile_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof \App\Entity\Utilisateur) {
+            return $this->redirectToRoute('app_login'); // Should not happen
+        }
+
+        $form = $this->createForm(ProfileType::class, $user); // Create ProfileType form
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Optional: Handle password change if included in ProfileType
+            // $plainPassword = $form->get('plainPassword')->getData();
+            // if ($plainPassword) {
+            //     $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
+            // }
+
+            $entityManager->flush();
+            $this->addFlash('success', 'Profil mis à jour avec succès.');
+            return $this->redirectToRoute('app_client_profile_view');
+        }
+
+        return $this->render('client/profile/edit.html.twig', [
+            'utilisateur' => $user,
+            'profileForm' => $form->createView(),
+        ]);
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Controller/Client/ReclamationController.php -----
+<?php
+
+namespace App\Controller\Client;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class ReclamationController extends AbstractController
+{
+    // TODO: actions
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Service/DataFixturesService.php -----
+<?php
+
+namespace App\Service;
+
+use App\Entity\PointRelais;
+use App\Entity\Utilisateur;
+use Doctrine\ORM\EntityManagerInterface;
+
+class DataFixturesService
+{
+    private EntityManagerInterface $entityManager;
+    
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+    
+    public function getOrCreateDefaultPointRelais(): PointRelais
+    {
+        // Try to find an existing default point relais
+        $pointRelais = $this->entityManager->getRepository(PointRelais::class)->find(1);
+        
+        // If none exists, create one
+        if (!$pointRelais) {
+            $pointRelais = new PointRelais();
+            $pointRelais->setNom('Point Relais par défaut');
+            $pointRelais->setAdresse('123 Rue Test');
+            $pointRelais->setLocalisation('Paris');
+            
+            // Use proper JSON format for horairesOuverture
+            $horaires = json_encode([
+                'lundi' => '09:00-18:00',
+                'mardi' => '09:00-18:00',
+                'mercredi' => '09:00-18:00',
+                'jeudi' => '09:00-18:00',
+                'vendredi' => '09:00-18:00'
+            ]);
+            $pointRelais->setHorairesOuverture($horaires);
+            
+            $this->entityManager->persist($pointRelais);
+            $this->entityManager->flush();
+        }
+        
+        return $pointRelais;
+    }
+    
+    public function getOrCreateDefaultUser(): ?Utilisateur
+    {
+        // Try to find an existing default user
+        $user = $this->entityManager->getRepository(Utilisateur::class)->find(1);
+        
+        // If none exists, create one
+        if (!$user) {
+            $user = new Utilisateur();
+            $user->setEmail('test@example.com');
+            $user->setNom('User');
+            $user->setPrenom('Test');
+            $user->setTelephone('0123456789');
+            $user->setPassword('password');  // In a real app, you'd hash this
+            $user->setRole('client');
+            
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+        }
+        
+        return $user;
+    }
+    
+    public function getDefaultPointRelaisId(): int
+    {
+        return $this->getOrCreateDefaultPointRelais()->getId();
+    }
+    
+    public function getDefaultUserId(): ?int
+    {
+        $user = $this->getOrCreateDefaultUser();
+        return $user ? $user->getId() : null;
+    }
+}
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Twig/AppExtension.php -----
+<?php
+
+namespace App\Twig;
+
+use App\Enum\GouvernoratEnum;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
+
+class AppExtension extends AbstractExtension
+{
+    public function getFilters()
+    {
+        return [
+            new TwigFilter('enum_value', [$this, 'getEnumValue']),
+        ];
+    }
+
+    public function getEnumValue($enum)
+    {
+        if ($enum instanceof GouvernoratEnum) {
+            return $enum->value;
+        }
+        
+        if (is_object($enum) && property_exists($enum, 'value')) {
+            return $enum->value;
+        }
+        
+        return (string) $enum;
+    }
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/src/Kernel.php -----
+<?php
+
+namespace App;
+
+use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Component\HttpKernel\Kernel as BaseKernel;
+
+class Kernel extends BaseKernel
+{
+    use MicroKernelTrait;
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/config/bundles.php -----
+<?php
+
+return [
+    Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],
+    Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class => ['all' => true],
+    Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle::class => ['all' => true],
+    Symfony\Bundle\DebugBundle\DebugBundle::class => ['dev' => true],
+    Symfony\Bundle\TwigBundle\TwigBundle::class => ['all' => true],
+    Symfony\Bundle\WebProfilerBundle\WebProfilerBundle::class => ['dev' => true, 'test' => true],
+    Symfony\UX\StimulusBundle\StimulusBundle::class => ['all' => true],
+    Symfony\UX\Turbo\TurboBundle::class => ['all' => true],
+    Twig\Extra\TwigExtraBundle\TwigExtraBundle::class => ['all' => true],
+    Symfony\Bundle\SecurityBundle\SecurityBundle::class => ['all' => true],
+    Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
+    Symfony\Bundle\MakerBundle\MakerBundle::class => ['dev' => true],
+    Symfony\WebpackEncoreBundle\WebpackEncoreBundle::class => ['all' => true],
+    SymfonyCasts\Bundle\ResetPassword\SymfonyCastsResetPasswordBundle::class => ['all' => true],
+    SymfonyCasts\Bundle\VerifyEmail\SymfonyCastsVerifyEmailBundle::class => ['all' => true],
+];
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/config/preload.php -----
+<?php
+
+if (file_exists(dirname(__DIR__).'/var/cache/prod/App_KernelProdContainer.preload.php')) {
+    require dirname(__DIR__).'/var/cache/prod/App_KernelProdContainer.preload.php';
+}
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/public/index.php -----
+<?php
+
+use App\Kernel;
+
+require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
+
+return function (array $context) {
+    return new Kernel($context['APP_ENV'], (bool) $context['APP_DEBUG']);
+};
+
+
+
+----- /Users/mac/PhpstormProjects/my_project_troti/public/css/custom.css -----
+/* simple helper palette */
+body { background:#f8fafc; }
+
+

@@ -1,0 +1,51 @@
+{# /Users/mac/Downloads/my_project_troti-vf/templates/admin/utilisateur/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Utilisateur : {{ utilisateur.prenom }} {{ utilisateur.nom }}{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+    <div class="container mx-auto max-w-3xl"> {# Centered form container #}
+
+        {# 1. Header #}
+        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-6">
+            Modifier l'Utilisateur #{{ utilisateur.id }} - <span class="font-normal text-lg text-gray-600">{{ utilisateur.prenom }} {{ utilisateur.nom }}</span>
+        </h1>
+
+        {# 2. Flash Messages #}
+        {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+        {# 3. Form Card - Include the Tailwind form partial #}
+        <div class="bg-white rounded-lg shadow p-6 md:p-8">
+            {# Pass the form, button label, and edit flag to the partial #}
+            {{ include('admin/utilisateur/_form.html.twig', {
+            'form': form,
+            'button_label': 'Mettre à jour',
+            'is_edit': true
+            }) }}
+        </div>
+
+
+        <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <a href="{{ path('admin_utilisateur_show', {'id': utilisateur.id}) }}" class="text-sm text-blue-600 hover:underline">
+                Voir le profil
+             </a>
+             <span class="hidden sm:inline text-gray-400">|</span>
+             <a href="{{ path('admin_utilisateur_index') }}" class="text-sm text-blue-600 hover:underline">
+                Retour à la liste des utilisateurs
+             </a>
+             {# Optional: Include delete form trigger here if preferred over show page #}
+
+             <span class="hidden sm:inline text-gray-400">|</span>
+             <form method="post" action="{{ path('admin_utilisateur_delete', {'id': utilisateur.id}) }}" onsubmit="return confirm('Supprimer cet utilisateur ?');" class="inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ utilisateur.id) }}"/>
+                <button type="submit" class="text-sm text-red-600 hover:underline hover:text-red-800 font-medium">Supprimer cet utilisateur</button>
+                </form>
+
+        </div>
+
+    </div> {# End Container #}
+</div> {# End Page Wrapper #}
+{% endblock %}
+
+{# Note: No separate stylesheets block needed here as the styles are in the included _form_tailwind partial or base.html.twig #}

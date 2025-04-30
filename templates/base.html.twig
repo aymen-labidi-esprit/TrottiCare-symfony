@@ -1,0 +1,58 @@
+{# templates/base.html.twig #}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale|split('_')[0]|default('en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TrottiCare{% endblock %}</title>
+
+    {# === Stylesheets === #}
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+
+    {# TailwindCSS CDN #}
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    {# Bootstrap Icons #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+
+    {# FontAwesome #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    {# Your custom CSS (optional) #}
+    <link rel="stylesheet" href="{{ asset('css/main.css') }}">
+
+    {# Leaflet CSS for maps #}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="..." crossorigin=""/>
+
+    {% block stylesheets %}{% endblock %}
+
+    {# Optional extra styles #}
+    <style>
+        body { font-family: system-ui, sans-serif; }
+        #map-container { height: 400px; background-color: #e5e7eb; }
+        .leaflet-control-container .leaflet-control { background: white; box-shadow: 0 1px 5px rgba(0,0,0,0.4); border-radius: 4px; }
+        .leaflet-control-zoom a { color: black; }
+    </style>
+</head>
+
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+
+<div id="root" style="display: flex; flex-direction: column; flex-grow: 1;">
+    {% include '_header.html.twig' %}
+    <div class="page-content" style="flex-grow: 1;">
+        {% block body %}{% endblock %}
+    </div>
+    {% include '_footer.html.twig' %}
+</div>
+
+{# === JavaScript === #}
+{# Leaflet.js for map features #}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="..." crossorigin=""></script>
+
+{# ✅ Bootstrap JavaScript Bundle #}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+{% block javascripts %}{% endblock %}
+
+</body>
+</html>

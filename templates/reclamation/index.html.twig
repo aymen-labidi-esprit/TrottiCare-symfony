@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Trotticare Events - Home{% endblock %}
+
+{% block body %}
+    <div class="progress-bar"></div>
+
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 fade-in" style="animation-delay: 0.2s;">
+                    <h1 class="hero-title text-gradient">Trotticare Events</h1>
+                    <p class="hero-subtitle typing-animation"
+                       data-text='["Join Our Scooter Adventures!", "Explore The City Together!", "Experience The Freedom!"]'
+                       data-speed="100" data-loop="true"></p>
+                    <p class="mb-4 slide-up" style="animation-delay: 0.4s;">
+                        Join our electric scooter community and participate in exciting events around the city.
+                        Discover new routes, meet fellow enthusiasts, and enjoy the ride together!
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 slide-up" style="animation-delay: 0.6s;">
+                        <a href="#" class="btn btn-primary btn-lg btn-ripple">View Events</a>
+                        <a href="#" class="btn btn-outline-primary btn-lg">Sign Up</a>
+                        <a href="{{ path('create_reclamation') }}" class="btn btn-warning btn-lg">Créer une réclamation</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0 slide-in-right" style="animation-delay: 0.4s;">
+                    <img src="{{ asset('images/hero-scooter.png') }}" alt="Electric Scooter" class="img-fluid float">
+                </div>
+            </div>
+        </div>
+        <div class="particle-container"></div>
+    </section>
+{% endblock %}

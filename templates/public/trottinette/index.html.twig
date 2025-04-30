@@ -1,0 +1,100 @@
+{# templates/public/trottinette/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos Trottinettes - TrottiCare{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Optional: Add FontAwesome if not globally included #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% endblock %}
+
+{% block body %}
+    <div class="container mx-auto px-4 py-8 md:py-12 page-content">
+
+        <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center section-title">
+            <i class="fas fa-motorcycle me-2"></i> Nos Trottinettes
+        </h1>
+
+        {# Filter and Sort Form - Use GET method #}
+        <form method="get" action="{{ path('public_trottinette_index') }}" class="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200 filter-controls">
+            <div class="row g-3 align-items-end"> {# Use Bootstrap grid classes or adapt with CSS #}
+                {# Search Input #}
+                <div class="col-md-4">
+                    <label for="search-input" class="form-label text-sm font-medium text-gray-600">Rechercher</label>
+                    <input type="search" id="search-input" name="search" class="form-control form-control-sm search-input" placeholder="Modèle, N° Série, Lieu..." value="{{ current_search|default('') }}">
+                </div>
+
+                {# Status Filter #}
+                <div class="col-md-2">
+                    <label for="status-filter" class="form-label text-sm font-medium text-gray-600">État</label>
+                    <select id="status-filter" name="status" class="form-select form-select-sm filter-select">
+                        <option value="all" {{ current_status == 'all' ? 'selected' }}>Tous</option>
+                        {# Assuming TrottinetteStatus Enum exists and is accessible #}
+                        {% for status_case in enum('App\\Enum\\TrottinetteStatus').cases() %}
+                            <option value="{{ status_case.value }}" {{ current_status == status_case.value ? 'selected' }}>
+                                {{ status_case.value|replace({'_': ' '})|capitalize }} {# Simple label generation #}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Sort Dropdown #}
+                <div class="col-md-2">
+                    <label for="sort-select" class="form-label text-sm font-medium text-gray-600">Trier par</label>
+                    <select id="sort-select" name="sort" class="form-select form-select-sm filter-select">
+                        <option value="date_desc" {{ current_sort == 'date_desc' ? 'selected' }}>Plus récent</option>
+                        <option value="date_asc" {{ current_sort == 'date_asc' ? 'selected' }}>Plus ancien</option>
+                        <option value="model_asc" {{ current_sort == 'model_asc' ? 'selected' }}>Modèle (A-Z)</option>
+                        <option value="model_desc" {{ current_sort == 'model_desc' ? 'selected' }}>Modèle (Z-A)</option>
+                        <option value="battery_desc" {{ current_sort == 'battery_desc' ? 'selected' }}>Batterie (Max)</option>
+                        <option value="battery_asc" {{ current_sort == 'battery_asc' ? 'selected' }}>Batterie (Min)</option>
+                    </select>
+                </div>
+
+                {# Limit Dropdown #}
+                <div class="col-md-2">
+                    <label for="limit-select" class="form-label text-sm font-medium text-gray-600">Par page</label>
+                    <select id="limit-select" name="limit" class="form-select form-select-sm filter-select">
+                        {% for limit_option in limit_options %}
+                            <option value="{{ limit_option }}" {{ current_limit == limit_option ? 'selected' }}>{{ limit_option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Submit Button #}
+                <div class="col-md-2">
+                    <button type="submit" class="button button-primary w-100">Filtrer</button>
+                </div>
+            </div>
+        </form>
+
+        {# Results Count (Optional) #}
+        <div class="text-sm text-gray-600 mb-4">
+            Affichage de {{ pagination.firstItemNumber|default(0) }} à {{ pagination.lastItemNumber|default(0) }} sur {{ pagination.getTotalItemCount|default(0) }} trottinettes.
+        </div>
+
+
+        {# Scooter Grid #}
+        <div class="scooter-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"> {# Adjusted cols for this page #}
+            {% for scooter_loop_item in scooters_data %}
+                {# Include the same card partial used on the homepage #}
+                {% include 'scooter/_scooter_card.html.twig' with {
+                    'scooter_data': scooter_loop_item,
+                    'loop': loop
+                } %}
+            {% else %}
+                <div class="col-span-full text-center py-10 text-gray-500">
+                    <p><i class="fas fa-info-circle fa-2x mb-3"></i></p>
+                    <p>Aucune trottinette trouvée correspondant à vos critères.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# Pagination Controls - Using KnpPaginatorBundle #}
+        <div class="navigation mt-8 d-flex justify-content-center">
+            {{ knp_pagination_render(pagination) }}
+        </div>
+
+    </div>
+{% endblock %}

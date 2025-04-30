@@ -1,0 +1,391 @@
+{# templates/security/login.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion - TrottiCare{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Simple visibility helper */
+        .hidden { display: none !important; }
+
+        /* Add styles for webcam container, etc. if needed */
+        #videoOverlayLogin {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); z-index: 10;
+            display: flex; align-items: center; justify-content: center;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+    <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+    <div class="card shadow-lg">
+    <div class="card-body p-4 p-md-5">
+    <h1 class="h3 mb-4 fw-bold text-center">Connexion TrottiCare</h1>
+
+    {% include 'partials/_flash_messages.html.twig' %}
+
+    {# Display login errors from AuthenticationUtils or failed AJAX #}
+    {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {{ error.messageKey|trans(error.messageData, 'security') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+    {# Area for JS-driven status messages #}
+    <div id="loginStatus" class="mb-3"></div>
+
+    {# --- Step 1: Email Input (Always Visible Initially) --- #}
+    <div id="email-container">
+        <p class="text-center text-muted small">Entrez votre email pour commencer.</p>
+        <div class="mb-3">
+            <label for="inputEmail" class="form-label">Adresse Email</label>
+            <input type="email" id="inputEmail" class="form-control" value="{{ last_username }}" required autofocus autocomplete="email">
+        </div>
+        <div class="d-grid">
+            <button type="button" class="btn btn-primary" id="checkEmailButton">
+                <i class="bi bi-arrow-right-circle me-1"></i> Vérifier Email
+            </button>
+        </div>
+    </div>
+
+    {# --- Step 2a: Password Input (Hidden Initially) --- #}
+    {# This form POSTs to the PasswordOnlyAuthenticator route #}
+    <form id="password-form" method="post" action="{{ path('app_login_authenticate_password') }}" class="hidden mt-4">
+        <p class="text-center text-muted small">Entrez votre mot de passe.</p>
+        {# Email needs to be included for the authenticator #}
+        <input type="hidden" id="passwordFormEmail" name="email" value="">
+        <div class="mb-3">
+            <label for="inputPassword" class="form-label">Mot de passe</label>
+            <input type="password" name="password" id="inputPassword" class="form-control" autocomplete="current-password" required>
+        </div>
+        {# NO CSRF input needed here as requested #}
+        {# <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}"> #}
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary" type="submit" id="passwordLoginButton">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Se Connecter avec Mot de Passe
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="backToEmailButtonPassword">
+                <i class="bi bi-arrow-left me-1"></i> Retour (Email)
+            </button>
+        </div>
+    </form>
+
+    {# --- Step 2b: Face Login UI (Hidden Initially) --- #}
+    <div id="face-login-container" class="hidden mt-4 text-center">
+        <p class="text-center text-muted small">Préparez la reconnaissance faciale.</p>
+        {# Button to start face login process #}
+        <button type="button" class="btn btn-info btn-lg mb-3" id="startFaceLoginButton">
+            <i class="bi bi-camera-fill me-1"></i> Se Connecter avec le Visage
+        </button>
+
+        {# Webcam UI (Hidden until startFaceLoginButton is clicked) #}
+        <div id="webcam-ui" class="hidden">
+            <p class="text-center text-muted small">Autorisez la webcam et centrez votre visage.</p>
+            <div class="position-relative d-inline-block mb-3">
+                <video id="webcamFeedLogin" width="240" height="180" autoplay muted playsinline class="border rounded shadow-sm bg-light"></video>
+                <div id="videoOverlayLogin" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 rounded" style="display: none;">
+                    <div class="spinner-border text-light" role="status"><span class="visually-hidden">Chargement...</span></div>
+                </div>
+            </div>
+            <canvas id="captureCanvasLogin" width="240" height="180" style="display: none;"></canvas>
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-success" id="identifyFaceButton" disabled>
+                    <i class="bi bi-person-bounding-box me-1"></i> Vérifier mon Visage
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="cancelFaceLoginButton">
+                    Annuler Connexion Faciale
+                </button>
+            </div>
+        </div>
+        <hr>
+        <button type="button" class="btn btn-link btn-sm" id="backToEmailButtonFace">
+            <i class="bi bi-arrow-left me-1"></i> Retour (Email)
+        </button>
+    </div>
+
+    <hr class="my-4">
+    <div class="text-center small">
+        <p>Pas encore de compte ? <a href="{{ path('app_register') }}">Inscrivez-vous</a></p>
+        {# <p><a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a></p> #}
+    </div>
+    </div>{# End card-body #}
+    </div>{# End card #}
+    </div>{# End col #}
+    </div>{# End row #}
+    </div>{# End container #}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }} {# Includes base JS, ensure face-api.min.js is included if needed #}
+    {# <script src="{{ asset('js/face-api.min.js') }}"></script> <-- Include if not in base #}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const emailContainer = document.getElementById('email-container');
+            const passwordContainer = document.getElementById('password-form');
+            const faceLoginContainer = document.getElementById('face-login-container');
+            const webcamUI = document.getElementById('webcam-ui'); // Inner container for webcam/identify button
+            const loginStatusDiv = document.getElementById('loginStatus');
+
+            const emailInput = document.getElementById('inputEmail');
+            const checkEmailButton = document.getElementById('checkEmailButton');
+
+            const passwordFormEmailInput = document.getElementById('passwordFormEmail'); // Hidden email in pwd form
+            const passwordLoginButton = document.getElementById('passwordLoginButton');
+            const backToEmailButtonPassword = document.getElementById('backToEmailButtonPassword');
+
+            const startFaceLoginButton = document.getElementById('startFaceLoginButton');
+            const identifyFaceButton = document.getElementById('identifyFaceButton');
+            const cancelFaceLoginButton = document.getElementById('cancelFaceLoginButton');
+            const backToEmailButtonFace = document.getElementById('backToEmailButtonFace');
+
+            const videoLogin = document.getElementById('webcamFeedLogin');
+            const canvasLogin = document.getElementById('captureCanvasLogin');
+            const videoOverlayLogin = document.getElementById('videoOverlayLogin');
+
+            // --- State Variables ---
+            let currentUserEmail = '';
+            let streamLogin = null;
+            let modelsLoadedLogin = false;
+            const MODEL_URL = '/models';
+
+            // --- Helper Functions ---
+            function showSection(sectionId) {
+                emailContainer.classList.add('hidden');
+                passwordContainer.classList.add('hidden');
+                faceLoginContainer.classList.add('hidden');
+                stopWebcamLogin(); // Stop webcam when hiding sections
+
+                if (sectionId === 'email') emailContainer.classList.remove('hidden');
+                else if (sectionId === 'password') passwordContainer.classList.remove('hidden');
+                else if (sectionId === 'face') faceLoginContainer.classList.remove('hidden');
+                clearStatus();
+            }
+
+            function setStatus(message, type = 'info') {
+                loginStatusDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show small p-2" role="alert">
+                                          ${message}
+                                          <button type="button" class="btn-close btn-sm p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                                       </div>`;
+            }
+            function clearStatus() { loginStatusDiv.innerHTML = ''; }
+
+            function setLoading(button, isLoading, defaultHtml) {
+                if (isLoading) {
+                    button.disabled = true;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Chargement...';
+                } else {
+                    button.disabled = false;
+                    button.innerHTML = defaultHtml;
+                }
+            }
+
+            // --- Load FaceAPI Models (Only if needed for face login) ---
+            async function loadModelsLogin() {
+                if (modelsLoadedLogin) return true;
+                setStatus('Chargement modèles IA...', 'info');
+                if(videoOverlayLogin) videoOverlayLogin.style.display = 'flex';
+                identifyFaceButton.disabled = true;
+
+                try {
+                    await Promise.all([
+                        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                    ]);
+                    modelsLoadedLogin = true;
+                    clearStatus();
+                    console.log("FaceAPI models loaded for login.");
+                    return true;
+                } catch (error) {
+                    console.error("Error loading FaceAPI models:", error);
+                    setStatus('Erreur chargement modèles IA.', 'danger');
+                    return false;
+                } finally {
+                    if(videoOverlayLogin) videoOverlayLogin.style.display = 'none';
+                }
+            }
+
+            // --- Webcam Handling ---
+            async function startWebcamLogin() {
+                if (!modelsLoadedLogin) {
+                    setStatus('Modèles non chargés.', 'warning');
+                    return;
+                }
+                if (streamLogin) return; // Already running
+
+                setStatus('Démarrage webcam...', 'info');
+                identifyFaceButton.disabled = true;
+                if(videoOverlayLogin) videoOverlayLogin.style.display = 'flex';
+
+                try {
+                    streamLogin = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                    videoLogin.srcObject = streamLogin;
+                    await new Promise((resolve) => { videoLogin.onloadedmetadata = resolve; }); // Wait for metadata
+                    clearStatus();
+                    identifyFaceButton.disabled = false; // Enable identify button
+                    console.log("Login webcam started.");
+                } catch (err) {
+                    console.error("Login Webcam Error:", err);
+                    setStatus("Erreur webcam. Vérifiez permissions.", 'danger');
+                    identifyFaceButton.disabled = true;
+                } finally {
+                    if(videoOverlayLogin) videoOverlayLogin.style.display = 'none';
+                }
+            }
+
+            function stopWebcamLogin() {
+                if (streamLogin) {
+                    streamLogin.getTracks().forEach(track => track.stop());
+                    streamLogin = null;
+                    console.log("Login webcam stopped.");
+                }
+                if(videoLogin) videoLogin.srcObject = null;
+                if(identifyFaceButton) identifyFaceButton.disabled = true;
+                if(webcamUI) webcamUI.classList.add('hidden'); // Hide webcam UI when stopped
+                if(startFaceLoginButton) startFaceLoginButton.classList.remove('hidden'); // Show start button again
+            }
+
+            // --- Step 1: Check Email & Capabilities ---
+            checkEmailButton.addEventListener('click', async () => {
+                currentUserEmail = emailInput.value.trim();
+                if (!currentUserEmail) {
+                    setStatus('Veuillez entrer votre adresse email.', 'warning');
+                    return;
+                }
+                clearStatus();
+                setLoading(checkEmailButton, true, '<i class="bi bi-arrow-right-circle me-1"></i> Vérifier Email');
+
+                try {
+                    const response = await fetch("{{ path('app_login_check_email_caps') }}", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'},
+                        body: `email=${encodeURIComponent(currentUserEmail)}`
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        // Decide which UI to show based on capabilities
+                        if (result.canLoginWithPassword && result.canLoginWithFace) {
+                            // Offer both (for simplicity, let's prioritize face if available, or show both buttons)
+                            // Option 1: Prioritize Face
+                            // showSection('face');
+                            // Option 2: Show both sections or dedicated choice buttons (more complex UI)
+                            // For this example, let's show password form first, but face button too
+                            passwordFormEmailInput.value = currentUserEmail; // Populate hidden field
+                            showSection('password'); // Show password form
+                            faceLoginContainer.classList.remove('hidden'); // Also show face login button container
+                            emailContainer.classList.add('hidden'); // Hide email input section
+                            setStatus('Email trouvé. Connectez-vous avec votre mot de passe ou votre visage.', 'info');
+
+                        } else if (result.canLoginWithPassword) {
+                            passwordFormEmailInput.value = currentUserEmail; // Populate hidden field
+                            showSection('password');
+                            setStatus('Email trouvé. Entrez votre mot de passe.', 'info');
+                        } else if (result.canLoginWithFace) {
+                            showSection('face');
+                            setStatus('Email trouvé. Préparez la reconnaissance faciale.', 'info');
+                        } else {
+                            // Should be caught by server check, but handle just in case
+                            setStatus('Aucune méthode de connexion disponible pour ce compte.', 'warning');
+                        }
+                    } else {
+                        setStatus(result.message || 'Erreur lors de la vérification email.', 'danger');
+                    }
+                } catch (error) {
+                    console.error("Email Check Error:", error);
+                    setStatus('Erreur réseau lors de la vérification email.', 'danger');
+                } finally {
+                    setLoading(checkEmailButton, false, '<i class="bi bi-arrow-right-circle me-1"></i> Vérifier Email');
+                }
+            });
+
+            // --- Step 2a: Password Login ---
+            // The form submission is handled by the browser and PasswordOnlyAuthenticator
+            // We just add visual feedback
+            passwordContainer.addEventListener('submit', () => {
+                setLoading(passwordLoginButton, true, '<i class="bi bi-box-arrow-in-right me-1"></i> Se Connecter...');
+                // The browser will handle the rest
+            });
+
+            // --- Step 2b: Face Login ---
+            startFaceLoginButton.addEventListener('click', async () => {
+                startFaceLoginButton.classList.add('hidden'); // Hide start button
+                webcamUI.classList.remove('hidden'); // Show webcam/identify button
+                const modelsReady = await loadModelsLogin();
+                if (modelsReady) {
+                    startWebcamLogin();
+                } else {
+                    // Error handled in loadModelsLogin
+                    startFaceLoginButton.classList.remove('hidden'); // Show button again if model load fails
+                    webcamUI.classList.add('hidden');
+                }
+            });
+
+            identifyFaceButton.addEventListener('click', async () => {
+                if (!modelsLoadedLogin || !streamLogin || !videoLogin.readyState >= 3) {
+                    setStatus('Webcam non prête ou modèles non chargés.', 'warning'); return;
+                }
+                setStatus('Identification du visage...', 'info');
+                setLoading(identifyFaceButton, true, '<i class="bi bi-person-bounding-box me-1"></i> Vérification...');
+                cancelFaceLoginButton.disabled = true; // Disable cancel during check
+
+                try {
+                    const detection = await faceapi.detectSingleFace(videoLogin)
+                        .withFaceLandmarks().withFaceDescriptor();
+
+                    if (detection) {
+                        const descriptorString = Array.from(detection.descriptor).join(',');
+
+                        // Send email and descriptor to the face authentication endpoint
+                        const response = await fetch("{{ path('app_login_authenticate_face') }}", {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'},
+                            body: `email=${encodeURIComponent(currentUserEmail)}&face_data=${encodeURIComponent(descriptorString)}`
+                        });
+                        const result = await response.json();
+
+                        if (response.ok && result.success && result.redirectUrl) {
+                            setStatus('Visage reconnu ! Redirection...', 'success');
+                            window.location.href = result.redirectUrl; // Redirect on success
+                        } else {
+                            setStatus(result.message || 'Visage non reconnu.', 'danger');
+                            setLoading(identifyFaceButton, false, '<i class="bi bi-person-bounding-box me-1"></i> Vérifier mon Visage');
+                            cancelFaceLoginButton.disabled = false;
+                        }
+                    } else {
+                        setStatus('Aucun visage détecté. Réessayez.', 'warning');
+                        setLoading(identifyFaceButton, false, '<i class="bi bi-person-bounding-box me-1"></i> Vérifier mon Visage');
+                        cancelFaceLoginButton.disabled = false;
+                    }
+                } catch (error) {
+                    console.error("Face Identification Error:", error);
+                    setStatus('Erreur lors de l\'identification faciale.', 'danger');
+                    setLoading(identifyFaceButton, false, '<i class="bi bi-person-bounding-box me-1"></i> Vérifier mon Visage');
+                    cancelFaceLoginButton.disabled = false;
+                }
+            });
+
+            cancelFaceLoginButton.addEventListener('click', () => {
+                stopWebcamLogin(); // Stops webcam and hides webcamUI
+            });
+
+            // --- Back Buttons ---
+            backToEmailButtonPassword.addEventListener('click', () => showSection('email'));
+            backToEmailButtonFace.addEventListener('click', () => showSection('email'));
+
+
+            // --- Initial State ---
+            showSection('email'); // Start at email input
+
+            // Cleanup webcam on page leave
+            window.addEventListener('beforeunload', stopWebcamLogin);
+        });
+    </script>
+{% endblock %}

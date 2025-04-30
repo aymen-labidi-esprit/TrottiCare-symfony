@@ -1,0 +1,333 @@
+{# templates/admin/events.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Événements - Admin{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6">
+        <div class="container mx-auto">
+
+            {# Page Header & New Button #}
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+                    Gestion des Événements
+                </h1>
+                <a href="{{ path('app_admin_event_new') }}" class="button button-success inline-flex items-center whitespace-nowrap">
+                    <i class="fas fa-plus mr-2"></i> Nouvel Événement
+                </a>
+            </div>
+
+            {# Flash Messages #}
+            {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+            {# Controls Form - Passes ALL current parameters to retain state #}
+            <form method="get" action="{{ path('app_admin_events') }}" id="event-controls-form" class="mb-8 p-4 bg-white rounded-lg shadow space-y-4">
+                {# Row 1: Search and Filters #}
+                <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                    {# Search Input #}
+                    <div class="flex-grow w-full lg:w-auto">
+                        <label for="search-input" class="sr-only">Rechercher</label>
+                        <div class="relative">
+                            {# Use search_term passed from controller #}
+                            <input type="search" id="search-input" name="search" class="search-input w-full pr-10" placeholder="Rechercher par titre, description, lieu..." value="{{ search_term|default('') }}">
+                            <button type="submit" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-blue-600" aria-label="Rechercher"> <i class="fas fa-search"></i> </button>
+                        </div>
+                    </div>
+                    {# Filter Buttons #}
+                    <div class="flex gap-2 filter-buttons flex-wrap items-center">
+                        <span class="text-sm font-medium mr-2">Filtrer:</span>
+                        {# Use current_filter passed from controller to highlight active button #}
+                        <button type="submit" name="filter" value="all" class="button {{ current_filter == 'all' ? 'button-primary' : 'button-secondary' }}">Tous</button>
+                        {# Date Filters #}
+                        <button type="submit" name="filter" value="upcoming" class="button {{ current_filter == 'upcoming' ? 'button-primary' : 'button-secondary' }}">À venir</button>
+                        <button type="submit" name="filter" value="past" class="button {{ current_filter == 'past' ? 'button-primary' : 'button-secondary' }}">Passés</button>
+                        {# Status Filters - ensure values match controller logic (lowercase) #}
+                        <button type="submit" name="filter" value="a_venir" class="button {{ current_filter == 'a_venir' ? 'button-primary' : 'button-secondary' }}">A Venir</button>
+                        <button type="submit" name="filter" value="en_cours" class="button {{ current_filter == 'en_cours' ? 'button-primary' : 'button-secondary' }}">En Cours</button>
+                        <button type="submit" name="filter" value="termine" class="button {{ current_filter == 'termine' ? 'button-primary' : 'button-secondary' }}">Terminé</button>
+                        <button type="submit" name="filter" value="annule" class="button {{ current_filter == 'annule' ? 'button-primary' : 'button-secondary' }}">Annulé</button>
+
+                        {# Optional: Location (Gouvernorat) Filter Dropdown #}
+                        {# You would need to pass 'gouvernorat_cases' from the controller #}
+                        {# <select name="filter" class="form-select rounded-md border-gray-300 shadow-sm ml-2" onchange="this.form.submit();"> ... </select> #}
+                    </div>
+                </div>
+                {# Row 2: Sorting and Per Page #}
+                <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-start">
+                    {# Per Page Dropdown #}
+                    <div class="flex items-center gap-2">
+                        <label for="limit-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Afficher:</label>
+                        <select name="limit" id="limit-select" class="form-select rounded-md border-gray-300 shadow-sm" onchange="this.form.submit();">
+                            {% set limits = [5, 10, 20, 50, 100] %}
+                            {% for l in limits %}
+                                {# Use limit passed from controller #}
+                                <option value="{{ l }}" {{ limit == l ? 'selected' : '' }}>{{ l }} par page</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {# Sort Order Dropdown #}
+                    <div class="flex items-center gap-2">
+                        <label for="sort-select" class="text-sm font-medium text-gray-700 whitespace-nowrap">Trier par:</label>
+                        <select name="sort" id="sort-select" …>
+                            <option value="e.dateDebut" {{ sort == 'e.dateDebut' ? 'selected' }}>Date début</option>
+                            <option value="e.titre"     {{ sort == 'e.titre'     ? 'selected' }}>Titre</option>
+                            …
+                        </select>
+
+                        <select name="direction" id="direction-select" …>
+                            <option value="asc"  {{ direction == 'asc'  ? 'selected' }}>Asc</option>
+                            <option value="desc" {{ direction == 'desc' ? 'selected' }}>Desc</option>
+                        </select>
+                        {# KNP handles direction via separate URL param, usually no user control needed #}
+                    </div>
+                </div>
+            </form>
+
+            {# Events Table #}
+            <div class="bg-white shadow-md overflow-x-auto sm:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        {# Use KNP Pagination sortable links #}
+                        {# Third arg is the sort KEY used by KNP (matching controller's sortMapping keys) #}
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ knp_pagination_sortable(pagination,'Titre','e.titre') }}
+                        </th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ knp_pagination_sortable(pagination,'Date début','e.dateDebut') }}
+                        </th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ knp_pagination_sortable(pagination, 'Lieu (Gouvernorat)', 'state') }}
+                        </th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {{ knp_pagination_sortable(pagination, 'Statut', 'statut') }}
+                        </th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Participants
+                        </th>
+                        <th scope="col" class="relative px-4 py-3"> <span class="sr-only">Actions</span> </th>
+                    </tr>
+                    </thead>
+
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {# Loop through paginated results (pagination object) #}
+                    {% for event_row in pagination %} {# Changed loop variable name for clarity #}
+                        {% set event = event_row[0] %} {# Extract the Event entity #}
+                        {% set participantCount = event_row.participantCount %} {# Extract the count #}
+
+                        {# Now use 'event' which holds the actual Event entity #}
+                        <tr id="event-row-{{ event.id }}" class="hover:bg-gray-50">
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ event.titre }}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ event.dateDebut ? event.dateDebut|date('d/m/Y H:i') : '-' }}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-700">{{ event.state ? event.state.label : (event.state ? event.state.value : '-') }}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap event-status-cell">
+                                {% include 'admin/event/_status_badge.html.twig' with {'status': event.statut} %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
+                                {# Use the pre-calculated participant count #}
+                                <a href="{{ path('app_admin_event_participants', {id: event.id}) }}" class="text-indigo-600 hover:text-indigo-900">
+                                    {{ participantCount }}
+                                </a>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium space-x-1">
+                                {# Show Button #}
+                                <a href="{{ path('app_admin_event_show', {id: event.id}) }}" class="button button-small button-info" title="Voir">
+                                    <i class="fas fa-eye"></i><span class="sr-only"> Voir</span>
+                                </a>
+                                {# Edit Button #}
+                                <a href="{{ path('app_admin_event_edit', {id: event.id}) }}" class="button button-small button-warning" title="Modifier">
+                                    <i class="fas fa-edit"></i><span class="sr-only"> Modifier</span>
+                                </a>
+                                {# Cancel Button #}
+                                {% if event.statut not in ['TERMINE', 'ANNULE'] %}
+                                    <form action="{{ path('app_admin_event_delete', {id: event.id}) }}" method="post" class="inline-block form-delete-event" data-event-id="{{ event.id }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_admin_' ~ event.id) }}">
+                                        <button type="submit" class="button button-small button-danger" title="Annuler l'événement">
+                                            <i class="fas fa-ban"></i><span class="sr-only"> Annuler</span>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">
+                                Aucun événement trouvé {% if search_term or current_filter != 'all' %} correspondant aux critères actuels{% endif %}.
+                                {% if search_term or current_filter != 'all' %}
+                                    <a href="{{ path('app_admin_events') }}" class="text-blue-600 hover:underline ml-2">Voir tous</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+            {# Pagination Controls - Render the KNP Paginator controls #}
+            {# Pagination Controls - Render the KNP Paginator controls #}
+            <div class="pagination-controls text-center mt-6">
+                {# Render the actual pagination links #}
+                {{ knp_pagination_render(pagination) }}
+
+                {# Display item counts from pagination object #}
+                <div class="text-sm text-gray-600 mt-2">
+                    {# Check if there are any items to display #}
+                    {% if pagination.getTotalItemCount > 0 %}
+                        {# Calculate first and last item numbers for the current page #}
+                        {% set firstItem = (pagination.getCurrentPageNumber() - 1) * pagination.getItemNumberPerPage() + 1 %}
+                        {% set lastItem = firstItem + pagination.count - 1 %}
+
+                        {# Display the calculated range and total count #}
+                        Affichage de {{ firstItem }} à {{ lastItem }} sur {{ pagination.getTotalItemCount }} événement{{ pagination.getTotalItemCount > 1 ? 's' : '' }}.
+                    {% else %}
+                        {# Optional: Message when no items are found #}
+                        {# Aucun événement à afficher. #}
+                    {% endif %}
+                </div>
+            </div>
+
+        </div> {# End container #}
+    </div> {# End page wrapper #}
+{% endblock %}
+
+
+{% block javascripts %}
+    {{ parent() }}
+    {# Use the same AJAX JS as before for handling delete/cancel form #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const handleAdminFormSubmit = async (form, confirmMessage) => {
+                if (confirmMessage && !confirm(confirmMessage)) return;
+
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalButtonHtml = submitButton ? submitButton.innerHTML : '';
+
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: form.method,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest', // Crucial for controller detection
+                            'Accept': 'application/json', // Expect JSON response
+                        },
+                        body: new FormData(form)
+                    });
+
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        const result = await response.json();
+                        if (response.ok && result.success) {
+                            console.log('Action successful:', result.message);
+                            // Reload the page (simplest)
+                            location.reload();
+                        } else {
+                            console.error('Action failed:', result.error || result.message || `Status ${response.status}`);
+                            alert(`Erreur: ${result.error || result.message || 'Action échouée.'}`);
+                            if (submitButton) {
+                                submitButton.disabled = false;
+                                submitButton.innerHTML = originalButtonHtml;
+                            }
+                        }
+                    } else {
+                        console.error('Non-JSON response received:', await response.text());
+                        alert('Une erreur inattendue est survenue (réponse serveur non JSON).');
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.innerHTML = originalButtonHtml;
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    alert('Une erreur réseau est survenue lors de la tentative d\'annulation.');
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalButtonHtml;
+                    }
+                }
+            };
+
+            document.body.addEventListener('submit', function(e) {
+                // Target the form specifically for canceling/deleting
+                if (e.target && e.target.classList.contains('form-delete-event')) {
+                    e.preventDefault();
+                    handleAdminFormSubmit(e.target, 'Êtes-vous sûr de vouloir annuler cet événement ? Cette action ne peut pas être annulée.'); // Updated confirmation message
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Ensure required CSS is included or defined here #}
+    <style>
+        /* Minimal required styles (adapt based on your actual base.css/tailwind config) */
+        .search-input { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; width: 100%; box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+        .form-select { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.5rem 0.75rem; line-height: 1.5; }
+
+        /* Basic Button Styles (Example - reuse from previous) */
+        .button { display: inline-block; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; }
+        .button-small { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+        .button-success { background-color: #10b981; color: white; border-color: #10b981; } .button-success:hover { background-color: #059669; border-color: #047857; }
+        .button-warning { background-color: #f59e0b; color: white; border-color: #f59e0b; } .button-warning:hover { background-color: #d97706; border-color: #b45309; }
+        .button-danger { background-color: #ef4444; color: white; border-color: #ef4444; } .button-danger:hover { background-color: #dc2626; border-color: #b91c1c; }
+        .button-info { background-color: #0ea5e9; color: white; border-color: #0ea5e9; } .button-info:hover { background-color: #0284c7; border-color: #0369a1; }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Status Badge Styles (reuse from previous) */
+        .badge { display: inline-block; padding: 0.25em 0.6em; font-size: 75%; font-weight: 700; line-height: 1; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 0.375rem; }
+        .badge-blue { color: #1e40af; background-color: #dbeafe; } /* A_VENIR */
+        .badge-green { color: #065f46; background-color: #d1fae5; } /* EN_COURS */
+        .badge-gray { color: #374151; background-color: #f3f4f6; } /* TERMINE */
+        .badge-red { color: #991b1b; background-color: #fee2e2; } /* ANNULE */
+        .badge-default { color: #1f2937; background-color: #e5e7eb; } /* Default/Unknown */
+
+        /* KNP Paginator Styles (Example - reuse from previous) */
+        .pagination { display: flex; justify-content: center; padding-left: 0; list-style: none; }
+        .page-item { margin: 0 0.125rem; }
+        .page-item.disabled .page-link, .page-item.disabled span { color: #6c757d; pointer-events: none; background-color: #fff; border-color: #dee2e6; cursor: not-allowed;}
+        .page-item.active .page-link, .page-item.active span { z-index: 3; color: #fff; background-color: #3b82f6; border-color: #3b82f6; }
+        .page-link, .page-item span { /* KNP uses spans for disabled/current */
+            position: relative; display: block; padding: 0.5rem 0.75rem; line-height: 1.25; color: #3b82f6; background-color: #fff; border: 1px solid #dee2e6; border-radius: 0.25rem; transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .page-link:hover { z-index: 2; color: #2563eb; text-decoration: none; background-color: #e9ecef; border-color: #dee2e6; }
+
+        /* KNP Sortable Link Styles (reuse from previous) */
+        th a.sortable { color: #4b5563; text-decoration: none; display: inline-block; }
+        th a.sortable:hover { color: #1f2937; }
+        th a.sortable .fas { margin-left: 0.3em; color: #9ca3af; font-size: 0.8em; } /* Default sort arrow color & size */
+        th a.sortable.asc .fa-sort-up, th a.sortable.desc .fa-sort-down { color: #3b82f6; } /* Active sort arrow color */
+        th a.sortable .fa-sort { color: #9ca3af; } /* Default unsorted icon */
+
+        /* Spinner (reuse from previous) */
+        .fa-spin { animation: fa-spin 1s infinite linear; }
+        @keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Ensure FontAwesome icons render if used */
+        .fas { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+        .fa-plus:before { content: "\2b"; }
+        .fa-search:before { content: "\f002"; }
+        .fa-edit:before { content: "\f044"; }
+        .fa-ban:before { content: "\f05e"; }
+        .fa-eye:before { content: "\f06e"; }
+        .fa-spinner:before { content: "\f110"; }
+        .fa-sort:before { content: "\f0dc"; }
+        .fa-sort-up:before { content: "\f0de"; }
+        .fa-sort-down:before { content: "\f0dd"; }
+
+    </style>
+{% endblock %}

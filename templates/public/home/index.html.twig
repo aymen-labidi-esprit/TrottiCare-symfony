@@ -1,0 +1,161 @@
+    {% extends 'base.html.twig' %}
+
+    {% block title %}Accueil - TrottiCare Location{% endblock %}
+
+    {% block body %}
+        {# Hero Section #}
+        <section class="hero-section bg-gradient-to-r from-green-50 to-blue-50 py-16 lg:py-24"> {# Style .hero-section... #}
+            <div class="container">
+                <div class="hero-text-wrapper max-w-3xl mx-auto text-center"> {# Style .hero-text-wrapper... #}
+                    <h1 class="hero-h1 text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+                        {{ heroTitle|default('Location de Trottinettes Électriques') }}
+                    </h1>
+                    <p class="hero-p text-lg md:text-xl text-gray-600 mb-8">
+                        {{ heroSubtitle|default('Découvrez un moyen écologique et pratique de vous déplacer.') }}
+                    </p>
+                    {# Link to where users start renting or view scooters #}
+                    <a href="#scooters-nearby" class="button button-hero inline-block">Voir les trottinettes</a> {# Style .button .button-hero #}
+                </div>
+            </div>
+        </section>
+
+        {# Main Content Area #}
+        <main class="container main-content-area py-16 lg:py-24"> {# Style .main-content-area... #}
+
+            {# --- Map Section --- #}
+            <section id="map-section" class="map-wrapper mb-16 lg:mb-24"> {# Style .map-wrapper... #}
+                <h2 class="section-title text-center">Carte des Trottinettes Disponibles</h2> {# Style .section-title... #}
+                <div id="leaflet-map-container" class="map-container rounded-lg shadow-lg overflow-hidden" style="height: 450px;"> {# Style .map-container... #}
+                    <div class="flex items-center justify-center h-full bg-gray-100 text-gray-500">
+                        Chargement de la carte...
+                    </div>
+                </div>
+                <p class="text-center text-sm text-gray-500 mt-4">
+                    <span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span> Disponible (Bonne charge)
+                    <span class="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1 ml-3"></span> Disponible (Charge moyenne)
+                    {# <span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1 ml-3"></span> Disponible (Charge faible) #}
+                </p>
+                <p class="text-center text-xs text-gray-400 mt-2">Note: Les emplacements peuvent être approximatifs.</p> {# Add disclaimer due to geocoding #}
+            </section>
+
+            {# --- Nearby Scooters Section --- #}
+            <section id="scooters-nearby" class="mb-16 lg:mb-24">
+                <h2 class="section-title text-center">Trottinettes à proximité</h2>
+                <div class="scooter-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8"> {# Style .scooter-grid... #}
+                    {% for scooter_data in scooters %}
+                        {% include 'scooter/_scooter_card.html.twig' with {
+                            'scooter_data': scooter_data,
+                            'loop': loop
+                         } %}
+                    {% else %}
+                        <p class="text-center text-gray-600 col-span-full">Aucune trottinette disponible affichée pour le moment.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            {# --- Upcoming Events Section --- #}
+            <section id="upcoming-events">
+                 <div class="events-header flex justify-between items-center mb-8"> {# Style .events-header... #}
+                    <h2 class="section-title-inline mb-0">Événements à venir</h2> {# Style .section-title-inline... #}
+                    <a href="{{ path('public_event_index') }}"> {# Adjust route #}
+                        <button class="button button-secondary">Voir tous les événements</button>
+                    </a>
+                </div>
+                <div class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"> {# Style .events-grid... #}
+                     {% for event_data in upcoming_events %}
+                        {% include 'event/_event_card.html.twig' with {
+                            'event_data': event_data
+                        } %}
+                     {% else %}
+                        <p class="text-center text-gray-600 col-span-full">Aucun événement à venir programmé.</p>
+                     {% endfor %}
+                </div>
+            </section>
+
+        </main> {# End Main Content Area #}
+
+    {% endblock %}
+
+    {% block javascripts %}
+        {# JavaScript for initializing the Leaflet map on this page #}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const mapElement = document.getElementById('leaflet-map-container');
+                // Check if Leaflet (L) is loaded (should be via Encore)
+                if (mapElement && typeof L !== 'undefined') {
+                     try {
+                        // --- Initialize Map ---
+                        const mapCenterLat = {{ mapCenterLat|default(48.8566) }}; // Default to Paris
+                        const mapCenterLng = {{ mapCenterLng|default(2.3522) }};
+                        const mapZoom = {{ mapZoom|default(12) }};
+                        mapElement.innerHTML = ''; // Clear loading message
+                        const map = L.map(mapElement).setView([mapCenterLat, mapCenterLng], mapZoom);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+                            maxZoom: 18,
+                        }).addTo(map);
+
+                        // --- Add Markers ---
+                        // Controller passes 'markersJson' with lat/lng data
+                        const markersData = JSON.parse('{{ markersJson|raw|default("[]") }}');
+
+                        // Function to create custom marker HTML (ensure styles are in CSS)
+                        function createCustomIconHtml(colorClass = 'marker-green') {
+                            let colorCode = '#22c55e'; // Default green
+                            if (colorClass === 'marker-yellow') colorCode = '#eab308';
+                            if (colorClass === 'marker-red') colorCode = '#ef4444'; // Example red
+
+                             // More robust SVG icon
+                             return `<div class="custom-marker-wrapper">
+                                        <svg viewBox="0 0 32 46" width="32" height="46" style="overflow: visible;">
+                                          <path d="M16 0C7.163 0 0 7.163 0 16c0 8.837 16 30 16 30s16-21.163 16-30C32 7.163 24.837 0 16 0z" fill="${colorCode}" stroke="#fff" stroke-width="1"/>
+                                          <circle cx="16" cy="16" r="7" fill="#fff"/>
+                                          <circle cx="16" cy="16" r="4" fill="${colorCode}"/>
+                                        </svg>
+                                      </div>`;
+                         }
+
+                        if (Array.isArray(markersData)) {
+                            const markers = [];
+                            markersData.forEach(data => {
+                                 // !!! Check: Only add if lat/lng are present !!!
+                                 if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+                                     const customIcon = L.divIcon({
+                                         className: 'custom-leaflet-div-icon', // Base class for potential styling
+                                         html: createCustomIconHtml(data.color || 'marker-green'),
+                                         iconSize: [32, 46], // Width/Height of the SVG container
+                                         iconAnchor: [16, 46], // Point of the marker bottom-center
+                                         popupAnchor: [0, -48] // Popup opening point relative to iconAnchor
+                                     });
+
+                                    const marker = L.marker([data.lat, data.lng], { icon: customIcon })
+                                         .bindPopup(data.popup || 'Trottinette');
+                                    markers.push(marker);
+                                 }
+                            });
+                            // Add markers to the map
+                             if (markers.length > 0) {
+                                 L.layerGroup(markers).addTo(map);
+                                 // Optional: Fit map bounds to markers if desired
+                                 // map.fitBounds(L.featureGroup(markers).getBounds().pad(0.1));
+                             } else {
+                                 console.log("No valid markers to display.");
+                                 mapElement.innerHTML = '<p class="text-center text-gray-500 p-4">Aucune trottinette trouvée sur la carte.</p>';
+                             }
+                         } else {
+                            console.error("markersJson is not a valid array:", markersData);
+                             mapElement.innerHTML = '<p class="text-center text-red-500 p-4">Erreur lors du chargement des données de la carte.</p>';
+                        }
+
+                     } catch (error) {
+                        console.error("Failed to initialize Leaflet map:", error);
+                        mapElement.innerHTML = "<p style='padding: 20px; text-align: center; color: red;'>Impossible de charger la carte.</p>";
+                     }
+                } else {
+                    if (!mapElement) console.warn("Leaflet map container '#leaflet-map-container' not found.");
+                    if (typeof L === 'undefined') console.error("Leaflet library (L) is not loaded. Check your JS imports/scripts in assets/app.js and run Encore.");
+                }
+            });
+        </script>
+    {% endblock %}

@@ -1,0 +1,164 @@
+{# templates/admin/utilisateur/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Utilisateur : {{ utilisateur.prenom }} {{ utilisateur.nom }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Ensure Tailwind base styles are loaded via base.html.twig #}
+    <style>
+        /* Reusable Status Badge Styles (from index page) */
+        .status-badge {
+            padding: 0.25em 0.6em; border-radius: 9999px; /* pill */
+            font-size: 0.75rem; /* text-sm */ font-weight: 500; /* font-medium */
+            text-transform: uppercase; letter-spacing: 0.05em;
+            white-space: nowrap; line-height: 1;
+        }
+        .badge-green { background-color: #dcfce7; color: #166534; } /* green */
+        .badge-red { background-color: #fee2e2; color: #991b1b; } /* red */
+        .badge-yellow { background-color: #fef9c3; color: #854d0e; } /* yellow */
+        .badge-gray { background-color: #f3f4f6; color: #374151; } /* gray */
+        .badge-blue { background-color: #dbeafe; color: #1e40af; } /* blue */
+        .badge-indigo { background-color: #e0e7ff; color: #3730a3; } /* indigo */
+        .badge-purple { background-color: #f3e8ff; color: #581c87; } /* purple */
+
+        /* Reusable Button Styles (from index page) */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-warning { background-color: #f59e0b; color: white; border-color: #f59e0b; } .button-warning:hover { background-color: #d97706; border-color: #b45309; }
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+
+        /* FontAwesome Icons */
+        .fas { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+        .fa-user:before { content: "\f007"; }
+        .fa-edit:before { content: "\f044"; }
+        .fa-arrow-left:before { content: "\f060"; }
+        .mr-1\.5 { margin-right: 0.375rem; }
+        .mr-2 { margin-right: 0.5rem; }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+        <div class="container mx-auto max-w-4xl"> {# Adjusted max-width #}
+
+            {# 1. Header & Main Actions #}
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">
+                    <i class="fas fa-user mr-2 text-blue-600"></i>Utilisateur : {{ utilisateur.prenom }} {{ utilisateur.nom }}
+                </h1>
+                <div class="flex-shrink-0 flex gap-2">
+                    <a href="{{ path('admin_utilisateur_edit', {'id': utilisateur.id}) }}" class="button button-warning text-white"> {# Ensure text color is white for warning button #}
+                        <i class="fas fa-edit mr-1.5"></i>Modifier
+                    </a>
+                    <a href="{{ path('admin_utilisateur_index') }}" class="button button-secondary">
+                        <i class="fas fa-arrow-left mr-1.5"></i>Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            {# Flash Messages #}
+            {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+            {# 2. Details Card #}
+            <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Détails du Compte</h3>
+                </div>
+                <div class="p-6">
+                    {# Use a definition list for better semantics and styling #}
+                    <dl class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                        <div class="md:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">ID Utilisateur</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ utilisateur.id }}</dd>
+                        </div>
+                        <div class="md:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Nom</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ utilisateur.nom }}</dd>
+                        </div>
+                        <div class="md:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Prénom</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ utilisateur.prenom }}</dd>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <dt class="text-sm font-medium text-gray-500">Email</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ utilisateur.email }}</dd>
+                        </div>
+                        <div class="md:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Téléphone</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ utilisateur.telephone | default('Non renseigné') }}</dd>
+                        </div>
+
+                        <div class="md:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Rôle Interne</dt>
+                            <dd class="mt-1 text-sm">
+                                {# Role Badge - Copied from index styles #}
+                                {% set role_badge_class = 'badge-gray' %}
+                                {% if utilisateur.roleInterne == 'admin' %}
+                                    {% set role_badge_class = 'badge-purple' %}
+                                {% elseif utilisateur.roleInterne == 'partenaire' %}
+                                    {% set role_badge_class = 'badge-blue' %}
+                                {% endif %}
+                                <span class="status-badge {{ role_badge_class }}">{{ utilisateur.roleInterne | capitalize }}</span>
+                            </dd>
+                        </div>
+                        <div class="md:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Statut Compte</dt>
+                            <dd class="mt-1 text-sm">
+                            <span class="status-badge {{ utilisateur.isActive ? 'badge-green' : 'badge-red' }}">
+                                {{ utilisateur.isActive ? 'Actif' : 'Inactif' }}
+                            </span>
+                            </dd>
+                        </div>
+                        <div class="md:col-span-1">
+                            <dt class="text-sm font-medium text-gray-500">Email Vérifié</dt>
+                            <dd class="mt-1 text-sm">
+                            <span class="status-badge {{ utilisateur.isVerified ? 'badge-green' : 'badge-yellow' }}">
+                                {{ utilisateur.isVerified ? 'Oui' : 'Non' }}
+                            </span>
+                            </dd>
+                        </div>
+                        <div class="md:col-span-3"> {# Span full width #}
+                            <dt class="text-sm font-medium text-gray-500">Rôles Symfony</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if utilisateur.roles %}
+                                    {% for role in utilisateur.roles %}
+                                        <span class="inline-block bg-gray-200 rounded px-2 py-0.5 text-xs font-semibold text-gray-700 mr-1 mb-1">{{ role }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    Aucun
+                                {% endif %}
+                            </dd>
+                        </div>
+                        {# Add other fields like dateCreated, related counts etc. here #}
+                        {# Example:
+                     <div class="md:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Inscrit le</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ utilisateur.dateCreation ? utilisateur.dateCreation|date('d/m/Y') : 'N/A' }}</dd>
+                    </div>
+                        #}
+                    </dl>
+                </div>
+            </div>
+
+            {# 3. Delete Action Card #}
+            {# Consider if admin should delete themselves - logic is in controller #}
+            <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-200 mt-6">
+                <div class="px-6 py-4 border-b border-red-200 bg-red-50">
+                    <h3 class="text-base font-medium text-red-800 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"> <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 3.001-1.742 3.001H4.42c-1.53 0-2.493-1.667-1.743-3.001l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-4a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" /> </svg>
+                        Action Dangereuse
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-gray-600 mb-3">Supprimer cet utilisateur ? Cette action est irréversible.</p>
+                    {# Include the Tailwind delete form partial #}
+                    {{ include('admin/utilisateur/_delete_form.html.twig', {'utilisateur': utilisateur}) }}
+                </div>
+            </div>
+
+
+        </div> {# End Container #}
+    </div> {# End Page Wrapper #}
+{% endblock %}

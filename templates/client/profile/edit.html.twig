@@ -1,0 +1,152 @@
+{# templates/client/profile/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Mon Profil{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Ensure Tailwind base styles are loaded via base.html.twig #}
+    <style>
+        /* Reusable form input/select styles (adapt from previous) */
+        .form-input, .form-select {
+            appearance: none; display: block; width: 100%;
+            padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.5;
+            color: #1f2937; background-color: #fff; background-clip: padding-box;
+            border: 1px solid #d1d5db; border-radius: 0.375rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center; background-repeat: no-repeat;
+            background-size: 1.5em 1.5em; padding-right: 2.5rem;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none; border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6; /* ring-1 ring-blue-500 */
+        }
+        /* Error state styling */
+        .border-error { border-color: #ef4444 !important; /* red-500 */ }
+        .ring-error { box-shadow: 0 0 0 1px #ef4444 !important; /* ring-red-500 */ }
+        .form-error-message {
+            display: block; /* Show when errors exist */
+            margin-top: 0.25rem; /* mt-1 */
+            font-size: 0.75rem; /* text-xs */
+            color: #dc2626; /* red-600 */
+        }
+
+        /* Reusable Button Styles (adapt from previous) */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+
+        /* Bootstrap Icons */
+        .bi { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "bootstrap-icons"; font-weight: normal; }
+        .bi-save-fill::before { content: "\\F525"; }
+        .bi-x-lg::before { content: "\\F62A"; }
+        .me-1 { margin-right: 0.25rem; }
+        .ms-2 { margin-left: 0.5rem; }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+        <div class="container mx-auto max-w-2xl"> {# Slightly narrower container for profile edit #}
+
+            {# 1. Header #}
+            <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-6">
+                Modifier Mon Profil
+            </h1>
+
+            {# 2. Flash Messages #}
+            {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+            {# 3. Form Card #}
+            <div class="bg-white rounded-lg shadow p-6 md:p-8 border border-gray-200">
+                {# Use the action from the form object #}
+                {{ form_start(profileForm, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                {# General Form Error Summary (Optional) #}
+                {% if profileForm.vars.submitted and not profileForm.vars.valid and profileForm.vars.errors|length > 0 %}
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-5" role="alert">
+                        <strong class="font-bold">Veuillez corriger les erreurs :</strong>
+                        <ul class="mt-2 list-disc list-inside text-sm">
+                            {{ form_errors(profileForm) }}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                {# Render form fields with Tailwind classes #}
+                <div class="space-y-5">
+
+                    {# Standard Fields #}
+                    {% for field_name in ['nom', 'prenom', 'email', 'telephone'] %}
+                        {% set field = attribute(profileForm, field_name) %}
+                        <div>
+                            {{ form_label(field, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {% set input_type = (field_name == 'email') ? 'email' : ((field_name == 'telephone') ? 'tel' : 'text') %}
+                            {% set widget_attrs = {'class': 'form-input', 'type': input_type } %}
+                            {# Optionally disable email editing #}
+                            {# {% if field_name == 'email' %}{% set widget_attrs = widget_attrs|merge({'disabled': true, 'readonly': true, 'class': 'form-input bg-gray-100 cursor-not-allowed'}) %}{% endif %} #}
+                            {% if profileForm.vars.submitted and not field.vars.valid %}
+                                {% set widget_attrs = widget_attrs|merge({'class': 'form-input border-error focus:ring-error focus:border-error'}) %}
+                            {% endif %}
+                            {{ form_widget(field, {'attr': widget_attrs}) }}
+                            {% if profileForm.vars.submitted and not field.vars.valid %}
+                                <p class="form-error-message">{{ form_errors(field) }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    {# Optional Password Fields #}
+                    {% if profileForm.plainPassword is defined %}
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 my-5 text-sm text-blue-700">
+                            Laissez les champs de mot de passe vides si vous ne souhaitez pas le modifier.
+                        </div>
+                        <div>
+                            {{ form_label(profileForm.plainPassword.first, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {% set widget_attrs = {'class': 'form-input' } %}
+                            {% if profileForm.vars.submitted and not profileForm.plainPassword.first.vars.valid %}
+                                {% set widget_attrs = widget_attrs|merge({'class': 'form-input border-error focus:ring-error focus:border-error'}) %}
+                            {% endif %}
+                            {{ form_widget(profileForm.plainPassword.first, {'attr': widget_attrs, 'required': false}) }}
+                            {% if profileForm.vars.submitted and not profileForm.plainPassword.first.vars.valid %}
+                                <p class="form-error-message">{{ form_errors(profileForm.plainPassword.first) }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ form_label(profileForm.plainPassword.second, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {% set widget_attrs = {'class': 'form-input' } %}
+                            {% if profileForm.vars.submitted and not profileForm.plainPassword.second.vars.valid %}
+                                {# Check overall plainPassword validity for second field error #}
+                                {% set widget_attrs = widget_attrs|merge({'class': 'form-input border-error focus:ring-error focus:border-error'}) %}
+                            {% endif %}
+                            {{ form_widget(profileForm.plainPassword.second, {'attr': widget_attrs, 'required': false}) }}
+                            {% if profileForm.vars.submitted and not profileForm.plainPassword.second.vars.valid %}
+                                <p class="form-error-message">{{ form_errors(profileForm.plainPassword.second) }}</p>
+                            {% endif %}
+                            {# Display the parent repeated field error (like 'passwords must match') #}
+                            {% if profileForm.vars.submitted and profileForm.plainPassword.vars.errors|length > 0 %}
+                                <p class="form-error-message">{{ form_errors(profileForm.plainPassword) }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+                {# Form Actions/Buttons #}
+                <div class="mt-8 pt-5 border-t border-gray-200 flex justify-end items-center gap-3">
+                    <a href="{{ path('app_client_profile_view') }}" class="button button-secondary">
+                        <i class="bi bi-x-lg me-1"></i> Annuler
+                    </a>
+                    <button type="submit" class="button button-primary">
+                        <i class="bi bi-save-fill me-1"></i> Enregistrer
+                    </button>
+                </div>
+
+                {{ form_end(profileForm) }}
+            </div>
+
+        </div> {# End Container #}
+    </div> {# End Page Wrapper #}
+{% endblock %}

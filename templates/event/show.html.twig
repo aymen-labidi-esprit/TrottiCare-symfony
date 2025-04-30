@@ -1,0 +1,168 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ event.titre }} - Détails de l'événement{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        {# Breadcrumb Navigation #}
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('app_event_index') }}">Événements</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ event.titre|slice(0, 50) ~ (event.titre|length > 50 ? '...' : '') }}</li> {# Truncate long titles #}
+            </ol>
+        </nav>
+
+        <div class="row">
+            {# Main Event Details Column #}
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        {# Event Title #}
+                        <h1 class="card-title display-6 mb-3">{{ event.titre }}</h1>
+
+                        {# Event Metadata #}
+                        <div class="event-meta mb-4 border-top border-bottom py-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        {# Use Bootstrap Icons consistently #}
+                                        <i class="bi bi-calendar-event text-primary fs-3 me-3"></i>
+                                        <div>
+                                            <h6 class="mb-1 text-muted">Date de début</h6>
+                                            <p class="mb-0 fw-bold">{{ event.dateDebut ? event.dateDebut|date('d M Y \\à H:i') : 'Non définie' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-calendar-check text-primary fs-3 me-3"></i>
+                                        <div>
+                                            <h6 class="mb-1 text-muted">Date de fin</h6>
+                                            <p class="mb-0 fw-bold">{{ event.dateFin ? event.dateFin|date('d M Y \\à H:i') : 'Non définie' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-geo-alt-fill text-primary fs-3 me-3"></i>
+                                        <div>
+                                            <h6 class="mb-1 text-muted">Lieu (Gouvernorat)</h6>
+                                            {# Use the 'state' property which holds the GouvernoratEnum #}
+                                            <p class="mb-0 fw-bold">{{ event.state ? event.state.label : 'Non défini' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-battery-charging text-primary fs-3 me-3"></i>
+                                        <div>
+                                            <h6 class="mb-1 text-muted">Autonomie minimale requise</h6>
+                                            <p class="mb-0 fw-bold">
+                                                {% if event.trottinetteMinAutonomie is not null and event.trottinetteMinAutonomie > 0 %}
+                                                    {{ event.trottinetteMinAutonomie }} km
+                                                {% else %}
+                                                    Aucune
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {# Removed redundant gouvernorat check as it's now the 'lieu' field #}
+                            </div>
+                        </div>
+
+                        {# Event Description #}
+                        <div class="description mb-4">
+                            <h5 class="mb-2">Description</h5>
+                            {# Use nl2br filter to render line breaks from the textarea input #}
+                            <p class="mb-0">{{ event.description|nl2br }}</p>
+                        </div>
+
+                        {# Action Buttons Footer #}
+                        <div class="card-footer bg-transparent border-top pt-3 d-flex flex-wrap justify-content-between align-items-center gap-2"> {# Added gap-2 #}
+                            {# Back Button #}
+                            <a href="{{ path('app_admin_events') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+                            </a>
+
+                            {# Admin/Partenaire Actions - Consider conditional display with is_granted if security is added back #}
+                            <div>
+                                {# Edit Button - Visible to relevant roles #}
+                                {# {% if is_granted('ROLE_ADMIN') or (is_granted('ROLE_PARTENAIRE') and event.organisateur == app.user) %} #}
+                                <a href="{{ path('app_event_edit', {'id': event.id}) }}" class="btn btn-sm btn-primary me-2">
+                                    <i class="bi bi-pencil-fill me-1"></i>Modifier
+                                </a>
+                                {# {% endif %} #}
+
+                                {# Participants Button - Visible to relevant roles #}
+                                {# {% if is_granted('ROLE_ADMIN') %} #}
+                                <a href="{{ path('app_event_participants', {'id': event.id}) }}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-people-fill me-1"></i>Voir les participants
+                                </a>
+                                {# {% endif %} #}
+                            </div>
+
+                            {# Client Participation Actions #}
+                            <div>
+                                {% if app.user %} {# Only show buttons if a user concept exists #}
+                                    {% if user_participation and user_participation.statut == constant('App\\Enum\\ParticipationStatus::INSCRIT') %} {# <--- CORRECTED HERE #}
+                                        {# User is participating - Show Cancel Button #}
+                                        {# WARNING: No CSRF protection if removed! #}
+                                        <form action="{{ path('app_event_cancel_participation', {'id': event.id}) }}" method="post" onsubmit="return confirm('Voulez-vous vraiment annuler votre participation ?');" class="d-inline">
+                                            {# <input type="hidden" name="_token" value="{{ csrf_token('cancel'~event.id~app.user.id) }}"> #} {# CSRF Removed/Optional #}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-x-circle me-1"></i> Annuler Participation
+                                            </button>
+                                            <span class="badge bg-success ms-1 align-middle">Inscrit</span>
+                                        </form>
+                                    {% else %}
+                                        {# User is NOT actively participating (might be cancelled or never joined) - Show Participate Button #}
+                                        {# WARNING: No CSRF protection if removed! #}
+                                        <form action="{{ path('app_event_participate', {'id': event.id}) }}" method="post" class="d-inline">
+                                            {# <input type="hidden" name="_token" value="{{ csrf_token('participate'~event.id) }}"> #} {# CSRF Removed/Optional #}
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                {% if user_participation and user_participation.statut == constant('App\\Enum\\ParticipationStatus::ANNULE') %} {# <--- CORRECTED HERE #}
+                                                    <i class="bi bi-arrow-clockwise me-1"></i> Réactiver Participation
+                                                {% else %}
+                                                    <i class="bi bi-check-circle me-1"></i> Participer
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                        {% if user_participation and user_participation.statut == constant('App\\Enum\\ParticipationStatus::ANNULE') %} {# <--- CORRECTED HERE #}
+                                            <span class="badge bg-secondary ms-1 align-middle">Annulé</span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% else %}
+                                    {# Optionally show a message or login link for non-logged-in users #}
+                                    <a href="{{ path('app_login') }}" class="btn btn-sm btn-outline-primary">Connectez-vous pour participer</a>
+                                {% endif %}
+                            </div>
+                        </div> {# End Card Footer #}
+                    </div> {# End Card Body #}
+                </div> {# End Card #}
+            </div> {# End Main Column #}
+
+            {# Sidebar Column #}
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Actions Administrateur</h5> {# Assuming delete is admin action #}
+                    </div>
+                    <div class="card-body text-center">
+                        {# Delete Form - Consider conditional display with is_granted if security is added back #}
+                        {# {% if is_granted('ROLE_ADMIN') %} #}
+                        {% if event.id is defined and event.id %} {# Ensure event.id exists before including delete form #}
+                            {{ include('event/_delete_form.html.twig') }}
+                        {% else %}
+                            <p class="text-muted">Impossible de supprimer cet événement (ID manquant).</p>
+                        {% endif %}
+                        {# {% else %}
+                        <p class="text-muted">Aucune action administrateur disponible.</p>
+                    {% endif %} #}
+                    </div>
+                </div>
+                {# You could add more sidebar cards here - e.g., map snippet, related events #}
+            </div> {# End Sidebar Column #}
+        </div> {# End Row #}
+    </div> {# End Container #}
+{% endblock %}

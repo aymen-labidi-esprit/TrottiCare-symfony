@@ -1,0 +1,125 @@
+{# templates/home/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - TrottiCare Location{% endblock %}
+
+{% block body %}
+    {# Hero Section (Same as before) #}
+<section class="hero-section bg-gradient-to-r from-green-50 to-blue-50 py-16 lg:py-24">
+    <div class="container">
+        <div class="hero-text-wrapper max-w-3xl mx-auto text-center">
+            <h1 class="hero-h1 text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+                {{ heroTitle|default('Location de Trottinettes Électriques') }}
+            </h1>
+            <p class="hero-p text-lg md:text-xl text-gray-600 mb-8">
+                {{ heroSubtitle|default('Découvrez un moyen écologique et pratique de vous déplacer.') }}
+            </p>
+            {# Button linking to the scooter list page #}
+            <a href="{{ path('public_trottinette_index') }}" class="button button-hero inline-block">Voir les trottinettes</a>
+        </div>
+    </div>
+</section>
+
+{# Main Content Area #}
+<main class="container main-content-area py-16 lg:py-24">
+
+    {# --- MAP SECTION RE-ADDED --- #}
+    <section id="map-section" class="mb-16 lg:mb-24">
+        <h2 class="section-title text-center">Carte des Zones Desservies</h2> {# Changed title slightly #}
+        {# Container for the map - Apply styles from main.css or inline #}
+        <div id="map-container" class="map-container rounded-lg shadow-lg overflow-hidden">
+            {# Loading indicator or placeholder (will be replaced by map) #}
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background-color: #f3f4f6; color: #6b7280;">
+                Chargement de la carte...
+            </div>
+        </div>
+    </section>
+    {# --- END MAP SECTION --- #}
+
+    {# --- Nearby Scooters Section --- #}
+    <section id="scooters-nearby" class="mb-16 lg:mb-24">
+        <div class="events-header flex justify-between items-center mb-8">
+            <h2 class="section-title-inline mb-0">Quelques Trottinettes Disponibles</h2> {# Changed title #}
+            <a href="{{ path('public_trottinette_index') }}">
+                <button class="button button-secondary">Voir toutes les trottinettes</button>
+            </a>
+        </div>
+        <div class="scooter-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {% for scooter_loop_item in scooters %} {# Use scooters passed from controller #}
+                {% include 'scooter/_scooter_card.html.twig' with {
+                    'scooter_data': scooter_loop_item,
+                    'loop': loop
+                } %}
+            {% else %}
+                <p class="text-center text-gray-600 col-span-full">Aucune trottinette disponible affichée pour le moment.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# --- Upcoming Events Section --- #}
+    <section id="upcoming-events">
+        <div class="events-header flex justify-between items-center mb-8">
+            <h2 class="section-title-inline mb-0">Événements à venir</h2>
+            <a href="{{ path('public_event_index') }}"> {# Ensure this route exists #}
+                <button class="button button-secondary">Voir tous les événements</button>
+            </a>
+        </div>
+        <div class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {# Adjusted path #}
+            {% for event_loop_item in upcoming_events %}
+            {% include 'public/event/_event_card.html.twig' with {
+            'event_data': event_loop_item
+            } %}
+            {% else %}
+            <p class="text-center text-gray-600 col-span-full">Aucun événement à venir programmé.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+</main> {# End Main Content Area #}
+{% endblock %}
+
+{# --- JAVASCRIPT BLOCK FOR MAP INITIALIZATION --- #}
+{% block javascripts %}
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const mapElement = document.getElementById('map-container');
+
+            // Check if Leaflet (L) is loaded (linked in base.html.twig)
+            if (mapElement && typeof L !== 'undefined') {
+                try {
+                    // --- Initialize Map ---
+                    const mapCenterLat = 36.8065; // Tunis Latitude
+                    const mapCenterLng = 10.1815; // Tunis Longitude
+                    const mapZoom = 13;           // Zoom level for Tunis
+
+                    mapElement.innerHTML = ''; // Clear the loading message
+
+                    const map = L.map(mapElement).setView([mapCenterLat, mapCenterLng], mapZoom);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                        maxZoom: 18, // Standard max zoom for OSM
+                    }).addTo(map);
+
+                    console.log('Empty Leaflet map initialized and centered on Tunis.');
+
+                    // --- NO MARKERS ADDED HERE ---
+                    // The markersJson variable is not used in this version.
+
+                } catch (error) {
+                    console.error("Failed to initialize Leaflet map:", error);
+                    if (mapElement) {
+                        mapElement.innerHTML = "<p style='padding: 20px; text-align: center; color: red;'>Impossible de charger la carte.</p>";
+                    }
+                }
+            } else {
+                if (!mapElement) console.warn("Map container '#map-container' not found.");
+                if (typeof L === 'undefined') console.error("Leaflet library (L) not loaded. Check <script> tag in base.html.twig.");
+                if(mapElement) mapElement.innerHTML = "<p style='padding: 20px; text-align: center; color: orange;'>Carte interactive indisponible.</p>";
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,239 @@
+{# templates/admin/maintenance/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Maintenances - Admin{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Ensure Tailwind base styles are loaded via base.html.twig #}
+    <style>
+        /* Reusable Status Badge Styles */
+        .status-badge {
+            padding: 0.25em 0.6em; border-radius: 9999px; /* pill */
+            font-size: 0.7rem; /* text-xs */ font-weight: 500; /* font-medium */
+            text-transform: uppercase; letter-spacing: 0.05em;
+            white-space: nowrap; line-height: 1;
+        }
+        .status-en_cours { background-color: #fef9c3; color: #854d0e; } /* yellow */
+        .status-terminee { background-color: #dcfce7; color: #166534; } /* green */
+        .status-annulee { background-color: #fee2e2; color: #991b1b; } /* red */
+
+        /* Basic form input/select styles (reuse/adapt) */
+        .form-input { appearance: none; display: block; width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #1f2937; background-color: #fff; background-clip: padding-box; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+        .form-select { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; display: block; width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #1f2937; background-color: #fff; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .form-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+
+        /* Basic Button Styles (reuse/adapt) */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+        .button-outline-primary { color: #3b82f6; border-color: #3b82f6; background-color: transparent;} .button-outline-primary:hover { background-color: #eff6ff; }
+        .button-outline-secondary { color: #6b7280; border-color: #d1d5db; background-color: transparent;} .button-outline-secondary:hover { background-color: #f3f4f6; }
+        .button-outline-danger { color: #dc2626; border-color: #ef4444; background-color: transparent;} .button-outline-danger:hover { background-color: #fee2e2; }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Ensure FontAwesome icons render */
+        .fas { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+        .fa-tools:before { content: "\f7d9"; }
+        .fa-plus:before { content: "\2b"; }
+        .fa-wrench:before { content: "\f0ad"; }
+        .fa-check:before { content: "\f00c"; }
+        .fa-times:before { content: "\f00d"; }
+        .fa-search:before { content: "\f002"; }
+        .fa-eye:before { content: "\f06e"; }
+        .fa-edit:before { content: "\f044"; }
+        .fa-trash:before { content: "\f1f8"; } /* Different trash icon */
+        .fa-inbox:before { content: "\f01c"; }
+        .fa-filter:before { content: "\f0b0"; }
+        .mr-1 { margin-right: 0.25rem; }
+        .mr-1\.5 { margin-right: 0.375rem; }
+        .mr-2 { margin-right: 0.5rem; }
+        .mr-3 { margin-right: 0.75rem; }
+        .fa-calendar-alt:before { content: "\f073"; } /* Calendar icon */
+        .button-info { background-color: #0ea5e9; color: white; border-color: #0ea5e9; } .button-info:hover { background-color: #0284c7; border-color: #0369a1; }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+        <div class="container mx-auto max-w-7xl">
+
+            {# 1. Header Section #}
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">
+                    <i class="fas fa-tools mr-2 text-blue-600"></i>Gestion des Maintenances
+                </h1>
+                <div>
+                    <a href="{{ path('admin_maintenance_new') }}" class="button button-primary">
+                        <i class="fas fa-plus mr-1.5"></i> Nouvelle maintenance
+                    </a>
+                    <a href="{{ path('admin_maintenance_calendar') }}" class="button button-info"> {# Use info color or secondary #}
+                        <i class="fas fa-calendar-alt mr-1.5"></i> Maintenances planing
+                    </a>
+                </div>
+
+            </div>
+
+            {# 2. Status Cards #}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {# In Progress Card #}
+                <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 flex items-center gap-4">
+                    <div class="flex-shrink-0 rounded-full p-3 bg-yellow-100 text-yellow-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wider">En cours</div>
+                        <div class="text-2xl font-bold text-gray-900">{{ maintenances|filter(m => m.statut == 'EN_COURS')|length }}</div>
+                    </div>
+                </div>
+                {# Completed Card #}
+                <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 flex items-center gap-4">
+                    <div class="flex-shrink-0 rounded-full p-3 bg-green-100 text-green-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wider">Terminées</div>
+                        <div class="text-2xl font-bold text-gray-900">{{ maintenances|filter(m => m.statut == 'TERMINEE')|length }}</div>
+                    </div>
+                </div>
+                {# Cancelled Card #}
+                <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 flex items-center gap-4">
+                    <div class="flex-shrink-0 rounded-full p-3 bg-red-100 text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wider">Annulées</div>
+                        <div class="text-2xl font-bold text-gray-900">{{ maintenances|filter(m => m.statut == 'ANNULEE')|length }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {# 3. Flash Messages #}
+            {% include 'partials/_flash_messages.html.twig' ignore missing %} {# Assuming Tailwind styled #}
+
+            {# 4. Search and Filter Form - Assuming Server-Side Filtering #}
+            <form method="get" action="{{ path('admin_maintenance_index') }}" class="bg-white rounded-lg shadow p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+                    {# Search Input #}
+                    <div class="md:col-span-2 lg:col-span-2">
+                        <label for="search-input" class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"> <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /> </svg>
+                            </div>
+                            <input type="search" id="search-input" name="search" class="form-input pl-10" placeholder="Description, Trottinette ID..." value="{{ app.request.query.get('search', '') }}">
+                        </div>
+                    </div>
+                    {# Status Filter #}
+                    <div>
+                        <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">État</label>
+                        <select id="status-filter" name="status" class="form-select">
+                            <option value="">Tous les statuts</option>
+                            <option value="EN_COURS" {{ app.request.query.get('status') == 'EN_COURS' ? 'selected' }}>En cours</option>
+                            <option value="TERMINEE" {{ app.request.query.get('status') == 'TERMINEE' ? 'selected' }}>Terminée</option>
+                            <option value="ANNULEE" {{ app.request.query.get('status') == 'ANNULEE' ? 'selected' }}>Annulée</option>
+                        </select>
+                    </div>
+                    {# Submit Button #}
+                    <div>
+                        <button type="submit" class="button button-primary w-full">
+                            <i class="fas fa-filter mr-1.5"></i> Filtrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            {# 5. Table Section #}
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200" id="maintenanceTable-server"> {# Renamed ID #}
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trottinette ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Début</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fin</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        {% for maintenance in maintenances %} {# Assumes server-side provides correct list #}
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ maintenance.id }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                    {# Optionally link to the trottinette #}
+                                    <a href="{{ path('admin_trottinette_show', {'id': maintenance.trottinetteId}) }}" class="text-blue-600 hover:underline">
+                                        {{ maintenance.trottinetteId }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" title="{{ maintenance.description }}">
+                                    {{ maintenance.description|length > 60 ? maintenance.description|slice(0, 60) ~ '...' : maintenance.description }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ maintenance.dateDebut ? maintenance.dateDebut|date('d/m/Y H:i') : '' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ maintenance.dateFin ? maintenance.dateFin|date('d/m/Y H:i') : 'N/A' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                <span class="status-badge status-{{ maintenance.statut|lower }}">
+                                     {{ maintenance.statut|replace({'_': ' '})|capitalize }}
+                                </span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium space-x-1">
+                                    <a href="{{ path('admin_maintenance_show', {'id': maintenance.id}) }}" class="button button-sm button-outline-primary" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('admin_maintenance_edit', {'id': maintenance.id}) }}" class="button button-sm button-outline-secondary" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {# Delete Form #}
+                                    <form method="post" action="{{ path('admin_maintenance_delete', {'id': maintenance.id}) }}" onsubmit="return confirm('Supprimer la maintenance #{{ maintenance.id }} ?');" class="inline-block">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ maintenance.id) }}">
+                                        <button type="submit" class="button button-sm button-outline-danger" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-12 px-6 text-gray-500">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune maintenance trouvée</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Essayez de modifier vos filtres ou créez une nouvelle maintenance.</p>
+                                    {% if app.request.query.get('search') or app.request.query.get('status') %}
+                                        <div class="mt-6">
+                                            <a href="{{ path('admin_maintenance_index') }}" class="button button-sm button-secondary">
+                                                Réinitialiser les filtres
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# 6. Pagination (If using server-side pagination) #}
+            {# Example using KnpPaginatorBundle - adapt if needed #}
+            {# {% if maintenances.getTotalItemCount > maintenances.getItemNumberPerPage() %}
+        <div class="mt-6">
+             {{ knp_pagination_render(maintenances) }}
+             <div class="text-sm text-gray-600 mt-2 text-center">
+                Affichage de {{ maintenances.firstItemNumber }} à {{ maintenances.lastItemNumber }} sur {{ maintenances.getTotalItemCount }}.
+             </div>
+        </div>
+        {% endif %} #}
+
+        </div> {# End Container #}
+    </div> {# End Page Wrapper #}
+
+    {# Remove the old client-side filter JS #}
+    {# {% block javascripts %} ... {% endblock %} #}
+{% endblock %}

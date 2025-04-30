@@ -1,0 +1,44 @@
+{# templates/_header.html.twig #}
+<header class="header"> {# Ensure .header styles are in your app.css #}
+    <div class="container header-container"> {# Ensure .container, .header-container styles... #}
+        <div class="logo-area"> {# Ensure .logo-area styles... #}
+            <a href="{{ path('app_home') }}"> {# Adjust route name if needed #}
+                <span class="logo-text">Trotti-Care</span> {# Ensure .logo-text styles... #}
+            </a>
+        </div>
+        <nav class="navigation"> {# Ensure .navigation styles... #}
+             <a class="nav-link" href="{{ path('app_home') }}">Accueil</a> {# Ensure .nav-link styles... #}
+            {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_admin_events') }}" class="nav-link">Événements</a> {# Style .button, .button-secondary #}
+            <a href="{{ path('reclamation_list') }}" class="nav-link">Reclamation</a> {# Style .button, .button-secondary #}
+
+            <a href="{{ path('admin_trottinette_index') }}" class="nav-link">Torttinette</a> {# Style .button, .button-secondary #}
+            <a href="{{ path('chat') }}" class="nav-link">Chatbot</a> {# Style .button, .button-secondary #}
+            <a href="{{ path('app_admin_events') }}" class="nav-link">Événements</a> {# Style .button, .button-secondary #}
+
+            <a href="{{ path('admin_utilisateur_index') }}" class="nav-link">Utilisateurs</a> {# Style .button, .button-secondary #}
+            {% elseif is_granted('ROLE_USER') %}
+                <a href="{{ path('client_event_index') }}" class="nav-link">Événements</a> {# Style .button, .button-secondary #}
+            {% endif %}
+
+        </nav>
+        <div class="header-actions"> {# Wrap buttons if needed for layout #}
+            {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                {# User is logged in - Show appropriate links based on role #}
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('admin_dashboard') }}" class="button button-secondary">Admin</a> {# Style .button, .button-secondary #}
+                {% elseif is_granted('ROLE_PARTENAIRE') %}
+                     <a href="{{ path('partenaire_dashboard') }}" class="button button-secondary">Partenaire</a>
+                {% else %} {# Assuming ROLE_USER is the default client role #}
+                     <a href="{{ path('client_dashboard') }}" class="button button-secondary">Mon Espace</a>
+                {% endif %}
+                 <a href="{{ path('app_logout') }}" class="button button-secondary-outline">Déconnexion</a> {# Example style #}
+            {% else %}
+                {# User is not logged in #}
+                <a href="{{ path('app_login') }}" class="button button-primary">Se Connecter</a> {# Style .button, .button-primary #}
+                {# Optional registration link #}
+                {# <a href="{{ path('app_register') }}" class="button button-secondary">S'inscrire</a> #}
+            {% endif %}
+        </div>
+    </div>
+</header>

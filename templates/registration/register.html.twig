@@ -1,0 +1,101 @@
+{# templates/registration/register.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription - TrottiCare{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4 p-md-5">
+                        <h1 class="h3 mb-4 fw-bold text-center">Créer votre compte TrottiCare</h1>
+
+                        {# Display flash messages if any #}
+                        {% include 'partials/_flash_messages.html.twig' %}
+
+                        {# Display general form errors #}
+                        {{ form_errors(registrationForm) }}
+
+                        {# Start the form #}
+                        {{ form_start(registrationForm, {'attr': {'id': 'registration-form'}}) }}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                {{ form_row(registrationForm.nom) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form_row(registrationForm.prenom) }}
+                            </div>
+                            <div class="col-12">
+                                {{ form_row(registrationForm.email) }}
+                            </div>
+                            <div class="col-12">
+                                {{ form_row(registrationForm.telephone) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form_row(registrationForm.plainPassword.first) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form_row(registrationForm.plainPassword.second) }}
+                            </div>
+                        </div>
+
+                        {# --- REMOVED: Facial Recognition Section --- #}
+                        {# <hr class="my-4"> ... entire face setup UI ... #}
+
+                        {# --- ADDED: Terms agreement --- #}
+                        <div class="mt-3">
+                            {{ form_row(registrationForm.agreeTerms) }}
+                            {# Note: form_row includes label, widget, errors, help #}
+                            {# Manual rendering if more control needed:
+                             <div class="form-check">
+                                 {{ form_widget(registrationForm.agreeTerms) }}
+                                 {{ form_label(registrationForm.agreeTerms) }}
+                                 {{ form_errors(registrationForm.agreeTerms) }}
+                             </div>
+                            #}
+                        </div>
+
+                        {# CSRF Token (rendered by form_end) #}
+                        {# Submit Button - Now enabled by default #}
+                        <button type="submit" id="submitButton" class="btn btn-primary w-100 mt-4">
+                            Créer mon compte
+                        </button>
+                        <p class="mt-3 text-center small">
+                            En créant un compte, vous acceptez nos <a href="#">Conditions d'utilisation</a>.
+                        </p>
+
+                        {{ form_end(registrationForm) }}
+
+                        <p class="mt-4 text-center">
+                            Déjà un compte ? <a href="{{ path('app_login_page') }}">Connectez-vous</a> {# Point to login page route #}
+                        </p>
+                    </div> {# End card-body #}
+                </div> {# End card #}
+            </div> {# End col #}
+        </div> {# End row #}
+    </div> {# End container #}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }} {# Includes base JS, NO face-api needed here anymore #}
+
+    {# --- REMOVED: JavaScript for face capture on registration --- #}
+    <script>
+        // Optional: Add loading state to submit button on standard form submit
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('registration-form');
+            const submitButton = document.getElementById('submitButton');
+            if(form && submitButton) {
+                form.addEventListener('submit', () => {
+                    // Add a slight delay to show loading state before navigation
+                    setTimeout(() => {
+                        submitButton.disabled = true;
+                        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Création...';
+                    }, 50); // Small delay
+                });
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,14 @@
+{{ form_start(form) }}
+    {% for field in form %}
+        <div class="form-group">
+            {{ form_label(field) }}
+            {{ form_widget(field, {'attr': {'class': 'form-control ' ~ (field.vars.valid ? '' : 'is-invalid')}}) }}
+            {% if not field.vars.valid %}
+                <div class="invalid-feedback">
+                    {{ form_errors(field) }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+    <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
+{{ form_end(form) }}
