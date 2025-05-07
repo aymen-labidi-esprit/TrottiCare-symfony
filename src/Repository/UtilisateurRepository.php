@@ -5,21 +5,27 @@ namespace App\Repository;
 use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
-use Doctrine\ORM\Tools\Pagination\Paginator;
-
+use Doctrine\ORM\Tools\Pagination\Paginator; // <-- Import Paginator
+use Knp\Bundle\PaginatorBundle\Pagination\SlidingPagination; // <--- MAKE SURE THIS LINE EXISTS AND IS CORRECT
 /**
  * @extends ServiceEntityRepository<Utilisateur>
  * @implements PasswordUpgraderInterface<Utilisateur>
  */
 class UtilisateurRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
 {
-    public function __construct(ManagerRegistry $registry)
+    private PaginatorInterface $paginator; // <-- MUST HAVE THIS PROPERTY
+
+    // <-- MUST INJECT PaginatorInterface HERE -->
+    public function __construct(ManagerRegistry $registry, PaginatorInterface $paginator)
     {
         parent::__construct($registry, Utilisateur::class);
+        $this->paginator = $paginator; // <-- MUST STORE IT HERE
     }
+
 
     /**
      * Used to upgrade (rehash) the user's password automatically over time.
@@ -51,27 +57,38 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
         }
     }
 
+
     /**
-     * Find users based on search criteria (name, email, role) for Admin.
+     * Find users based on criteria with pagination and sorting.
+     *
      * @param array $criteria ['search' => string, 'role' => string]
      * @param int $page
      * @param int $limit
-     * @return Paginator
+     * @param string $sortField DQL field path (e.g., 'u.nom')
+     * @param string $sortDirection 'asc' or 'desc'
+     * @param array $sortFieldWhitelist Allowed DQL sort fields
+     * @return SlidingPagination // <--- CORRECTED RETURN TYPE HINT (uses the imported class)
      */
-    public function findByCriteria(array $criteria = [], int $page = 1, int $limit = 10): Paginator
+    public function findByCriteria(
+        array $criteria = [],
+        int $page = 1,
+        int $limit = 15,
+        string $sortField = 'u.nom',
+        string $sortDirection = 'asc',
+        array $sortFieldWhitelist = ['u.id', 'u.nom', 'u.prenom', 'u.email', 'u.roleInterne', 'u.isActive', 'u.isVerified']
+    ): SlidingPagination // <--- CORRECTED RETURN TYPE HINT (uses the imported class)
     {
-        $qb = $this->createQueryBuilder('u')
-            ->orderBy('u.nom', 'ASC')
-            ->addOrderBy('u.prenom', 'ASC');
+        $qb = $this->createQueryBuilder('u');
 
+        // --- Apply Filters ---
         if (!empty($criteria['search'])) {
-            $searchTerm = '%' . $criteria['search'] . '%';
+            $searchTerm = '%' . trim($criteria['search']) . '%';
             $qb->andWhere($qb->expr()->orX(
-                $qb->expr()->like('u.nom', ':search'),
-                $qb->expr()->like('u.prenom', ':search'),
-                $qb->expr()->like('u.email', ':search')
+                $qb->expr()->like('LOWER(u.nom)', ':searchLower'),
+                $qb->expr()->like('LOWER(u.prenom)', ':searchLower'),
+                $qb->expr()->like('LOWER(u.email)', ':searchLower')
             ))
-                ->setParameter('search', $searchTerm);
+                ->setParameter('searchLower', mb_strtolower($searchTerm));
         }
 
         if (!empty($criteria['role'])) {
@@ -79,13 +96,28 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
                 ->setParameter('role', $criteria['role']);
         }
 
-        // Exclude deleted users if you add a soft delete flag later
-        // $qb->andWhere('u.deletedAt IS NULL');
+        // --- Apply Sorting ---
+        if (in_array($sortField, $sortFieldWhitelist)) {
+            $qb->orderBy($sortField, $sortDirection);
+        } else {
+            $qb->orderBy('u.nom', 'asc');
+        }
+        $qb->addOrderBy('u.id', 'ASC');
 
-        $query = $qb->getQuery()
-            ->setFirstResult(($page - 1) * $limit)
-            ->setMaxResults($limit);
+        $query = $qb->getQuery();
 
-        return new Paginator($query, true); // true to fetch join collection
+        // --- Use KNP Paginator Service ---
+        // This part is already correct based on the error message!
+        return $this->paginator->paginate(
+            $query,
+            $page,
+            $limit,
+            [
+                'sortFieldWhitelist' => $sortFieldWhitelist,
+                'defaultSortFieldName' => $sortField,
+                'defaultSortDirection' => $sortDirection,
+                'distinct' => false,
+            ]
+        );
     }
-}
+ }

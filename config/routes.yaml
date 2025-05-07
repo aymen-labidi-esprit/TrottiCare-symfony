@@ -3,3 +3,118 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+# config/routes.yaml
+app_home:
+    path: /
+    controller: App\Controller\HomeController::index
+
+# --- Security Placeholders (!!! INSECURE - FOR DEMO ONLY !!!) ---
+app_login:
+    path: /login
+    controller: App\Controller\SecurityController::login # Will only display form
+    methods: [GET, POST] # Allow POST but won't process it securely
+
+app_logout:
+    path: /logout
+    controller: App\Controller\SecurityController::logout # Will just redirect
+
+app_register:
+    path: /register
+    controller: App\Controller\RegistrationController::register
+    methods: [GET, POST]
+
+# --- Trottinette CRUD ---
+app_trottinette_index:
+    path: /trottinettes
+    controller: App\Controller\TrottinetteController::index
+    methods: [GET]
+
+app_trottinette_new:
+    path: /trottinettes/new
+    controller: App\Controller\TrottinetteController::new
+    methods: [GET, POST]
+
+app_trottinette_show:
+    path: /trottinettes/{id}
+    controller: App\Controller\TrottinetteController::show
+    requirements:
+        id: '\d+'
+    methods: [GET]
+
+app_trottinette_edit:
+    path: /trottinettes/{id}/edit
+    controller: App\Controller\TrottinetteController::edit
+    requirements:
+        id: '\d+'
+    methods: [GET, POST]
+
+app_trottinette_delete:
+    path: /trottinettes/{id}/delete
+    controller: App\Controller\TrottinetteController::delete
+    requirements:
+        id: '\d+'
+    methods: [POST] # Use POST for delete action
+
+# --- Reclamation CRUD ---
+app_reclamation_index:
+    path: /reclamations
+    controller: App\Controller\ReclamationController::index
+    methods: [GET]
+
+app_reclamation_new:
+    path: /reclamations/new
+    controller: App\Controller\ReclamationController::new
+    methods: [GET, POST]
+
+app_reclamation_show:
+    path: /reclamations/{id}
+    controller: App\Controller\ReclamationController::show
+    requirements:
+        id: '\d+'
+    methods: [GET]
+
+app_reclamation_edit:
+    path: /reclamations/{id}/edit
+    controller: App\Controller\ReclamationController::edit
+    requirements:
+        id: '\d+'
+    methods: [GET, POST]
+
+app_reclamation_delete:
+    path: /reclamations/{id}/delete
+    controller: App\Controller\ReclamationController::delete
+    requirements:
+        id: '\d+'
+    methods: [POST] # Use POST for delete action
+    
+    # Admin tro action
+
+admin_trottinette_new:
+    path: /admin/trottinettes/new
+    controller: App\Controller\Admin\TrottinetteController::new
+
+admin_trottinette_index:
+    path: /admin/trottinettes
+    controller: App\Controller\Admin\TrottinetteController::index
+    methods: [GET]
+
+admin_trottinette_show:
+    path: /admin/trottinettes/{id}
+    controller: App\Controller\Admin\TrottinetteController::show
+    requirements:
+        id: '\d+'
+    methods: [GET]
+
+admin_trottinette_edit:
+    path: /admin/trottinettes/{id}/edit
+    controller: App\Controller\Admin\TrottinetteController::edit
+    requirements:
+        id: '\d+'
+    methods: [GET, POST]
+
+admin_trottinette_delete:
+    path: /admin/trottinettes/{id}/delete
+    controller: App\Controller\Admin\TrottinetteController::delete
+    requirements:
+        id: '\d+'
+    methods: [POST] # Use POST for delete action

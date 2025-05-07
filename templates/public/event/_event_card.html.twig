@@ -45,6 +45,7 @@
                 </span>
             </div>
 
+
             {# Durée calculée en jours et heures #}
             <div class="event-meta-item flex items-center gap-2 text-gray-600">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -147,7 +148,7 @@
                                 </button>
                             </form>
                         {% else %}
-                            <form action="{{ path('app_event_participate', {'id': event.id}) }}"
+                            <form action="{{ path('client_event_participate', {'id': event.id}) }}"
                                   method="post" class="d-inline-block">
                                 <button type="submit"
                                         class="button button-primary button-small flex items-center gap-1">

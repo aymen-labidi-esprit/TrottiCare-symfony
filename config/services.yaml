@@ -4,12 +4,23 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.mail_sender_address: '%env(MAIL_SENDER_ADDRESS)%'
+    app.mail_sender_name: '%env(MAIL_SENDER_NAME)%'
+    twilio.account_sid: '%env(TWILIO_ACCOUNT_SID)%'
+    twilio.auth_token: '%env(TWILIO_AUTH_TOKEN)%'
+    twilio.phone_number: '%env(TWILIO_PHONE_NUMBER)%'
+
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    App\Service\TwilioNotifierService:
+        arguments:
+            $notifier: '@symfony.notifier'
+    Symfony\Component\Notifier\NotifierInterface:
+        public: true
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -20,5 +31,37 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    # Explicitly configure repositories
+    App\Repository\TrottinetteRepository:
+        public: true
+        tags: ['doctrine.repository_service']
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Service\Texter:
+        arguments:
+            $accountSid: '%twilio.account_sid%'
+            $authToken: '%twilio.auth_token%'
+            $phoneNumber: '%twilio.phone_number%'
+
+    # configure services manually (example for FacialRecognitionService)
+    App\Service\FacialRecognitionService:
+        arguments:
+            $httpClient: '@http_client' # Inject the default http client service
+            $faceApiEndpoint: '%env(resolve:FACE_RECOGNITION_API_ENDPOINT)%'
+
+    # configure EmailVerifier (if not already auto-configured)
+    App\Security\EmailVerifier:
+        arguments:
+            $verifyEmailHelper: '@symfonycasts.verify_email.helper'
+            $mailer: '@mailer.mailer'
+            $entityManager: '@doctrine.orm.entity_manager'
+
+    # Ensure user checker is tagged correctly (autoconfigure usually handles this)
+    App\Security\FacialUserChecker:
+        tags: ['security.user_checker']
+
+    App\Validator\RecaptchaV2Validator:
+        arguments:
+            $recaptchaV2SecretKey: '%env(RECAPTCHA_V2_SECRET_KEY)%' # Inject secret key from .env
+        tags: [validator.constraint_validator]

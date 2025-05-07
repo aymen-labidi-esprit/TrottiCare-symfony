@@ -26,6 +26,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Email(message: 'L\'adresse email {{ value }} n\'est pas valide.')]
     #[Assert\Length(max: 180, maxMessage: 'L\'email ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $email = null;
+    // --- NEW DETAILS FIELD ---
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $details = null;
 
     /**
      * Internal role representation (simple string) - Corrected column name
@@ -113,6 +116,17 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
 
+    // --- GETTER AND SETTER FOR NEW DETAILS FIELD ---
+    public function getDetails(): ?string
+    {
+        return $this->details;
+    }
+
+    public function setDetails(?string $details): static
+    {
+        $this->details = $details;
+        return $this;
+    }
     public function getRoleInterne(): string { return $this->roleInterne; }
     public function setRoleInterne(string $roleInterne): static {
         if (!in_array($roleInterne, ['admin', 'client', 'partenaire'])) {
