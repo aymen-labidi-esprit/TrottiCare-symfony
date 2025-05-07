@@ -1,0 +1,80 @@
+{# templates/scooter/_scooter_card.html.twig #}
+{# Expects a 'scooter_data' variable (array with 'entity', 'distanceString', 'pricePerMinute', 'image_url') #}
+{% set scooter = scooter_data.entity %} {# Extract the entity for easier access #}
+
+<div class="scooter-card">
+    <div class="scooter-image-wrapper">
+        {# Use a consistent placeholder or implement logic for specific images #}
+        <img class="scooter-image" src="{{ scooter_data.image_url|default(asset('images/electric-scooter.jpg')) }}" alt="{{ scooter.modele|default('Trottinette') }}">
+        <div class="battery-indicator">🔋 {{ scooter.batterie|default('N/A') }}%</div>
+    </div>
+    <h3 class="scooter-title">{{ scooter.modele|default('Trottinette Électrique') }}</h3>
+    <div class="scooter-info">
+        <p>📍 {{ scooter_data.distanceString|default(scooter.localisation)|default('Emplacement inconnu') }}</p>
+        {# Autonomy - ADDED HERE #}
+        <p class="text-sm text-gray-600 flex items-center gap-1 mb-1">
+            <i class="fas fa-road text-blue-500 text-xs w-4 text-center"></i> {# Example Icon #}
+            <span>{{ scooter.autonomie|default('N/A') }}</span> {# Display autonomy #}
+        </p>
+        <p>💶 {{ scooter_data.pricePerMinute|default('N/A') }}</p> {# Ensure price format is correct, e.g., TND/min #}
+    </div>
+
+    {# --- Button Logic --- #}
+    {% set is_available = scooter.etat is defined and scooter.etat.value == 'DISPONIBLE' %} {# Check Enum value #}
+    {% set can_rent = is_granted('ROLE_USER') %} {# Check if user is logged in and has client role #}
+    {% set is_logged_in = is_granted('IS_AUTHENTICATED_FULLY') %}
+
+    <div class="scooter-actions mt-auto space-y-2"> {# Use space-y-2 for spacing #}
+        {% if is_available %}
+            {# --- Reserve Button --- #}
+            {% if can_rent %}
+                {# User is logged in as client - Link to reservation page #}
+                {# Ensure 'client_reservation_new' route exists and takes 'trottinetteId' #}
+                <a href="{{ path('reservation_new', {'trottinetteId': scooter.id}) }}" class="button button-reserve w-full">
+                    Réserver
+                </a>
+            {% elseif is_logged_in %}
+                {# Logged in, but not a client (e.g., Admin, Partenaire) - Disable #}
+                <button class="button button-reserve w-full" disabled title="Seuls les clients peuvent réserver">
+                    Réserver
+                </button>
+            {% else %}
+                {# Not logged in - Link to login page #}
+                <a href="{{ path('app_login') }}" class="button button-reserve w-full">
+                    Se connecter pour Réserver
+                </a>
+            {% endif %}
+
+            {# --- QR Code Button --- #}
+            {% if can_rent %}
+                {# User is logged in as client - Link to QR scan page #}
+                {# Ensure 'client_qr_scan' route exists #}
+                <a href="{{ path('client_qr_scan', {'scooterId': scooter.id}) }}" {# Pass ID if scanner needs it #}
+                   class="button button-qr w-full">
+                    <i class="fas fa-qrcode me-1"></i> Louer via QR Code
+                </a>
+            {% elseif is_logged_in %}
+                {# Logged in, but not a client - Disable #}
+                <button class="button button-qr w-full" disabled title="Seuls les clients peuvent louer via QR">
+                    <i class="fas fa-qrcode me-1"></i> Louer via QR Code
+                </button>
+            {% else %}
+                {# Not logged in - Link to login page #}
+                <a href="{{ path('app_login') }}" class="button button-qr w-full">
+                    <i class="fas fa-qrcode me-1"></i> Se connecter pour Louer
+                </a>
+            {% endif %}
+
+        {% else %}
+            {# Scooter not available - Show unavailable status #}
+            <button class="button button-unavailable w-full" disabled>
+                {{ scooter.etat ? scooter.etat.value|replace({'_': ' '})|capitalize : 'Indisponible' }}
+            </button>
+            {# Optionally hide the QR code button entirely when unavailable #}
+            <button class="button button-qr w-full" disabled>
+                <i class="fas fa-qrcode me-1"></i> Louer via QR Code
+            </button>
+        {% endif %}
+    </div>
+    {# --- End Button Logic --- #}
+</div>

@@ -1,0 +1,13 @@
+{# templates/reset_password/email.html.twig #}
+<h1>Bonjour !</h1>
+
+<p>Pour réinitialiser votre mot de passe, veuillez visiter le lien suivant :</p>
+
+{# resetToken.url contains the full URL #}
+{% set resetUrl = url('app_reset_password', {token: resetToken.token}) %}
+<p><a href="{{ resetUrl }}">{{ resetUrl }}</a></p>
+
+{# tokenLifetime is passed from controller, contains expiration interval in seconds #}
+<p>Ce lien expirera dans {{ tokenLifetime|date('g') }} heure(s).</p>
+
+<p>Merci,<br> L'équipe TrottiCare</p>

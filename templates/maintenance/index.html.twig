@@ -1,0 +1,369 @@
+{# templates/maintenance/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Maintenances - Admin{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Ensure Tailwind base styles are loaded via base.html.twig #}
+    <style>
+        /* Reusable Status Badge Styles */
+        .status-badge { padding: 0.25em 0.6em; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; line-height: 1; display: inline-block; } /* Added display inline-block */
+        .status-en_cours { background-color: #fef9c3; color: #854d0e; } /* yellow */
+        .status-terminee { background-color: #dcfce7; color: #166534; } /* green */
+        .status-annulee { background-color: #fee2e2; color: #991b1b; } /* red */
+
+        /* Basic form input/select styles (reuse/adapt from user template) */
+        .form-input, .form-select { appearance: none; display: block; width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #1f2937; background-color: #fff; background-clip: padding-box; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .form-select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; /* ring-1 ring-blue-500 */ }
+        /* Specific height for form elements in filter bar if needed */
+        .filter-form .form-input, .filter-form .form-select { height: 2.25rem; /* h-9 */ }
+
+        /* Reusable Button Styles (reuse/adapt from user template) */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+        .button-info { background-color: #0ea5e9; color: white; border-color: #0ea5e9; } .button-info:hover { background-color: #0284c7; border-color: #0369a1; }
+        .button-warning { background-color: #f59e0b; color: white; border-color: #f59e0b; } .button-warning:hover { background-color: #d97706; border-color: #b45309; }
+        .button-danger { background-color: #ef4444; color: white; border-color: #ef4444; } .button-danger:hover { background-color: #dc2626; border-color: #b91c1c; }
+        .button-outline-primary { color: #3b82f6; border-color: #3b82f6; background-color: transparent;} .button-outline-primary:hover { background-color: #eff6ff; }
+        .button-outline-secondary { color: #6b7280; border-color: #d1d5db; background-color: transparent;} .button-outline-secondary:hover { background-color: #f3f4f6; }
+        .button-outline-danger { color: #dc2626; border-color: #ef4444; background-color: transparent;} .button-outline-danger:hover { background-color: #fee2e2; }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* FontAwesome Icons (reuse/adapt from user template) */
+        .fas { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+        .fa-tools:before { content: "\f7d9"; }
+        .fa-plus:before { content: "\2b"; }
+        .fa-calendar-alt:before { content: "\f073"; }
+        .fa-filter:before { content: "\f0b0"; }
+        .fa-sync-alt:before { content: "\f2f1"; } /* Reset icon */
+        .fa-eye:before { content: "\f06e"; }
+        .fa-edit:before { content: "\f044"; }
+        .fa-trash:before { content: "\f1f8"; }
+        .mr-1 { margin-right: 0.25rem; }
+        .mr-1\.5 { margin-right: 0.375rem; }
+        .mr-2 { margin-right: 0.5rem; }
+
+        /* --- Pagination Styles --- */
+        .pagination-container {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: space-between; /* Space out links and controls */
+            align-items: center;
+            margin-top: 1.5rem; /* mt-6 */
+            padding-top: 1rem; /* pt-4 */
+            border-top: 1px solid #e5e7eb; /* border-t border-gray-200 */
+        }
+
+        /* KNP Paginator default classes (adapt if using a different template) */
+        .pagination { display: flex; padding-left: 0; list-style: none; border-radius: .25rem; margin: 0; /* Remove default margin */ }
+        .page-item .page-link { position: relative; display: block; padding: .5rem .75rem; margin-left: -1px; line-height: 1.25; color: #3b82f6; background-color: #fff; border: 1px solid #dee2e6; transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out; }
+        .page-item:first-child .page-link { margin-left: 0; border-top-left-radius: .25rem; border-bottom-left-radius: .25rem; }
+        .page-item:last-child .page-link { border-top-right-radius: .25rem; border-bottom-right-radius: .25rem; }
+        .page-item.disabled .page-link { color: #6c757d; pointer-events: none; cursor: auto; background-color: #fff; border-color: #dee2e6; }
+        .page-item.active .page-link { z-index: 3; color: #fff; background-color: #3b82f6; border-color: #3b82f6; }
+        .page-link:hover { z-index: 2; color: #2563eb; text-decoration: none; background-color: #e9ecef; border-color: #dee2e6; }
+
+        /* Pagination summary and limit selector styles */
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* space-x-3 */
+            font-size: 0.875rem; /* text-sm */
+            color: #4b5563; /* text-gray-600 */
+            margin-top: 0.5rem; /* Add some space when wrapped */
+        }
+        .pagination-controls label {
+            margin-bottom: 0; /* Override default label margin */
+            white-space: nowrap;
+            margin-right: 0.25rem; /* mr-1 */
+        }
+        /* Make the select smaller */
+        .limit-select {
+            padding: 0.25rem 1.75rem 0.25rem 0.5rem; /* Adjust padding for size and arrow */
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25;
+            height: auto; /* Override filter-form height if needed */
+            min-width: 4.5rem; /* Give it some minimum width */
+            background-size: 1.2em 1.2em; /* Adjust arrow size */
+            background-position: right 0.3rem center;
+            border-radius: 0.375rem; /* Match other inputs */
+            border: 1px solid #d1d5db; /* Match other inputs */
+        }
+        /* Reusable Status Badge Styles */
+        .status-badge { padding: 0.25em 0.6em; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; line-height: 1; display: inline-block; }
+        .status-en_cours { background-color: #fef9c3; color: #854d0e; } /* yellow */
+        .status-terminee { background-color: #dcfce7; color: #166534; } /* green */
+        .status-annulee { background-color: #fee2e2; color: #991b1b; } /* red */
+
+        /* Basic form input/select styles (KEEP THESE) */
+        .form-input, .form-select { appearance: none; display: block; width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #1f2937; background-color: #fff; background-clip: padding-box; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .form-select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; /* ring-1 ring-blue-500 */ }
+        .filter-form .form-input, .filter-form .form-select { height: 2.25rem; /* h-9 */ }
+
+        /* Reusable Button Styles (KEEP THESE) */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+        .button-info { background-color: #0ea5e9; color: white; border-color: #0ea5e9; } .button-info:hover { background-color: #0284c7; border-color: #0369a1; }
+        .button-warning { background-color: #f59e0b; color: white; border-color: #f59e0b; } .button-warning:hover { background-color: #d97706; border-color: #b45309; }
+        .button-danger { background-color: #ef4444; color: white; border-color: #ef4444; } .button-danger:hover { background-color: #dc2626; border-color: #b91c1c; }
+        .button-outline-primary { color: #3b82f6; border-color: #3b82f6; background-color: transparent;} .button-outline-primary:hover { background-color: #eff6ff; }
+        .button-outline-secondary { color: #6b7280; border-color: #d1d5db; background-color: transparent;} .button-outline-secondary:hover { background-color: #f3f4f6; }
+        .button-outline-danger { color: #dc2626; border-color: #ef4444; background-color: transparent;} .button-outline-danger:hover { background-color: #fee2e2; }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* FontAwesome Icons (KEEP THESE) */
+        .fas { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+        .fa-tools:before { content: "\f7d9"; }
+        .fa-plus:before { content: "\2b"; }
+        .fa-calendar-alt:before { content: "\f073"; }
+        .fa-filter:before { content: "\f0b0"; }
+        .fa-sync-alt:before { content: "\f2f1"; } /* Reset icon */
+        .fa-eye:before { content: "\f06e"; }
+        .fa-edit:before { content: "\f044"; }
+        .fa-trash:before { content: "\f1f8"; }
+        .mr-1 { margin-right: 0.25rem; }
+        .mr-1\.5 { margin-right: 0.375rem; }
+        .mr-2 { margin-right: 0.5rem; }
+
+        /* --- REMOVE Pagination specific styles --- */
+        /* .pagination { ... } */
+        /* .page-item .page-link { ... } */
+        /* .page-item.disabled .page-link { ... } */
+        /* .page-item.active .page-link { ... } */
+        /* .page-link:hover { ... } */
+        /* --- END REMOVE --- */
+
+        /* Styles for limit selector container (KEEP THESE) */
+        .pagination-container {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;
+        }
+        .pagination-controls { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: #4b5563; margin-top: 0.5rem; }
+        .pagination-controls label { margin-bottom: 0; white-space: nowrap; margin-right: 0.25rem; }
+        .limit-select { padding: 0.25rem 1.75rem 0.25rem 0.5rem; font-size: 0.875rem; line-height: 1.25; height: auto; min-width: 4.5rem; background-size: 1.2em 1.2em; background-position: right 0.3rem center; border-radius: 0.375rem; border: 1px solid #d1d5db; }
+        /* END KEEP */
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+        <div class="container mx-auto max-w-7xl">
+
+            {# 1. Header Section #}
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">
+                    <i class="fas fa-tools mr-2 text-blue-600"></i>Gestion des Maintenances
+                </h1>
+                <div>
+                    <a href="{{ path('admin_maintenance_new') }}" class="button button-primary mr-2">
+                        <i class="fas fa-plus mr-1.5"></i> Nouvelle maintenance
+                    </a>
+                    <a href="{{ path('admin_maintenance_calendar') }}" class="button button-info">
+                        <i class="fas fa-calendar-alt mr-1.5"></i> Planning
+                    </a>
+                </div>
+            </div>
+
+            {# 2. Status Cards #}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {# In Progress Card #}
+                <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 flex items-center gap-4">
+                    <div class="flex-shrink-0 rounded-full p-3 bg-yellow-100 text-yellow-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wider">En cours</div>
+                        <div class="text-2xl font-bold text-gray-900">{{ countEnCours|default(0) }}</div>
+                    </div>
+                </div>
+                {# Completed Card #}
+                <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 flex items-center gap-4">
+                    <div class="flex-shrink-0 rounded-full p-3 bg-green-100 text-green-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wider">Terminées</div>
+                        <div class="text-2xl font-bold text-gray-900">{{ countTerminee|default(0) }}</div>
+                    </div>
+                </div>
+                {# Cancelled Card #}
+                <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 flex items-center gap-4">
+                    <div class="flex-shrink-0 rounded-full p-3 bg-red-100 text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wider">Annulées</div>
+                        <div class="text-2xl font-bold text-gray-900">{{ countAnnulee|default(0) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {# 3. Flash Messages #}
+            {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+            {# 4. Filter Form #}
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                {{ form_start(filterForm, {'attr': {'class': 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end filter-form'}}) }}
+                <div class="sm:col-span-2 md:col-span-2 lg:col-span-2">
+                    <label for="{{ filterForm.search.vars.id }}" class="sr-only">Rechercher</label>
+                    {{ form_widget(filterForm.search) }}
+                    {{ form_errors(filterForm.search) }}
+                </div>
+                <div>
+                    <label for="{{ filterForm.statut.vars.id }}" class="sr-only">État</label>
+                    {{ form_widget(filterForm.statut) }}
+                    {{ form_errors(filterForm.statut) }}
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="button button-primary button-sm flex-grow">
+                        <i class="fas fa-filter mr-1"></i>Filtrer
+                    </button>
+                    <a href="{{ path('admin_maintenance_index') }}" class="button button-secondary button-sm flex-grow" title="Réinitialiser">
+                        <i class="fas fa-sync-alt mr-1"></i>Réinitialiser
+                    </a>
+                </div>
+                {{ form_end(filterForm) }}
+            </div>
+
+
+            {# 5. Table Section #}
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trottinette ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Début</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fin</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        {% for maintenance in pagination %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ maintenance.id }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                    {% if maintenance.trottinetteId %}
+                                        {# Assuming admin_trottinette_show route exists #}
+                                        <a href="{{ path('admin_trottinette_show', {'id': maintenance.trottinetteId}) }}" class="text-blue-600 hover:underline" title="Voir trottinette {{ maintenance.trottinetteId }}">
+                                            {{ maintenance.trottinetteId }}
+                                        </a>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" title="{{ maintenance.description }}">
+                                    {{ maintenance.description|length > 60 ? maintenance.description|slice(0, 60) ~ '...' : maintenance.description|default('N/A') }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ maintenance.dateDebut ? maintenance.dateDebut|date('d/m/Y H:i') : '' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{{ maintenance.dateFin ? maintenance.dateFin|date('d/m/Y H:i') : 'N/A' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                    {# Ensure status is not null before processing #}
+                                    {% if maintenance.statut %}
+                                        {% set status_class = 'status-' ~ (maintenance.statut|lower|replace({'_': '-'})) %}
+                                        <span class="status-badge {{ status_class }}">
+                                             {{ maintenance.statut|replace({'_': ' '})|capitalize }}
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-unknown">Inconnu</span> {# Fallback style #}
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium space-x-1">
+                                    <a href="{{ path('admin_maintenance_show', {'id': maintenance.id}) }}" class="button button-sm button-info text-white" title="Voir"> <i class="fas fa-eye"></i> </a>
+                                    <a href="{{ path('admin_maintenance_edit', {'id': maintenance.id}) }}" class="button button-sm button-warning text-white" title="Modifier"> <i class="fas fa-edit"></i> </a>
+                                    <form method="post" action="{{ path('admin_maintenance_delete', {'id': maintenance.id}) }}" onsubmit="return confirm('Supprimer la maintenance #{{ maintenance.id }} ?');" class="inline-block">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ maintenance.id) }}">
+                                        <button type="submit" class="button button-sm button-outline-danger" title="Supprimer"> <i class="fas fa-trash"></i> </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-12 px-6 text-gray-500"> {# Adjusted colspan #}
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune maintenance trouvée</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Essayez de modifier vos filtres ou créez une nouvelle maintenance.</p>
+                                    {% if filterForm.vars.value.search is not empty or filterForm.vars.value.statut is not empty %}
+                                        <div class="mt-6">
+                                            <a href="{{ path('admin_maintenance_index') }}" class="button button-sm button-secondary">
+                                                Réinitialiser les filtres
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div> {# End Table Section #}
+
+            {# 6. Pagination Container (as before, but without the old CSS) #}
+            {% if pagination is defined and pagination.getTotalItemCount > 0 %}
+                <div class="pagination-container"> {# Wrapper for links and controls #}
+                    <div> {# Div to keep links together #}
+                        {% if pagination.pageCount > 1 %}
+                            {{ knp_pagination_render(pagination) }} {# This will now use the Tailwind template #}
+                        {% endif %}
+                    </div>
+                    <div class="pagination-controls"> {# Controls group #}
+                        <span> {# Item count text #}
+                            {% set firstItem = pagination.firstItemNumber|default(0) %}
+                            {% set lastItem = pagination.lastItemNumber|default(0) %}
+                            {% set totalItems = pagination.getTotalItemCount|default(0) %}
+                            Affichage de {{ firstItem }}-{{ lastItem }} sur {{ totalItems }}
+                         </span>
+                        <div class="inline-flex items-center"> {# Limit Selector #}
+                            <label for="itemsPerPageSelect" class="whitespace-nowrap">par page:</label>
+                            <select id="itemsPerPageSelect" class="form-select limit-select">
+                                {% for limitOption in allowedLimits %}
+                                    <option value="{{ limitOption }}" {{ limitOption == currentLimit ? 'selected' : '' }}>
+                                        {{ limitOption }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div> {# End Container #}
+    </div> {# End Page Wrapper #}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }} {# Include scripts from base template if any #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectElement = document.getElementById('itemsPerPageSelect');
+            if (selectElement) {
+                selectElement.addEventListener('change', function() {
+                    const newLimit = this.value;
+                    const currentUrl = new URL(window.location.href);
+                    const params = currentUrl.searchParams;
+
+                    // Set the new limit parameter
+                    params.set('limit', newLimit);
+                    // IMPORTANT: Reset to page 1 when changing the number of items per page
+                    params.set('page', '1');
+
+                    // Reconstruct the URL and navigate
+                    currentUrl.search = params.toString();
+                    window.location.href = currentUrl.toString();
+                });
+            }
+        });
+    </script>
+{% endblock %}

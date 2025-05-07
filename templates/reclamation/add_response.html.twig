@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter une Réponse{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        border: 1px solid transparent;
+        line-height: 1.25;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+    .button-primary { background-color: #3b82f6; color: white; }
+    .button-primary:hover { background-color: #2563eb; }
+    .form-input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        color: #1f2937;
+        background-color: #fff;
+        transition: border-color .15s ease-in-out;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px #3b82f6;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 p-4 md:p-6">
+    <div class="container mx-auto max-w-xl">
+        <div class="bg-white rounded-lg shadow-md p-6">
+
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-comment-alt text-blue-600 mr-1"></i> Ajouter une Réponse
+                </h1>
+                <p class="text-sm text-gray-600">
+                    à la réclamation : <strong>{{ reclamation.titre }}</strong>
+                </p>
+            </div>
+
+            {{ form_start(form, { attr: { novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
+
+            {% if form.vars.errors|length > 0 %}
+                <div class="alert alert-danger mb-4">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            <div class="mb-6">
+                {{ form_label(form.message, null, { label_attr: { class: 'font-medium text-gray-700 mb-1 block' } }) }}
+                {{ form_widget(form.message, { attr: { class: 'form-input', placeholder: 'Saisissez votre réponse ici...' } }) }}
+                {{ form_errors(form.message) }}
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="button button-primary">
+                    <i class="fas fa-paper-plane mr-1"></i> Envoyer la Réponse
+                </button>
+            </div>
+
+            {{ form_end(form) }}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

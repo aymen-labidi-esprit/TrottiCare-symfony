@@ -1,0 +1,22 @@
+{# templates/admin/event/_status_badge.html.twig #}
+{% set status_upper = status|default('Unknown')|upper %}
+{% set badge_class = 'badge-default' %}
+{% set status_text = status_upper|replace({'_': ' '})|capitalize %}
+
+{% if status_upper == 'A_VENIR' %}
+    {% set badge_class = 'badge-blue' %}
+    {% set status_text = 'À venir' %} {# Nicer Label #}
+{% elseif status_upper == 'EN_COURS' %}
+    {% set badge_class = 'badge-green' %}
+    {% set status_text = 'En cours' %} {# Nicer Label #}
+{% elseif status_upper == 'TERMINE' %}
+    {% set badge_class = 'badge-gray' %}
+    {% set status_text = 'Terminé' %} {# Nicer Label #}
+{% elseif status_upper == 'ANNULE' %}
+    {% set badge_class = 'badge-red' %}
+    {% set status_text = 'Annulé' %} {# Nicer Label #}
+{% endif %}
+
+<span class="badge {{ badge_class }}">
+    {{ status_text }}
+</span>

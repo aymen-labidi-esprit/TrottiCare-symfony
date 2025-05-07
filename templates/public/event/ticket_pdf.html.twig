@@ -1,0 +1,155 @@
+{# templates/public/event/ticket_pdf.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Billet pour {{ event.titre }}</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif; /* Use a font supporting UTF-8 characters well in wkhtmltopdf */
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .ticket-container {
+            width: 90%;
+            max-width: 600px; /* Adjust as needed */
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        .ticket-header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 15px;
+        }
+        .ticket-header h1 {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+            color: #0056b3; /* Example primary color */
+        }
+        .ticket-header p {
+            margin: 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .ticket-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+        }
+        .ticket-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .ticket-section h2 {
+            font-size: 16px;
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .details-list dt {
+            font-weight: bold;
+            color: #444;
+            width: 120px; /* Adjust label width */
+            float: left;
+            clear: left;
+            margin-bottom: 5px;
+        }
+        .details-list dd {
+            margin-left: 130px; /* Should be > dt width */
+            margin-bottom: 5px;
+            color: #555;
+        }
+        /* Clearfix for the float */
+        .details-list::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .qr-code-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-code-section img {
+            display: block;
+            margin: 10px auto;
+            max-width: 150px; /* Match size from controller */
+            height: auto;
+            border: 1px solid #eee; /* Optional border */
+            padding: 5px;
+        }
+
+        .ticket-footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+        }
+
+    </style>
+</head>
+<body>
+<div class="ticket-container">
+
+    <div class="ticket-header">
+        <h1>{{ event.titre }}</h1>
+        <p>Votre Billet Électronique</p>
+    </div>
+
+    <div class="ticket-section event-details">
+        <h2>Détails de l'Événement</h2>
+        <dl class="details-list">
+            <dt>Date Début:</dt>
+            <dd>{{ event.dateDebut ? event.dateDebut|date('d/m/Y H:i') : 'N/A' }}</dd>
+
+            <dt>Date Fin:</dt>
+            <dd>{{ event.dateFin ? event.dateFin|date('d/m/Y H:i') : 'N/A' }}</dd>
+
+            <dt>Lieu:</dt>
+            <dd>{{ event.state ? event.state.label : (event.state ? event.state.value : 'Non défini') }}</dd>
+        </dl>
+    </div>
+
+    <div class="ticket-section participant-details">
+        <h2>Informations Participant</h2>
+        <dl class="details-list">
+            <dt>Nom:</dt>
+            <dd>{{ user.fullName }}</dd> {# Assuming fullName method exists #}
+
+            <dt>Email:</dt>
+            <dd>{{ user.email }}</dd> {# Use email or another identifier #}
+
+            <dt>N° Billet:</dt>
+            <dd><strong>EVT-{{ event.id }}-{{ participation.id }}</strong></dd> {# Unique ticket ID #}
+        </dl>
+    </div>
+
+    <div class="ticket-section qr-code-section">
+        <h2>Votre Code QR</h2>
+        <p style="font-size: 11px; color: #666;">Présentez ce code à l'entrée de l'événement.</p>
+        {# Embed the base64 encoded QR code image #}
+        {# Use the 'raw' filter because the string contains special characters #}
+        <img src="{{ qrCodeBase64 | raw }}" alt="QR Code Billet">
+    </div>
+
+    <div class="ticket-footer">
+        Merci de votre participation ! - TrottiCare Events
+    </div>
+
+</div>
+</body>
+</html>

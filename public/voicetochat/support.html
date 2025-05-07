@@ -1,0 +1,745 @@
+{# templates/voice_support/single_file_poc.html.twig #}
+{% extends 'base.html.twig' %} {# Or your specific base template #}
+
+{% block title %}Support Vocal TrottiCare (POC - Single File){% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+{# Add Bootstrap Icons if needed and not in base #}
+{# <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"> #}
+
+<style>
+  /* --- PASTE ALL CSS CODE HERE --- */
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    /* Apply RTL direction if needed globally or specifically */
+    /* direction: rtl; */
+  }
+
+  /* Specific styles for the component if not using RTL globally */
+  .phone-call-container,
+  .phone-call-container * {
+    direction: rtl; /* Apply RTL only to this component and its children */
+  }
+
+  /* Ensure icons render correctly if using Bootstrap Icons classes */
+  .bi {
+    display: inline-block;
+    vertical-align: -.125em;
+    fill: currentColor;
+  }
+
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    /* background-color: #f5f5f5; */ /* Let base template handle bg */
+  }
+
+  .phone-call-wrapper { /* Added wrapper for centering */
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem; /* Add some padding */
+  }
+
+  .phone-call-container {
+    width: 100%; /* Responsive width */
+    max-width: 380px;
+    height: 680px;
+    /* margin: 30px auto; */ /* Removed margin for wrapper centering */
+    border-radius: 40px;
+    background-color: #111; /* Slightly lighter black */
+    padding: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3), inset 0 -2px 5px rgba(255,255,255,0.1), inset 0 2px 5px rgba(0,0,0,0.5); /* Inner shadow for realism */
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Notch simulation */
+  .phone-call-container::before {
+    content: '';
+    position: absolute;
+    top: 12px; /* Match padding */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 20px;
+    background: #111;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    z-index: 10; /* Above screen */
+  }
+
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #4386ec, #e55d87); /* Adjusted gradient */
+    border-radius: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle inner border */
+  }
+
+  .phone-header {
+    padding: 15px 20px; /* Adjusted padding */
+    background-color: rgba(0, 0, 0, 0.25); /* Slightly darker */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .phone-status {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 11px; /* Slightly smaller */
+    opacity: 0.9;
+    margin-bottom: 8px;
+  }
+
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 1px; /* Use gap */
+  }
+
+  .bar {
+    width: 3px;
+    background-color: white;
+    border-radius: 1px;
+  }
+
+  .bar:nth-child(1) { height: 4px; }
+  .bar:nth-child(2) { height: 7px; }
+  .bar:nth-child(3) { height: 10px; }
+
+  .call-status {
+    font-size: 18px; /* Slightly smaller */
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .call-timer {
+    font-size: 14px; /* Slightly smaller */
+    opacity: 0.8;
+    font-family: monospace; /* Monospace for timer */
+  }
+
+  .call-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px 0;
+    min-height: 220px; /* Ensure space even if hidden */
+  }
+
+  .agent-avatar {
+    width: 100px; /* Slightly smaller */
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px; /* Reduced margin */
+    background-color: #eee; /* Placeholder bg */
+  }
+
+  .agent-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sound-waves {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px; /* Reduced height */
+  }
+
+  .wave {
+    display: inline-block;
+    width: 4px; /* Thinner */
+    height: 15px;
+    margin: 0 1.5px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 2px;
+    animation: sound-wave 1.2s infinite ease-in-out alternate;
+  }
+
+  .wave:nth-child(1) { animation-delay: -1.0s; }
+  .wave:nth-child(2) { animation-delay: -0.8s; }
+  .wave:nth-child(3) { animation-delay: -0.6s; }
+  .wave:nth-child(4) { animation-delay: -0.4s; }
+  .wave:nth-child(5) { animation-delay: -0.2s; }
+
+  @keyframes sound-wave {
+    0% { height: 4px; opacity: 0.5; }
+    100% { height: 25px; opacity: 0.9; }
+  }
+
+  .conversation-display {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.1); /* Lighter bg */
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(0,0,0,0.2) transparent; /* Firefox */
+  }
+  /* Webkit scrollbar */
+  .conversation-display::-webkit-scrollbar {
+    width: 6px;
+  }
+  .conversation-display::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .conversation-display::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 3px;
+  }
+
+
+  .message {
+    margin-bottom: 12px; /* Slightly more margin */
+    padding: 8px 14px; /* Adjusted padding */
+    border-radius: 18px;
+    max-width: 85%; /* Allow wider messages */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    position: relative;
+    animation: fade-in 0.4s ease-out;
+    word-wrap: break-word; /* Ensure long words break */
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .user-message {
+    align-self: flex-start; /* User messages on the left (RTL) */
+    background-color: #e2ffc7; /* Lighter green */
+    color: #333;
+    border-bottom-left-radius: 4px; /* Bubble tail effect */
+  }
+
+  .agent-message {
+    align-self: flex-end; /* Agent messages on the right (RTL) */
+    background-color: #ffffff;
+    color: #333;
+    border-bottom-right-radius: 4px; /* Bubble tail effect */
+  }
+
+  .message[data-temporary="true"] {
+    opacity: 0.6;
+    font-style: italic;
+  }
+
+
+  .message-time {
+    font-size: 9px; /* Smaller time */
+    color: #777;
+    margin-top: 4px;
+    display: block; /* Ensure it appears below text */
+    text-align: inherit; /* Align with message bubble */
+    /* Removed absolute positioning */
+  }
+  /* Align time differently based on sender */
+  .user-message .message-time { text-align: left; }
+  .agent-message .message-time { text-align: right; }
+
+  .call-controls {
+    display: flex;
+    justify-content: space-evenly; /* Space out buttons */
+    align-items: center;
+    padding: 15px 10px; /* Adjusted padding */
+    gap: 15px;
+    background-color: rgba(0, 0, 0, 0.3); /* Slightly darker controls bg */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .call-button, .end-call-button, .mic-button {
+    width: 65px; /* Slightly larger buttons */
+    height: 65px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    color: white; /* Ensure icon color is white */
+  }
+  .call-button:active, .end-call-button:active, .mic-button:active {
+    transform: scale(0.95); /* Press effect */
+  }
+
+  .call-button { background-color: #4CAF50; }
+  .end-call-button { background-color: #F44336; }
+  .mic-button { background-color: #2196F3; }
+
+  .mic-button.active {
+    background-color: #FF9800; /* Orange when active */
+    animation: pulse 1.3s infinite;
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.6); }
+    70% { box-shadow: 0 0 0 12px rgba(255, 152, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+  }
+
+  /* Icons handled by Bootstrap Icons classes */
+
+  .button-label {
+    font-size: 9px; /* Smaller label */
+    color: white;
+    margin-top: 3px; /* Adjust spacing */
+    font-weight: 600;
+  }
+
+  .hidden {
+    display: none !important; /* Use important to override potential conflicts */
+  }
+
+  .call-connecting {
+    text-align: center;
+    color: white;
+    font-size: 16px; /* Smaller connecting text */
+    padding: 20px;
+    animation: blink 1.8s infinite;
+    opacity: 0.8;
+  }
+
+  .waiting-message { /* Agent waiting message */
+    align-self: flex-end; /* Match agent bubble alignment */
+    padding: 8px 14px;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
+    border-radius: 18px;
+    border-bottom-right-radius: 4px;
+    color: #555;
+    font-style: italic;
+    font-size: 12px;
+    margin-bottom: 12px;
+    max-width: 70%;
+    animation: fade-in 0.4s ease-out;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-4 mb-4"> {# Reduced top margin #}
+  <h1 class="text-center mb-3 h4">Simulation Support Vocal (POC)</h1> {# Smaller heading #}
+  <p class="text-center text-muted mb-4 small">Ceci est une démonstration technique utilisant OpenAI. Pas de vraie reconnaissance/synthèse vocale.</p>
+
+  {# --- PASTE THE HTML STRUCTURE HERE --- #}
+  <div class="phone-call-wrapper"> {# Added wrapper #}
+    <div class="phone-call-container">
+      <div class="phone-screen">
+        <div class="phone-header">
+          <div class="phone-status">
+                            <span class="signal-bars">
+                            <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                            </span>
+            <span class="operator">TrottiNet</span>
+            <span class="battery"> <i class="bi bi-battery-half"></i> 75%</span>
+          </div>
+          <div class="call-status" id="callStatus">Support TrottiCare</div>
+          <div class="call-timer" id="callTimer">00:00</div>
+        </div>
+
+        <div class="call-animation" id="callAnimation"> {# Start visible, JS will hide/show waves #}
+          <div class="agent-avatar">
+            <img src="{{ asset('images/support-agent.png') }}" alt="Agent Support"> {# UPDATE PATH IF NEEDED #}
+          </div>
+          <div class="sound-waves" style="display: none;"> {# Start hidden #}
+            <span class="wave"></span><span class="wave"></span><span class="wave"></span><span class="wave"></span><span class="wave"></span>
+          </div>
+        </div>
+
+        <div class="conversation-display" id="conversationDisplay">
+          <!-- Conversation transcript will appear here -->
+        </div>
+
+        <div class="call-controls">
+          <button class="call-button" id="callButton" title="Démarrer l'appel">
+            <i class="bi bi-telephone-fill fs-4"></i> {# Icon size using Bootstrap class #}
+          </button>
+
+          <button class="end-call-button hidden" id="endCallButton" title="Terminer l'appel">
+            <i class="bi bi-telephone-x-fill fs-4"></i>
+          </button>
+
+          <button class="mic-button hidden" id="micButton" title="Appuyez pour parler (simulation)">
+            <i class="bi bi-mic-fill fs-4"></i>
+            <span class="button-label">تكلم</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# --- END OF PASTED HTML STRUCTURE --- #}
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{# --- PASTE ALL JavaScript CODE HERE --- #}
+<script>
+  class TunisianSupportCall {
+    constructor() {
+      this.isCallActive = false;
+      this.isRecording = false;
+      this.recordingTimeout = null; // Store timeout ID
+      this.callTimerInterval = null; // Store interval ID
+      this.callDuration = 0;
+      this.conversationHistory = [];
+
+      // --- Backend Endpoint ---
+      // Use Twig path function for the correct URL
+      this.backendUrl = '{{ path('app_voice_support_message') }}';
+
+      // Tunisian support phrases
+      this.phrases = {
+        greeting: "السلام عليكم، مرحبا بيك في خدمة دعم التروتينات الكهربائية. كيفاش نجم نعاونك اليوم؟",
+        waiting: "لحظة بربي، قاعد نلوج...", // Thinking message
+        notUnderstood: "سامحني، ما فهمتش عليك. تنجم تعاود؟", // Fallback
+        callEnding: "شكرا على الاتصال. يعيشك و نهارك زين!",
+        recording: "... (أنت تتكلم)", // Placeholder for user speaking
+        error: "سامحني، فما مشكلة فنية صارت.", // Generic error
+      };
+
+      // Predefined user queries for demo
+      this.demoQueries = [
+        "كيفاش نكري تروتينات عندكم؟",
+        "قداش سوم الكراء؟",
+        "عندي مشكلة في الفران متاع التروتينات، شنوة نعمل؟",
+        "وين نجم نلقى تروتينات قريبة ليا؟",
+        "بالله كيفاش نخلص؟",
+        "التروتينات ما تحبش تخدم",
+        "نحب نبدل الاشتراك متاعي"
+      ];
+
+
+      this.initElements();
+      this.initEventListeners();
+      console.log("TunisianSupportCall initialized. Backend URL:", this.backendUrl);
+    }
+
+    initElements() {
+      this.callButton = document.getElementById('callButton');
+      this.endCallButton = document.getElementById('endCallButton');
+      this.micButton = document.getElementById('micButton');
+      this.callStatus = document.getElementById('callStatus');
+      this.callTimer = document.getElementById('callTimer');
+      this.conversationDisplay = document.getElementById('conversationDisplay');
+      this.callAnimation = document.getElementById('callAnimation');
+      this.soundWaves = this.callAnimation ? this.callAnimation.querySelector('.sound-waves') : null; // Get sound waves element
+
+      // Add checks for element existence
+      if (!this.callButton || !this.endCallButton || !this.micButton || !this.callStatus || !this.callTimer || !this.conversationDisplay || !this.callAnimation || !this.soundWaves) {
+        console.error("One or more essential UI elements not found!");
+      }
+
+    }
+
+    initEventListeners() {
+      if (this.callButton) this.callButton.addEventListener('click', () => this.startCall());
+      if (this.endCallButton) this.endCallButton.addEventListener('click', () => this.endCall());
+      if (this.micButton) this.micButton.addEventListener('click', () => this.toggleMic());
+    }
+
+    startCall() {
+      if (this.isCallActive) return;
+      console.log("Starting call...");
+
+      this.isCallActive = true;
+      this.callButton?.classList.add('hidden');
+      this.endCallButton?.classList.remove('hidden');
+
+      // Show connecting animation
+      this.callStatus.textContent = "جاري الاتصال...";
+      this.conversationDisplay.innerHTML = '<div class="call-connecting">جاري الاتصال بخدمة الدعم...</div>';
+      this.callAnimation.style.display = 'flex';
+
+      // Simulate connection delay
+      setTimeout(() => {
+        if (!this.isCallActive) return; // Check if call was ended during delay
+
+        this.conversationDisplay.innerHTML = ''; // Clear connecting message
+        this.callStatus.textContent = "متصل";
+        this.micButton?.classList.remove('hidden');
+        this.startCallTimer();
+
+        // Add agent greeting
+        this.addMessage(this.phrases.greeting, 'agent');
+        this.playDemoAudio('greeting'); // Simulate agent speaking
+
+        this.conversationHistory = [{ role: 'assistant', content: this.phrases.greeting }]; // Start history
+
+      }, 2500);
+    }
+
+    endCall() {
+      if (!this.isCallActive) return;
+      console.log("Ending call...");
+
+      this.isCallActive = false;
+      if (this.isRecording) {
+        this.stopRecording(true); // Stop recording if active, indicate manual stop
+      }
+      this.stopCallTimer();
+      if (this.soundWaves) this.soundWaves.style.display = 'none'; // Ensure waves are hidden
+
+      // Update UI
+      this.callStatus.textContent = "انتهت المكالمة";
+      this.endCallButton?.classList.add('hidden');
+      this.micButton?.classList.add('hidden');
+      this.micButton?.classList.remove('active'); // Ensure mic button style reset
+
+      // Add ending message
+      this.addMessage(this.phrases.callEnding, 'agent');
+      this.playDemoAudio('goodbye');
+
+      // Reset after a delay
+      setTimeout(() => {
+        this.callButton?.classList.remove('hidden');
+        this.callStatus.textContent = "Support TrottiCare";
+        this.callTimer.textContent = "00:00";
+        this.conversationDisplay.innerHTML = '';
+        this.conversationHistory = [];
+        this.callDuration = 0;
+        this.callAnimation.style.display = 'flex'; // Show avatar again
+
+      }, 3500); // Longer delay to read final message
+    }
+
+    toggleMic() {
+      if (!this.isCallActive || !this.micButton) return;
+
+      if (!this.isRecording) {
+        this.startRecording();
+      } else {
+        this.stopRecording(true); // Manual stop
+      }
+    }
+
+    async startRecording() {
+      if (this.isRecording || !this.micButton) return; // Prevent starting if already recording
+      console.log("Simulating recording started...");
+
+      this.isRecording = true;
+      this.micButton.classList.add('active');
+      this.micButton.querySelector('.button-label').textContent = 'إيقاف';
+
+      // Visual feedback in chat
+      this.addMessage(this.phrases.recording, 'user', true); // Add temporary message
+
+      // Simulate recording time
+      this.recordingTimeout = setTimeout(() => {
+        if (this.isRecording) {
+          this.stopRecording(false); // Natural stop after timeout
+        }
+      }, 5000); // 5 seconds recording time
+    }
+
+    async stopRecording(manuallyStopped = false) {
+      if (!this.isRecording || !this.micButton) return;
+      console.log(`Stopping recording. Manually stopped: ${manuallyStopped}`);
+
+      // Clear the recording timeout if it exists
+      if (this.recordingTimeout) {
+        clearTimeout(this.recordingTimeout);
+        this.recordingTimeout = null;
+      }
+
+      this.isRecording = false;
+      this.micButton.classList.remove('active');
+      this.micButton.querySelector('.button-label').textContent = 'تكلم';
+
+      // --- Get the last temporary user message ---
+      const userMessages = this.conversationDisplay.querySelectorAll('.user-message[data-temporary="true"]');
+      const lastUserMessage = userMessages[userMessages.length - 1];
+
+      if (manuallyStopped) {
+        if(lastUserMessage) lastUserMessage.remove(); // Remove temp message if stopped early
+        console.log("Recording stopped manually by user.");
+        return; // Don't proceed to send request
+      }
+
+      // --- Recording finished naturally ---
+      const randomIndex = Math.floor(Math.random() * this.demoQueries.length);
+      const userQuery = this.demoQueries[randomIndex];
+      console.log("Simulated User Query:", userQuery);
+
+      // Update the temporary message or add a new one
+      if (lastUserMessage) {
+        lastUserMessage.textContent = userQuery;
+        lastUserMessage.removeAttribute('data-temporary');
+        lastUserMessage.style.opacity = '1'; // Reset styles
+        lastUserMessage.style.fontStyle = 'normal';
+        this.addTimestamp(lastUserMessage);
+      } else {
+        this.addMessage(userQuery, 'user'); // Add if temp wasn't found
+      }
+
+      // Add to conversation history
+      this.conversationHistory.push({ role: 'user', content: userQuery });
+
+      // --- Send to Backend ---
+      this.addMessage(this.phrases.waiting, 'agent', true); // Show temporary waiting message
+      this.playDemoAudio('waiting'); // Simulate agent processing
+
+      try {
+        console.log("Sending to backend:", this.backendUrl);
+        const response = await fetch(this.backendUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ message: userQuery })
+        });
+
+        // Remove the temporary waiting message immediately
+        const waitingMessages = this.conversationDisplay.querySelectorAll('.agent-message[data-temporary="true"]');
+        waitingMessages.forEach(msg => msg.remove());
+
+        if (!response.ok) {
+          let errorMsg = `Erreur serveur (${response.status})`;
+          try {
+            const errorData = await response.json();
+            errorMsg = errorData.reply || errorData.message || errorMsg;
+          } catch(e) { /* Ignore parsing error */ }
+          throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.reply) {
+          this.addMessage(data.reply, 'agent');
+          this.conversationHistory.push({ role: 'assistant', content: data.reply });
+          this.playDemoAudio('response');
+        } else {
+          this.addMessage(data.reply || this.phrases.notUnderstood, 'agent');
+          this.playDemoAudio('error');
+        }
+
+      } catch (error) {
+        console.error('Error sending/receiving message:', error);
+        // Ensure waiting message is removed on error too
+        const waitingMessages = this.conversationDisplay.querySelectorAll('.agent-message[data-temporary="true"]');
+        waitingMessages.forEach(msg => msg.remove());
+        this.addMessage(this.phrases.error, 'agent'); // Show generic error
+        this.playDemoAudio('error');
+      } finally {
+        if (this.soundWaves) this.soundWaves.style.display = 'none'; // Hide waves after response/error
+      }
+    }
+
+    // Modified addMessage to handle temporary messages
+    addMessage(text, sender, isTemporary = false) {
+      if (!this.conversationDisplay) return; // Safety check
+
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message');
+      messageElement.classList.add(sender === 'user' ? 'user-message' : 'agent-message');
+      messageElement.textContent = text;
+
+      if (isTemporary) {
+        messageElement.setAttribute('data-temporary', 'true');
+        messageElement.style.opacity = '0.6'; // Style temporary messages
+        messageElement.style.fontStyle = 'italic';
+      } else {
+        this.addTimestamp(messageElement); // Only add timestamp to permanent messages
+      }
+
+      this.conversationDisplay.appendChild(messageElement);
+      // Scroll to bottom smoothly
+      this.conversationDisplay.scrollTo({ top: this.conversationDisplay.scrollHeight, behavior: 'smooth' });
+    }
+
+    // Helper to add timestamp
+    addTimestamp(messageElement) {
+      const timeElement = document.createElement('span');
+      timeElement.classList.add('message-time');
+      const now = new Date();
+      timeElement.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      // Append timestamp inside the message bubble
+      messageElement.appendChild(timeElement);
+    }
+
+    startCallTimer() {
+      this.callDuration = 0;
+      if (this.callTimerInterval) clearInterval(this.callTimerInterval);
+
+      this.callTimerInterval = setInterval(() => {
+        this.callDuration++;
+        const minutes = Math.floor(this.callDuration / 60);
+        const seconds = this.callDuration % 60;
+        if (this.callTimer) {
+          this.callTimer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+          clearInterval(this.callTimerInterval); // Stop if element lost
+        }
+      }, 1000);
+    }
+
+    stopCallTimer() {
+      clearInterval(this.callTimerInterval);
+      this.callTimerInterval = null;
+    }
+
+    // Simulate audio playback visually
+    playDemoAudio(type) {
+      if (!this.soundWaves) return; // Safety check
+
+      console.log(`Playing ${type} audio simulation...`);
+      this.soundWaves.style.display = 'flex'; // Show waves
+
+      // Vary duration based on type
+      const duration = type === 'greeting' ? 2500 :
+              type === 'goodbye' ? 1500 :
+                      type === 'waiting' ? 1000 : // Shorter wait visual
+                              type === 'error' ? 1000 : // Short error visual
+                                      3500; // Default for response
+
+      // Use a specific timeout for this audio simulation
+      if (this.audioTimeout) clearTimeout(this.audioTimeout); // Clear previous if any
+      this.audioTimeout = setTimeout(() => {
+        if (this.soundWaves) this.soundWaves.style.display = 'none'; // Hide waves
+        this.audioTimeout = null;
+      }, duration);
+    }
+  }
+
+  // Initialize when the page loads
+  document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('.phone-call-container')) {
+      window.supportCall = new TunisianSupportCall();
+    } else {
+      console.warn("Phone call container not found on this page.");
+    }
+  });
+</script>
+{% endblock %}

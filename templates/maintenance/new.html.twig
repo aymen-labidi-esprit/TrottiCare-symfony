@@ -1,0 +1,186 @@
+{# templates/admin/maintenance/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Maintenance{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Ensure Tailwind base styles are loaded via base.html.twig #}
+    <style>
+        /* Reusable form input/select/textarea styles (adapt from previous) */
+        .form-input, .form-select, .form-textarea {
+            appearance: none; display: block; width: 100%;
+            padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.5;
+            color: #1f2937; background-color: #fff; background-clip: padding-box;
+            border: 1px solid #d1d5db; border-radius: 0.375rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+        }
+        .form-textarea { min-height: 80px; /* Adjust as needed */ }
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center; background-repeat: no-repeat;
+            background-size: 1.5em 1.5em; padding-right: 2.5rem;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none; border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6; /* ring-1 ring-blue-500 */
+        }
+        /* Error state styling */
+        .border-error { border-color: #ef4444 !important; /* red-500 */ }
+        .ring-error { box-shadow: 0 0 0 1px #ef4444 !important; /* ring-red-500 */ }
+        .form-error-message {
+            display: block; /* Show when errors exist */
+            margin-top: 0.25rem; /* mt-1 */
+            font-size: 0.75rem; /* text-xs */
+            color: #dc2626; /* red-600 */
+        }
+
+        /* Reusable Button Styles (adapt from previous) */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.625rem 1.25rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+
+        /* FontAwesome Icons */
+        .fas { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+        .fa-save:before { content: "\f0c7"; }
+        .fa-arrow-left:before { content: "\f060"; }
+        .mr-2 { margin-right: 0.5rem; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+        <div class="container mx-auto max-w-3xl">
+
+            {# 1. Header #}
+            <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-6">
+                Créer une nouvelle Maintenance
+            </h1>
+
+            {# 2. Flash Messages #}
+            {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+            {# 3. Form Card #}
+            <div class="bg-white rounded-lg shadow p-6 md:p-8">
+                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                {# General Form Error Summary #}
+                {% if form.vars.submitted and not form.vars.valid and form.vars.errors|length > 0 %}
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-5" role="alert">
+                        <strong class="font-bold">Erreurs détectées :</strong>
+                        <ul class="mt-2 list-disc list-inside text-sm">
+                            {{ form_errors(form) }}
+                            {# Optionally list individual field errors here too if needed #}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                {# Render form fields using Tailwind classes #}
+                <div class="space-y-5"> {# Vertical spacing between fields #}
+
+                    {# Trottinette Field (ensure this is in your MaintenanceType) #}
+                    {% if form.trottinette is defined %}
+                        <div>
+                            {{ form_label(form.trottinette, 'Trottinette Concernée *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {% set widget_attrs = {'class': 'form-select' } %}
+                            {% if form.vars.submitted and not form.trottinette.vars.valid %}
+                                {% set widget_attrs = widget_attrs|merge({'class': 'form-select border-error focus:ring-error focus:border-error'}) %}
+                            {% endif %}
+                            {{ form_widget(form.trottinette, {'attr': widget_attrs}) }}
+                            {% if form.vars.submitted and not form.trottinette.vars.valid %}
+                                <p class="form-error-message">{{ form_errors(form.trottinette) }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Sélectionnez la trottinette qui nécessite une maintenance.</p>
+                        </div>
+                    {% endif %}
+
+                    {# Description Field #}
+                    <div>
+                        {{ form_label(form.description, 'Description *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {% set widget_attrs = {'class': 'form-textarea' } %} {# Use form-textarea class #}
+                        {% if form.vars.submitted and not form.description.vars.valid %}
+                            {% set widget_attrs = widget_attrs|merge({'class': 'form-textarea border-error focus:ring-error focus:border-error'}) %}
+                        {% endif %}
+                        {{ form_widget(form.description, {'attr': widget_attrs|merge({'rows': 4}) }) }}
+                        {% if form.vars.submitted and not form.description.vars.valid %}
+                            <p class="form-error-message">{{ form_errors(form.description) }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Date Debut Field #}
+                    <div>
+                        {{ form_label(form.dateDebut, 'Date et Heure de Début *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {% set widget_attrs = {'class': 'form-input' } %}
+                        {% if form.vars.submitted and not form.dateDebut.vars.valid %}
+                            {% set widget_attrs = widget_attrs|merge({'class': 'form-input border-error focus:ring-error focus:border-error'}) %}
+                        {% endif %}
+                        {{ form_widget(form.dateDebut, {'attr': widget_attrs}) }}
+                        {% if form.vars.submitted and not form.dateDebut.vars.valid %}
+                            <p class="form-error-message">{{ form_errors(form.dateDebut) }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Date Fin Field (Optional) #}
+                    <div>
+                        {{ form_label(form.dateFin, 'Date et Heure de Fin (Optionnel)', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {% set widget_attrs = {'class': 'form-input' } %}
+                        {% if form.vars.submitted and not form.dateFin.vars.valid %}
+                            {% set widget_attrs = widget_attrs|merge({'class': 'form-input border-error focus:ring-error focus:border-error'}) %}
+                        {% endif %}
+                        {{ form_widget(form.dateFin, {'attr': widget_attrs}) }}
+                        {% if form.vars.submitted and not form.dateFin.vars.valid %}
+                            <p class="form-error-message">{{ form_errors(form.dateFin) }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Laissez vide si la maintenance est toujours en cours.</p>
+                    </div>
+
+                    {# Statut Field #}
+                    <div>
+                        {{ form_label(form.statut, 'Statut *', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                        {% set widget_attrs = {'class': 'form-select' } %}
+                        {% if form.vars.submitted and not form.statut.vars.valid %}
+                            {% set widget_attrs = widget_attrs|merge({'class': 'form-select border-error focus:ring-error focus:border-error'}) %}
+                        {% endif %}
+                        {{ form_widget(form.statut, {'attr': widget_attrs}) }}
+                        {% if form.vars.submitted and not form.statut.vars.valid %}
+                            <p class="form-error-message">{{ form_errors(form.statut) }}</p>
+                        {% endif %}
+                    </div>
+
+                    {# Type Field (Assuming it's added to MaintenanceType) #}
+                    {% if form.type is defined %}
+                        <div>
+                            {{ form_label(form.type, 'Type de Maintenance', {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                            {% set widget_attrs = {'class': 'form-select' } %}
+                            {% if form.vars.submitted and not form.type.vars.valid %}
+                                {% set widget_attrs = widget_attrs|merge({'class': 'form-select border-error focus:ring-error focus:border-error'}) %}
+                            {% endif %}
+                            {{ form_widget(form.type, {'attr': widget_attrs}) }}
+                            {% if form.vars.submitted and not form.type.vars.valid %}
+                                <p class="form-error-message">{{ form_errors(form.type) }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {# Removed cout and technicien fields as they are not in the provided form type #}
+                    {# {% if form.cout is defined %} ... {% endif %} #}
+                    {# {% if form.technicien is defined %} ... {% endif %} #}
+
+                </div>
+
+                {# Form Actions/Buttons #}
+                <div class="mt-8 pt-5 border-t border-gray-200 flex justify-between items-center">
+                    <a href="{{ path('admin_maintenance_index') }}" class="button button-secondary">
+                        <i class="fas fa-arrow-left mr-2"></i>Retour à la liste
+                    </a>
+                    <button type="submit" class="button button-primary">
+                        <i class="fas fa-save mr-2"></i>{{ button_label|default('Enregistrer') }}
+                    </button>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+
+        </div> {# End Container #}
+    </div> {# End Page Wrapper #}
+{% endblock %}

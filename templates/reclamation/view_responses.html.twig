@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réponses à la Réclamation{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        font-size: 0.75rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        border: 1px solid transparent;
+    }
+    .button-primary { background-color: #3b82f6; color: white; }
+    .button-primary:hover { background-color: #2563eb; }
+    .button-danger { background-color: #ef4444; color: white; }
+    .button-danger:hover { background-color: #dc2626; }
+    .button-outline-primary { background-color: transparent; color: #3b82f6; border: 1px solid #3b82f6; }
+    .button-outline-primary:hover { background-color: #e0f2fe; }
+    .badge {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 9999px;
+        background-color: #e5e7eb;
+        color: #374151;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 p-4 md:p-6">
+    <div class="container mx-auto max-w-5xl">
+        <div class="bg-white rounded-lg shadow-md p-6">
+
+            <h1 class="text-2xl font-bold text-gray-900 mb-6">
+                Réponses à la réclamation : <span class="text-blue-600">{{ reclamation.titre }}</span>
+            </h1>
+
+            {% if responses is not empty %}
+                <ul class="space-y-4 mb-6">
+                    {% for response in responses %}
+                        <li class="bg-gray-50 rounded-md p-4 shadow-sm flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-800 mb-2">{{ response.message }}</p>
+                                <div class="text-sm text-gray-500 space-x-2">
+                                    <span>Envoyée le {{ response.dateReponse|date('d/m/Y H:i') }}</span>
+                                    <span class="badge">{{ response.userType|capitalize }}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2 items-end">
+                                <a href="{{ path('edit_response', {'id': response.id}) }}" class="button button-primary">
+                                    <i class="fas fa-edit mr-1"></i> Modifier
+                                </a>
+                                <a href="{{ path('delete_response', {'id': response.id}) }}" class="button button-danger"
+                                   onclick="return confirm('Voulez-vous vraiment supprimer cette réponse ?');">
+                                    <i class="fas fa-trash-alt mr-1"></i> Supprimer
+                                </a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center text-gray-500 py-10">
+                    <i class="fas fa-exclamation-circle text-4xl mb-2"></i>
+                    <p>Aucune réponse disponible pour cette réclamation.</p>
+                </div>
+            {% endif %}
+
+            <div class="text-center mt-6">
+                <a href="{{ path('admin_reclamations') }}" class="button button-outline-primary">
+                    <i class="fas fa-arrow-left mr-1"></i> Retour à la liste des réclamations
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

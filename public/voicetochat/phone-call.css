@@ -1,0 +1,292 @@
+
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+}
+
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: #f5f5f5;
+}
+
+.phone-call-container {
+  max-width: 380px;
+  height: 680px;
+  margin: 30px auto;
+  border-radius: 40px;
+  background-color: #000;
+  padding: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #3494e6, #ec6ead);
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.phone-header {
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phone-status {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.signal-bars {
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar {
+  width: 3px;
+  background-color: white;
+  margin-right: 2px;
+  border-radius: 1px;
+}
+
+.bar:nth-child(1) {
+  height: 5px;
+}
+
+.bar:nth-child(2) {
+  height: 8px;
+}
+
+.bar:nth-child(3) {
+  height: 11px;
+}
+
+.call-status {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.call-timer {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.call-animation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.agent-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.agent-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sound-waves {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+}
+
+.wave {
+  display: inline-block;
+  width: 5px;
+  height: 20px;
+  margin: 0 2px;
+  background-color: white;
+  border-radius: 3px;
+  opacity: 0.8;
+  animation: sound-wave 1s infinite ease-in-out alternate;
+}
+
+.wave:nth-child(1) { animation-delay: -0.8s; }
+.wave:nth-child(2) { animation-delay: -0.6s; }
+.wave:nth-child(3) { animation-delay: -0.4s; }
+.wave:nth-child(4) { animation-delay: -0.2s; }
+.wave:nth-child(5) { animation-delay: 0s; }
+
+@keyframes sound-wave {
+  0% { height: 5px; opacity: 0.4; }
+  100% { height: 30px; opacity: 0.8; }
+}
+
+.conversation-display {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 80%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  animation: fade-in 0.3s ease-in-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.user-message {
+  align-self: flex-end;
+  background-color: #dcf8c6;
+  color: #000;
+}
+
+.agent-message {
+  align-self: flex-start;
+  background-color: white;
+  color: #000;
+}
+
+.message-time {
+  font-size: 10px;
+  opacity: 0.7;
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+}
+
+.call-controls {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  gap: 20px;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.call-button, .end-call-button, .mic-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.call-button {
+  background-color: #4CAF50;
+}
+
+.end-call-button {
+  background-color: #F44336;
+}
+
+.mic-button {
+  background-color: #2196F3;
+}
+
+.mic-button.active {
+  background-color: #FFC107;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+  }
+}
+
+.call-icon, .end-call-icon, .mic-icon {
+  width: 24px;
+  height: 24px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: 5px;
+}
+
+.call-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 24 24'%3E%3Cpath d='M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z'/%3E%3C/svg%3E");
+}
+
+.end-call-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 24 24'%3E%3Cpath d='M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z'/%3E%3C/svg%3E");
+}
+
+.mic-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ffffff' viewBox='0 0 24 24'%3E%3Cpath d='M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z'/%3E%3Cpath d='M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z'/%3E%3C/svg%3E");
+}
+
+.button-label {
+  font-size: 10px;
+  color: white;
+  margin-top: 4px;
+}
+
+.hidden {
+  display: none;
+}
+
+.call-connecting {
+  text-align: center;
+  color: white;
+  font-size: 18px;
+  padding: 20px;
+  animation: blink 1.5s infinite;
+}
+
+.waiting-message {
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+  margin: 20px auto;
+  max-width: 250px;
+}
+
+@keyframes blink {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}

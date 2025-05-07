@@ -1,0 +1,7 @@
+{
+    "error": "Input is too long for this model, shorten your input or use 'parameters': {'truncation': 'only_first'} to run the model only on the first part.",
+    "warnings": [
+        "There was an inference error: unknown error: INDICES element is out of DATA bounds, id=128 axis_dim=128",
+        "Token indices sequence length is longer than the specified maximum sequence length for this model (214 > 128). Running this sequence through the model will result in indexing errors"
+    ]
+}

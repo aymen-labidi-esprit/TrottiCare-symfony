@@ -1,0 +1,590 @@
+{# templates/security/login.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion - TrottiCare{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }} {# Includes Tailwind from base.html.twig #}
+    {# --- Page-Specific Styles --- #}
+    <style>
+        /* Mimic Tailwind form input styles if @tailwindcss/forms is not used globally */
+        .form-input {
+            appearance: none;
+            display: block;
+            width: 100%;
+            border-radius: 0.375rem; /* rounded-md */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            padding: 0.5rem 0.75rem; /* px-3 py-2 */
+            box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
+            color: #1f2937; /* gray-800 */
+        }
+        .form-input:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: #4f46e5; /* focus:border-indigo-500 */
+            box-shadow: 0 0 0 1px #4f46e5; /* focus:ring-indigo-500 */
+        }
+
+        /* Mimic Tailwind basic button styles */
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem; /* px-4 py-2 */
+            border-radius: 0.375rem; /* rounded-md */
+            border: 1px solid transparent;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            white-space: nowrap;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+            cursor: pointer;
+        }
+        .button:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            /* Example focus ring - adjust color */
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .button-primary {
+            color: #ffffff; /* text-white */
+            background-color: #2563eb; /* bg-blue-600 */
+            border-color: #2563eb;
+        }
+        .button-primary:hover {
+            background-color: #1d4ed8; /* hover:bg-blue-700 */
+        }
+        .button-secondary {
+            color: #374151; /* text-gray-700 */
+            background-color: #e5e7eb; /* bg-gray-200 */
+            border-color: #d1d5db; /* border-gray-300 */
+        }
+        .button-secondary:hover {
+            background-color: #d1d5db; /* hover:bg-gray-300 */
+        }
+        .button-info { /* For Face Login button */
+            color: #ffffff;
+            background-color: #0ea5e9; /* bg-sky-500 */
+            border-color: #0ea5e9;
+        }
+        .button-info:hover {
+            background-color: #0284c7; /* hover:bg-sky-600 */
+        }
+        .button-success { /* For Verify Face button */
+            color: #ffffff;
+            background-color: #16a34a; /* bg-green-600 */
+            border-color: #16a34a;
+        }
+        .button-success:hover {
+            background-color: #15803d; /* hover:bg-green-700 */
+        }
+        .button-sm {
+            padding: 0.375rem 0.75rem; /* px-3 py-1.5 */
+            font-size: 0.75rem; /* text-xs */
+        }
+        .button-lg {
+            padding: 0.75rem 1.5rem; /* px-6 py-3 */
+            font-size: 1rem; /* text-base */
+        }
+
+
+        /* Basic Tailwind-like alert styles */
+        .alert-base {
+            padding: 0.75rem 1rem; /* px-4 py-3 */
+            border-radius: 0.375rem; /* rounded */
+            position: relative;
+            margin-bottom: 1rem; /* mb-4 */
+            display: flex;
+            align-items: center;
+        }
+        .alert-danger {
+            background-color: #fee2e2; /* bg-red-100 */
+            border: 1px solid #fca5a5; /* border-red-400 */
+            color: #b91c1c; /* text-red-700 */
+        }
+        .alert-success {
+            background-color: #dcfce7; /* bg-green-100 */
+            border: 1px solid #86efac; /* border-green-400 */
+            color: #166534; /* text-green-700 */
+        }
+        .alert-warning {
+            background-color: #fef9c3; /* bg-yellow-100 */
+            border: 1px solid #fcd34d; /* border-yellow-400 */
+            color: #854d0e; /* text-yellow-700 */
+        }
+        .alert-info {
+            background-color: #dbeafe; /* bg-blue-100 */
+            border: 1px solid #93c5fd; /* border-blue-400 */
+            color: #1e40af; /* text-blue-700 */
+        }
+        .alert-close-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.75rem;
+            padding: 0.25rem;
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            line-height: 1;
+            color: inherit; /* Inherit color from alert */
+            opacity: 0.7;
+            cursor: pointer;
+        }
+        .alert-close-button:hover {
+            opacity: 1;
+        }
+
+        /* Webcam overlay style */
+        #videoOverlayLogin {
+            position: absolute;
+            inset: 0; /* Equivalent to top/left/right/bottom: 0 */
+            background-color: rgba(0, 0, 0, 0.6); /* bg-black/60 */
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem; /* rounded-md (match video) */
+        }
+        /* Tailwind-like spinner */
+        .spinner-tw {
+            border: 4px solid rgba(255, 255, 255, 0.3); /* border-4 border-white/30 */
+            border-left-color: #ffffff; /* border-l-white */
+            border-radius: 50%; /* rounded-full */
+            width: 2rem; /* w-8 */
+            height: 2rem; /* h-8 */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .sr-only { /* From Tailwind - for accessibility */
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Ensure icons have correct margin */
+        .button i { margin-right: 0.25rem; /* me-1 */ }
+        .alert-base i { margin-right: 0.5rem; /* me-2 */ }
+
+        /* Force hidden state */
+        .hidden { display: none !important; }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+    {# Centering container - Use Tailwind flexbox and height utilities #}
+    <div class="min-h-[calc(100vh-150px)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"> {# Adjust min-height based on header/footer #}
+    <div class="max-w-md w-full space-y-8">
+    {# Login Card - Use Tailwind classes #}
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
+    <div class="px-6 py-8 md:px-10">
+    <h1 class="text-2xl font-bold text-center text-gray-900 mb-6">
+        Connexion TrottiCare
+    </h1>
+
+    {# Flash Messages (ensure partial uses Tailwind or defined styles) #}
+    {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+    {# Display login errors (using defined alert styles) #}
+    {% if error %}
+        <div class="alert-base alert-danger mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+            <button type="button" onclick="this.parentElement.remove()" class="alert-close-button">×</button>
+        </div>
+    {% endif %}
+    {# Area for JS-driven status messages (will use defined alert styles) #}
+    <div id="loginStatus" class="mb-4"></div>
+
+    {# --- Step 1: Email Input (Always Visible Initially) --- #}
+    <div id="email-container" class="space-y-4">
+        <p class="text-center text-sm text-gray-600">Entrez votre email pour commencer.</p>
+        <div>
+            <label for="inputEmail" class="block text-sm font-medium text-gray-700 mb-1">Adresse Email</label>
+            <input type="email" id="inputEmail" class="form-input" value="{{ last_username }}" required autofocus autocomplete="email">
+        </div>
+        <div>
+            <button type="button" class="button button-primary w-full" id="checkEmailButton">
+                <i class="bi bi-arrow-right-circle"></i> Vérifier Email
+            </button>
+        </div>
+    </div>
+
+    {# --- Step 2a: Password Input (Hidden Initially) --- #}
+    <form id="password-form" method="post" action="{{ path('app_login_authenticate_password') }}" class="hidden space-y-4 mt-4">
+        <p class="text-center text-sm text-gray-600">Entrez votre mot de passe.</p>
+        <input type="hidden" id="passwordFormEmail" name="email" value="">
+        <div>
+            <label for="inputPassword" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+            <input type="password" name="password" id="inputPassword" class="form-input" autocomplete="current-password" required>
+        </div>
+        {# NO CSRF #}
+        <div class="flex flex-col gap-2">
+            <button class="button button-primary w-full" type="submit" id="passwordLoginButton">
+                <i class="bi bi-box-arrow-in-right"></i> Se Connecter avec Mot de Passe
+            </button>
+            <button type="button" class="button button-secondary button-sm w-full" id="backToEmailButtonPassword">
+                <i class="bi bi-arrow-left"></i> Retour (Email)
+            </button>
+        </div>
+    </form>
+
+    {# --- Step 2b: Face Login UI (Hidden Initially) --- #}
+    <div id="face-login-container" class="hidden mt-4 text-center space-y-4">
+        <p class="text-sm text-gray-600">Préparez la reconnaissance faciale.</p>
+        <button type="button" class="button button-info w-full text-base" id="startFaceLoginButton">
+            <i class="bi bi-camera-fill"></i> Se Connecter avec le Visage
+        </button>
+
+        {# Webcam UI (Hidden until startFaceLoginButton is clicked) #}
+        <div id="webcam-ui" class="hidden space-y-3">
+            <p class="text-center text-sm text-gray-600">Autorisez la webcam et centrez votre visage.</p>
+            <div class="relative inline-block mx-auto w-[240px] h-[180px]"> {# Centered with fixed size #}
+                <video id="webcamFeedLogin" width="240" height="180" autoplay muted playsinline class="border border-gray-300 rounded-md shadow-sm bg-gray-200 block"></video>
+                <div id="videoOverlayLogin" style="display: none;"> {# JS controls display #}
+                    <div class="spinner-tw"><span class="sr-only">Chargement...</span></div>
+                </div>
+            </div>
+            <canvas id="captureCanvasLogin" width="240" height="180" class="hidden"></canvas>
+            <div class="flex flex-col gap-2">
+                <button type="button" class="button button-success w-full" id="identifyFaceButton" disabled>
+                    <i class="bi bi-person-bounding-box"></i> Vérifier mon Visage
+                </button>
+                <button type="button" class="button button-secondary button-sm w-full" id="cancelFaceLoginButton">
+                    Annuler Connexion Faciale
+                </button>
+            </div>
+        </div>
+        <hr class="border-gray-200 my-3">
+        <button type="button" class="text-sm text-blue-600 hover:underline" id="backToEmailButtonFace">
+            <i class="bi bi-arrow-left"></i> Retour (Email)
+        </button>
+    </div>
+
+
+
+    <hr class="my-6 border-gray-200">
+    <div class="text-center text-sm text-gray-600 space-y-1"> {# Added space-y-1 #}
+        <p>Pas encore de compte ? <a href="{{ path('app_register') }}" class="font-medium text-blue-600 hover:text-blue-500 hover:underline">Inscrivez-vous</a></p>
+        {# --- ADD THIS LINK --- #}
+        <p><a href="{{ path('app_forgot_password_request') }}" class="font-medium text-blue-600 hover:text-blue-500 hover:underline">Mot de passe oublié ?</a></p>
+        {# -------------------- #}
+    </div>
+
+    </div>{# End card-body equivalent #}
+    </div>{# End card equivalent #}
+    </div>{# End max-w container #}
+    </div>{# End centering wrapper #}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }} {# Includes base JS, face-api etc. #}
+    {# --- Login Page Specific JavaScript --- #}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const emailContainer = document.getElementById('email-container');
+            const passwordContainer = document.getElementById('password-form');
+            const faceLoginContainer = document.getElementById('face-login-container');
+            const webcamUI = document.getElementById('webcam-ui');
+            const loginStatusDiv = document.getElementById('loginStatus');
+
+            const emailInput = document.getElementById('inputEmail');
+            const checkEmailButton = document.getElementById('checkEmailButton');
+
+            const passwordFormEmailInput = document.getElementById('passwordFormEmail');
+            const passwordLoginButton = document.getElementById('passwordLoginButton');
+            const backToEmailButtonPassword = document.getElementById('backToEmailButtonPassword');
+
+            const startFaceLoginButton = document.getElementById('startFaceLoginButton');
+            const identifyFaceButton = document.getElementById('identifyFaceButton');
+            const cancelFaceLoginButton = document.getElementById('cancelFaceLoginButton');
+            const backToEmailButtonFace = document.getElementById('backToEmailButtonFace');
+
+            const videoLogin = document.getElementById('webcamFeedLogin');
+            const canvasLogin = document.getElementById('captureCanvasLogin');
+            const videoOverlayLogin = document.getElementById('videoOverlayLogin');
+
+            // --- State Variables ---
+            let currentUserEmail = '';
+            let streamLogin = null;
+            let modelsLoadedLogin = false;
+            const MODEL_URL = '/models'; // Ensure this path is correct
+
+            // --- Helper Functions ---
+            function showSection(sectionId) {
+                emailContainer?.classList.add('hidden');
+                passwordContainer?.classList.add('hidden');
+                faceLoginContainer?.classList.add('hidden');
+                stopWebcamLogin(); // Stop webcam when switching
+
+                const section = document.getElementById(sectionId + (sectionId === 'password' ? '-form' : '-container'));
+                if (section) {
+                    section.classList.remove('hidden');
+                }
+                clearStatus();
+            }
+
+            function setStatus(message, type = 'info') {
+                if (!loginStatusDiv) return;
+                let alertClass = 'alert-info'; // Default to info style defined above
+                let iconClass = 'bi-info-circle-fill';
+                if (type === 'success') {
+                    alertClass = 'alert-success'; iconClass = 'bi-check-circle-fill';
+                } else if (type === 'danger' || type === 'error') {
+                    alertClass = 'alert-danger'; iconClass = 'bi-exclamation-triangle-fill';
+                } else if (type === 'warning') {
+                    alertClass = 'alert-warning'; iconClass = 'bi-exclamation-triangle-fill';
+                }
+
+                loginStatusDiv.innerHTML = `<div class="${alertClass} alert-base" role="alert">
+                                          <i class="bi ${iconClass} me-2"></i>
+                                          <span>${message}</span>
+                                          <button type="button" onclick="this.parentElement.remove()" class="alert-close-button">×</button>
+                                       </div>`;
+            }
+            function clearStatus() { if (loginStatusDiv) loginStatusDiv.innerHTML = ''; }
+
+            function setLoading(button, isLoading, defaultHtml) {
+                if (!button) return;
+                if (isLoading) {
+                    button.disabled = true;
+                    // Use the Tailwind-like spinner defined in <style>
+                    button.innerHTML = `
+                        <span class="spinner-tw animate-spin mr-2" role="status" aria-hidden="true"></span>
+                        Chargement...`;
+                } else {
+                    button.disabled = false;
+                    button.innerHTML = defaultHtml;
+                }
+            }
+
+            // --- Load FaceAPI Models ---
+            async function loadModelsLogin() {
+                if (modelsLoadedLogin) return true;
+                setStatus('Chargement modèles IA...', 'info');
+                if(videoOverlayLogin) videoOverlayLogin.style.display = 'flex';
+                if(identifyFaceButton) identifyFaceButton.disabled = true;
+
+                try {
+                    if (typeof faceapi === 'undefined') throw new Error("FaceAPI library not loaded.");
+                    await Promise.all([
+                        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                    ]);
+                    modelsLoadedLogin = true;
+                    clearStatus();
+                    console.log("FaceAPI models loaded for login.");
+                    return true;
+                } catch (error) {
+                    console.error("Error loading FaceAPI models:", error);
+                    setStatus('Erreur chargement modèles IA.', 'danger');
+                    return false;
+                } finally {
+                    if(videoOverlayLogin) videoOverlayLogin.style.display = 'none';
+                    if(identifyFaceButton && modelsLoadedLogin && streamLogin) identifyFaceButton.disabled = false;
+                }
+            }
+
+            // --- Webcam Handling ---
+            async function startWebcamLogin() {
+                if (streamLogin) return;
+                if (!modelsLoadedLogin) {
+                    const loaded = await loadModelsLogin();
+                    if (!loaded) { setStatus('Impossible de démarrer la webcam: modèles IA non chargés.', 'danger'); return; }
+                }
+
+                setStatus('Démarrage webcam...', 'info');
+                if(identifyFaceButton) identifyFaceButton.disabled = true;
+                if(videoOverlayLogin) videoOverlayLogin.style.display = 'flex';
+
+                try {
+                    streamLogin = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                    if(videoLogin) videoLogin.srcObject = streamLogin;
+                    await new Promise((resolve) => { if(videoLogin) videoLogin.onloadedmetadata = resolve; else resolve(false); });
+                    clearStatus();
+                    if(identifyFaceButton) identifyFaceButton.disabled = false;
+                    console.log("Login webcam started.");
+                } catch (err) {
+                    console.error("Login Webcam Error:", err);
+                    setStatus("Erreur webcam. Vérifiez permissions.", 'danger');
+                    if(identifyFaceButton) identifyFaceButton.disabled = true;
+                } finally {
+                    if(videoOverlayLogin) videoOverlayLogin.style.display = 'none';
+                }
+            }
+
+            function stopWebcamLogin() {
+                if (streamLogin) {
+                    streamLogin.getTracks().forEach(track => track.stop());
+                    streamLogin = null;
+                    console.log("Login webcam stopped.");
+                }
+                if(videoLogin) videoLogin.srcObject = null;
+                if(identifyFaceButton) identifyFaceButton.disabled = true;
+                if(webcamUI) webcamUI.classList.add('hidden');
+                if(startFaceLoginButton) startFaceLoginButton.classList.remove('hidden');
+            }
+
+            // --- Step 1: Check Email & Capabilities ---
+            if (checkEmailButton && emailInput) {
+                checkEmailButton.addEventListener('click', async () => {
+                    currentUserEmail = emailInput.value.trim();
+                    if (!currentUserEmail) { setStatus('Veuillez entrer votre adresse email.', 'warning'); return; }
+                    clearStatus();
+                    const originalButtonHtml = checkEmailButton.innerHTML;
+                    setLoading(checkEmailButton, true, originalButtonHtml);
+
+                    try {
+                        const response = await fetch("{{ path('app_login_check_email_caps') }}", {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'},
+                            body: `email=${encodeURIComponent(currentUserEmail)}`
+                        });
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            if (passwordFormEmailInput) passwordFormEmailInput.value = currentUserEmail;
+
+                            // --- MODIFIED LOGIC ---
+                            emailContainer?.classList.add('hidden'); // Always hide email container on success
+                            passwordContainer?.classList.add('hidden'); // Default hide password
+                            faceLoginContainer?.classList.add('hidden'); // Default hide face
+                            stopWebcamLogin(); // Ensure webcam is stopped
+
+                            let statusMessage = '';
+
+                            if (result.canLoginWithPassword) {
+                                passwordContainer?.classList.remove('hidden'); // Show password form
+                                statusMessage = 'Email trouvé. Entrez votre mot de passe';
+                            }
+                            if (result.canLoginWithFace) {
+                                faceLoginContainer?.classList.remove('hidden'); // Show face login options
+                                if (statusMessage) {
+                                    statusMessage += ' ou connectez-vous avec votre visage.';
+                                } else {
+                                    statusMessage = 'Email trouvé. Préparez la reconnaissance faciale.';
+                                }
+                            }
+
+                            if (!result.canLoginWithPassword && !result.canLoginWithFace) {
+                                // This case should be handled by the previous check in the controller, but as fallback:
+                                emailContainer?.classList.remove('hidden'); // Show email container again
+                                setStatus('Aucune méthode de connexion disponible.', 'warning');
+                            } else {
+                                setStatus(statusMessage, 'info'); // Set combined status message
+                            }
+                            // --- END MODIFIED LOGIC ---
+
+                        } else {
+                            setStatus(result.message || 'Erreur lors de la vérification email.', 'danger');
+                        }
+                    } catch (error) {
+                        console.error("Email Check Error:", error);
+                        setStatus('Erreur réseau lors de la vérification email.', 'danger');
+                    } finally {
+                        setLoading(checkEmailButton, false, originalButtonHtml);
+                    }
+                });
+            }
+            // --- Step 2a: Password Login ---
+            if (passwordContainer && passwordLoginButton) {
+                passwordContainer.addEventListener('submit', () => {
+                    const originalButtonHtml = passwordLoginButton.innerHTML;
+                    setLoading(passwordLoginButton, true, originalButtonHtml);
+                });
+            }
+
+            // --- Step 2b: Face Login ---
+            if (startFaceLoginButton && webcamUI) {
+                startFaceLoginButton.addEventListener('click', async () => {
+                    startFaceLoginButton.classList.add('hidden');
+                    webcamUI.classList.remove('hidden');
+                    startWebcamLogin();
+                });
+            }
+
+            if (identifyFaceButton && cancelFaceLoginButton && videoLogin) {
+                identifyFaceButton.addEventListener('click', async () => {
+                    if (!modelsLoadedLogin || !streamLogin || videoLogin.readyState < 3) {
+                        setStatus('Webcam non prête ou modèles non chargés.', 'warning'); return;
+                    }
+                    setStatus('Identification du visage...', 'info');
+                    const originalButtonHtml = identifyFaceButton.innerHTML;
+                    setLoading(identifyFaceButton, true, originalButtonHtml);
+                    cancelFaceLoginButton.disabled = true;
+
+                    try {
+                        const detection = await faceapi.detectSingleFace(videoLogin)
+                            .withFaceLandmarks().withFaceDescriptor();
+
+                        if (detection) {
+                            const descriptorString = Array.from(detection.descriptor).join(',');
+                            setStatus("Visage détecté. Vérification...", 'info');
+
+                            const response = await fetch("{{ path('app_login_authenticate_face') }}", {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'},
+                                body: `email=${encodeURIComponent(currentUserEmail)}&face_data=${encodeURIComponent(descriptorString)}`
+                            });
+                            const result = await response.json();
+
+                            if (response.ok && result.success && result.redirectUrl) {
+                                setStatus('Visage reconnu ! Redirection...', 'success');
+                                window.location.href = result.redirectUrl;
+                            } else {
+                                setStatus(result.message || 'Visage non reconnu.', 'danger');
+                                setLoading(identifyFaceButton, false, originalButtonHtml);
+                                cancelFaceLoginButton.disabled = false;
+                            }
+                        } else {
+                            setStatus('Aucun visage détecté. Réessayez.', 'warning');
+                            setLoading(identifyFaceButton, false, originalButtonHtml);
+                            cancelFaceLoginButton.disabled = false;
+                        }
+                    } catch (error) {
+                        console.error("Face Identification Error:", error);
+                        setStatus('Erreur lors de l\'identification faciale.', 'danger');
+                        setLoading(identifyFaceButton, false, originalButtonHtml);
+                        cancelFaceLoginButton.disabled = false;
+                    } finally {
+                        if(videoOverlayLogin) videoOverlayLogin.style.display = 'none';
+                    }
+                });
+            }
+
+            if (cancelFaceLoginButton) {
+                cancelFaceLoginButton.addEventListener('click', () => {
+                    stopWebcamLogin();
+                });
+            }
+
+            // --- Back Buttons ---
+            if (backToEmailButtonPassword) backToEmailButtonPassword.addEventListener('click', () => showSection('email'));
+            if (backToEmailButtonFace) backToEmailButtonFace.addEventListener('click', () => showSection('email'));
+
+            // --- Initial State ---
+            showSection('email'); // Start at email input
+
+            // --- Cleanup ---
+            window.addEventListener('beforeunload', stopWebcamLogin);
+        });
+    </script>
+{% endblock %}

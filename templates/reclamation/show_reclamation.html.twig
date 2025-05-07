@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Réclamation{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 p-4 md:p-6">
+    <div class="container mx-auto max-w-4xl">
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+
+            <h1 class="text-2xl font-bold text-gray-900 mb-6">
+                {{ reclamation.titre }}
+            </h1>
+
+            <div class="space-y-4 mb-8">
+                <div>
+                    <span class="font-semibold text-gray-700">Description:</span>
+                    <p class="text-gray-800">{{ reclamation.description }}</p>
+                </div>
+                <div>
+                    <span class="font-semibold text-gray-700">Type de Réclamation:</span>
+                    <p class="text-gray-800">{{ reclamation.getTypeReclamation() }}</p>
+                </div>
+                <div>
+                    <span class="font-semibold text-gray-700">Date de Création:</span>
+                    <p class="text-gray-800">{{ reclamation.getDateCreation()|date('Y-m-d') }}</p>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Réponses</h2>
+
+            {% if reponses is not empty %}
+                <ul class="space-y-4">
+                    {% for reponse in reponses %}
+                        <li class="bg-gray-50 p-4 rounded-md shadow-sm">
+                            <p class="text-gray-800 mb-2">{{ reponse.message }}</p>
+                            <p class="text-xs text-gray-500">{{ reponse.getDateReponse()|date('Y-m-d') }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500">Aucune réponse pour cette réclamation.</p>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

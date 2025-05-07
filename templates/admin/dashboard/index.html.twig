@@ -1,0 +1,93 @@
+{# templates/admin/dashboard.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de Bord Admin - TrottiCare{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# Optional: Add FontAwesome if not globally included in base.html.twig #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% endblock %}
+
+{% block body %}
+    <div class="container mx-auto px-4 py-8 md:py-12 page-content"> {# Use container class and padding #}
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-user-shield me-2"></i> Tableau de Bord Administrateur
+        </h1>
+        <p class="text-lg text-gray-600 mb-6">Vue d'ensemble et gestion de la plateforme.</p>
+
+        {# Display flash messages #}
+        {% include 'partials/_flash_messages.html.twig' %}
+
+        {# Key Statistics Cards #}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {# Users Card #}
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                <div>
+                    <div class="text-3xl font-bold text-primary">{{ user_count|default('0') }}</div>
+                    <div class="text-sm text-gray-500">Utilisateurs Inscrits</div>
+                </div>
+                <i class="fas fa-users fa-2x text-primary opacity-50"></i>
+            </div>
+
+            {# Scooters Card #}
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                <div>
+                    <div class="text-3xl font-bold text-green-500">{{ trottinette_count|default('0') }}</div>
+                    <div class="text-sm text-gray-500">Trottinettes Total</div>
+                </div>
+                <i class="fas fa-motorcycle fa-2x text-green-500 opacity-50"></i>
+            </div>
+
+            {# Reservations Card #}
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                <div>
+                    <div class="text-3xl font-bold text-blue-500">{{ reservation_count|default('0') }}</div>
+                    <div class="text-sm text-gray-500">Réservations Total</div>
+                </div>
+                <i class="fas fa-receipt fa-2x text-blue-500 opacity-50"></i>
+            </div>
+
+            {# Events Card #}
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                <div>
+                    <div class="text-3xl font-bold text-purple-600">{{ eventData|length }}</div> {# Use eventData passed from controller #}
+                    <div class="text-sm text-gray-500">Événements Total</div>
+                </div>
+                <i class="fas fa-calendar-alt fa-2x text-purple-600 opacity-50"></i>
+            </div>
+        </div>
+
+        {# Management Links #}
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Gestion Rapide</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {# Use list-group styling equivalent or simple links #}
+            <a href="{{ path('admin_utilisateur_index') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary">
+                <i class="fas fa-users-cog fa-fw me-3 text-lg"></i> Gestion des Utilisateurs
+            </a>
+            <a href="{{ path('admin_trottinette_index') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary">
+                <i class="fas fa-motorcycle fa-fw me-3 text-lg"></i> Gestion des Trottinettes
+            </a>
+            <a href="{{ path('point_relais_index') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary"> {# Corrected route name #}
+                <i class="fas fa-map-pin fa-fw me-3 text-lg"></i> Gestion des Points Relais
+            </a>
+            <a href="{{ path('admin_maintenance_index') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary"> {# Corrected route name #}
+                <i class="fas fa-tools fa-fw me-3 text-lg"></i> Gestion des Maintenances
+            </a>
+            <a href="{{ path('reservation_index') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary"> {# Corrected route name #}
+                <i class="fas fa-file-invoice-dollar fa-fw me-3 text-lg"></i> Gestion des Réservations
+            </a>
+            <a href="{{ path('reclamation_index') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary"> {# Corrected route name #}
+                <i class="fas fa-bullhorn fa-fw me-3 text-lg"></i> Gestion des Réclamations
+            </a>
+            <a href="{{ path('app_admin_events') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary"> {# Corrected route name #}
+                <i class="fas fa-calendar-check fa-fw me-3 text-lg"></i> Gestion des Événements
+            </a>
+            {# Add link for Participations if route exists #}
+            {# <a href="{{ path('admin_participation_index') }}" class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center text-gray-700 hover:text-primary">
+            <i class="fas fa-user-check fa-fw me-3 text-lg"></i> Gestion des Participations
+        </a> #}
+        </div>
+
+    </div>
+{% endblock %}

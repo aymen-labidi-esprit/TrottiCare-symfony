@@ -1,0 +1,127 @@
+{# templates/partials/_nav.html.twig #}
+<nav class="navbar navbar-expand-lg navbar-glass fixed-top py-3" style="font-size: 15px">
+
+    <div class="container" >
+        <a class="navbar-brand" href="{{ path('app_home') }}">
+            <span class="brand-highlight">Trotti</span>Care
+        </a>
+
+        <button class="navbar-toggler border-0" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#mainNav"
+                aria-controls="mainNav"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'point_relais' ? 'active' : '' }}"
+                           href="{{ path('point_relais_index') }}">
+                            Points Relais
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if is_granted('ROLE_USER') %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'dashboard' ? 'active' : '' }}"
+                           href="/client/dashboard">
+                            Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'reservation_' ? 'active' : '' }}"
+                           href="{{ path('reservation_index') }}">
+                            Mes Réservations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'reclamation_' ? 'active' : '' }}"
+                           href="{{ path('reclamation_index') }}">
+                            Mes Réclamations
+                        </a>
+                    </li>
+
+                {% endif %}
+
+                {% if is_granted('ROLE_PARTENAIRE') %}
+                    {# Partner‐specific links here… #}
+                {% endif %}
+
+                {% if is_granted('ROLE_ADMIN') %}
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'admin_utilisateur' ? 'active' : '' }}"
+                           href="{{ path('admin_utilisateur_index') }}">
+                            Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'app_event' ? 'active' : '' }}"
+                           href="{{ path('app_event_index') }}">
+                            Événements
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'app_trottinette' ? 'active' : '' }}"
+                           href="{{ path('app_trottinette_index') }}">
+                            Trottinettes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'admin_' ? 'active' : '' }}"
+                           href="{{ path('reservation_index') }}">
+                            Réservations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'admin_reclamation' ? 'active' : '' }}"
+                           href="{{ path('reclamation_index') }}">
+                            Réclamations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ app.request.get('_route') starts with 'app_admin_events' ? 'active' : '' }}"
+                           href="{{ path('app_admin_events') }}">
+                            Gestion Événements
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                {% if app.user %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                           href="#"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            <i class="bi bi-person-circle fs-5"></i>
+                            {{ app.user.prenom ?: app.user.userIdentifier }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}" style="color: white">Tableau de Bord Admin</a></li>
+                            {% endif %}
+                            {% if is_granted('ROLE_PARTENAIRE') %}
+                                <li><a class="dropdown-item" href="{{ path('app_partenaire_dashboard') }}" style="color: white">Tableau de Bord Partenaire</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ path('app_client_profile_view') }}" style="color: white">Profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('app_logout') }}" style="color: white">Déconnexion</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_login') }}">Connexion</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

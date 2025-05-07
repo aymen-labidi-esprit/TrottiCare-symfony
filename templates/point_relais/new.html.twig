@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Point Relais{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+    .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; font-size: 0.875rem; white-space: nowrap; }
+    .button-primary { background-color: #10b981; color: white; }
+    .button-primary:hover { background-color: #059669; }
+    .button-secondary { background-color: #e5e7eb; color: #374151; }
+    .button-secondary:hover { background-color: #d1d5db; }
+    .form-input {
+        width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem;
+        font-size: 0.875rem; color: #1f2937; background-color: #fff; transition: border-color .15s ease-in-out;
+    }
+    .form-input:focus {
+        outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 p-4 md:p-6">
+  <div class="container mx-auto max-w-3xl">
+    <div class="bg-white rounded-lg shadow-md p-6">
+
+      <h1 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-plus-circle text-blue-600 mr-2"></i> Nouveau Point Relais
+      </h1>
+
+      {# ✅ Flash messages #}
+      {% for label, messages in app.flashes %}
+        {% for message in messages %}
+          <div class="alert alert-{{ label }} alert-dismissible fade show mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+          </div>
+        {% endfor %}
+      {% endfor %}
+
+      {{ form_start(form, { attr: { novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
+
+      {% if form.vars.errors|length > 0 %}
+        <div class="alert alert-danger mb-4">
+          {{ form_errors(form) }}
+        </div>
+      {% endif %}
+
+      <div class="mb-4">
+        {{ form_label(form.nom, null, { label_attr: { class: 'font-medium text-gray-700 mb-1 block' } }) }}
+        {{ form_widget(form.nom, { attr: { class: 'form-input' } }) }}
+        {{ form_errors(form.nom) }}
+      </div>
+
+      <div class="mb-6">
+        <label for="map" class="font-medium text-gray-700 mb-2 block">Sélectionner l'emplacement :</label>
+        <div id="map" style="height: 400px; border-radius: 10px; border: 1px solid #ccc;"></div>
+      </div>
+
+      <div class="mb-4 hidden">
+        {{ form_widget(form.addresse, { attr: { id: 'addressInput' } }) }}
+      </div>
+
+      <div class="mb-4">
+        {{ form_label(form.HoraireOuverture, null, { label_attr: { class: 'font-medium text-gray-700 mb-1 block' } }) }}
+        {{ form_widget(form.HoraireOuverture, { attr: { class: 'form-input' } }) }}
+        {{ form_errors(form.HoraireOuverture) }}
+      </div>
+
+      <div class="flex justify-between items-center mt-6">
+        <a href="{{ path('point_relais_index') }}" class="button button-secondary">
+          <i class="fas fa-arrow-left mr-1"></i> Retour
+        </a>
+        <button type="submit" class="button button-primary">
+          <i class="fas fa-check mr-1"></i> Enregistrer
+        </button>
+      </div>
+
+      {{ form_end(form) }}
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const map = L.map('map').setView([36.8065, 10.1815], 13); // Default: Tunis center
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker;
+
+    map.on('click', function(e) {
+        const { lat, lng } = e.latlng;
+
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        }
+
+        document.getElementById('addressInput').value = lat + ',' + lng;
+
+        marker.on('moveend', function (e) {
+            const { lat, lng } = e.target.getLatLng();
+            document.getElementById('addressInput').value = lat + ',' + lng;
+        });
+    });
+});
+</script>
+{% endblock %}

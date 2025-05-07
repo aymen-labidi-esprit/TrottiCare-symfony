@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ar-TN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>كيفاش تستعمل السكوتر الكهربائي - تعليم بالتونسي</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/GLTFLoader/2.0.0/GLTFLoader.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/OrbitControls/2.0.0/OrbitControls.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f0f0f0;
+      direction: rtl;
+      overflow-x: hidden;
+    }
+
+    #canvas-container {
+      position: relative;
+      width: 100%;
+      height: 50vh;
+      overflow: hidden;
+      background: linear-gradient(135deg, #3498db, #8e44ad);
+    }
+
+    .content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 15px;
+      margin-top: -50px;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 1rem 1.5rem;
+      margin: 0 0.5rem 0.5rem;
+      background-color: #e0e0e0;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn:hover {
+      background-color: #d0d0d0;
+    }
+
+    .tab-btn.active {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .step {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .step h3 {
+      color: #3498db;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .step p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #555;
+    }
+
+    .controls-helper {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    .button-3d {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+
+    .button-3d:hover {
+      background-color: #2980b9;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background-color: #333;
+      color: white;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .tab-btn {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .step h3 {
+        font-size: 1.3rem;
+      }
+
+      .step p {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="canvas-container">
+  <div class="controls-helper">حرك المؤشر للتحكم في الدوران | استخدم العجلة للزوم</div>
+  <button class="button-3d" id="resetView">إعادة عرض الدراجة</button>
+</div>
+
+<div class="content">
+  <h1>كيفاش تستعمل السكوتر الكهربائي</h1>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="basics">الأساسيات</button>
+    <button class="tab-btn" data-tab="safety">السلامة</button>
+    <button class="tab-btn" data-tab="maintenance">الصيانة</button>
+    <button class="tab-btn" data-tab="tips">نصائح و حيل</button>
+  </div>
+
+  <div class="tab-content active" id="basics">
+    <div class="step">
+      <h3>1. قبل ما تبدا</h3>
+      <p>قبل ما تبدا استعمال السكوتر الكهربائي متاعك، تأكد أنّو مشحون بالكامل. لمبة الشحن لازم تولّي خضراء. زيد تأكد إلي الإطارات منفوخين مليح والفرامل تخدم كيما لازم.</p>
+    </div>
+
+    <div class="step">
+      <h3>2. كيفاش تشغّل السكوتر</h3>
+      <p>اضغط على زر التشغيل الموجود في لوحة القيادة لمدة ثانيتين. تو باش تشوف الشاشة تشعل وتظهر فيها نسبة البطارية والسرعة. إذا كان السكوتر متاعك فيه أوضاع مختلفة (عادي، رياضي، اقتصادي)، نجم تختار النمط اللي يناسبك باش تضغط على زر الوضع.</p>
+    </div>
+
+    <div class="step">
+      <h3>3. كيفاش تمشي</h3>
+      <p>ابدأ بوضع رجل وحدة على السكوتر وادفع بالرجل الأخرى على الأرض باش تاخذ دفعة صغيرة. بعد ما تبدا تمشي شوية، اضغط برفق على دواسة السرعة (عادة تكون على جهة اليمين من المقود). حط الرجل الثانية على السكوتر وأنتَ ماشي.</p>
+    </div>
+
+    <div class="step">
+      <h3>4. كيفاش توقف</h3>
+      <p>باش توقف، سيب دواسة السرعة أولاً وبعدين اضغط بلطف على الفرامل (عادة موجودة على جهة اليسار من المقود). ما تضغطش على الفرامل بقوة برشا خاطر ممكن تطيح. تو باش تحس السكوتر يبطئ تدريجيًا لين ما يوقف بالكامل.</p>
+    </div>
+
+    <div class="step">
+      <h3>5. كيفاش تلف وتدور</h3>
+      <p>باش تلف، حرك المقود في الاتجاه اللي تحب تمشي فيه. في البداية، دير بالك وخذ منعرجات واسعة وما تديرش دورانات حادة برشا. مع الوقت والتمرين، باش تولي قادر تتحكم في الدورانات بشكل أفضل.</p>
+    </div>
+  </div>
+
+  <div class="tab-content" id="safety">
+    <div class="step">
+      <h3>1. الخوذة و معدات السلامة</h3>
+      <p>لازم تلبس خوذة ديما وقت اللي تستعمل السكوتر الكهربائي، حتى لو كنت ماشي لمسافة قصيرة. زيد ينصح بلبس واقيات الركبة والكوع ومعدات الحماية خاصة للمبتدئين.</p>
+    </div>
+
+    <div class="step">
+      <h3>2. قواعد الطريق</h3>
+      <p>احترم قوانين المرور ديما. استعمل مسارات الدراجات إذا متوفرة، وإلا امشي في اتجاه حركة المرور وعلى جنب الطريق. ما تنساش تعطي الأولوية للمشاة ديما.</p>
+    </div>
+
+    <div class="step">
+      <h3>3. السلامة في الليل</h3>
+      <p>إذا كنت تستعمل السكوتر في الليل، تأكد أنو الأضواء الأمامية والخلفية تخدم مليح. زيد البس ملابس عاكسة أو فاتحة اللون باش شوفورات الكارهبة واللي في الطريق يشوفوك.</p>
+    </div>
+
+    <div class="step">
+      <h3>4. تجنب المخاطر</h3>
+      <p>دير بالك من الحفر، الأغراض في الطريق، والطرق المبلولة. ما تستعملش السكوتر في طقس غير مناسب كيما المطر الثقيل أو الثلج.</p>
+    </div>
+
+    <div class="step">
+      <h3>5. ما تتسرّعش</h3>
+      <p>ابدا بسرعات منخفضة، خاصة إذا كنت جديد في استعمال السكوتر الكهربائي. زيد سرعتك تدريجيًا بعد ما تحس بالراحة والثقة.</p>
+    </div>
+  </div>
+
+  <div class="tab-content" id="maintenance">
+    <div class="step">
+      <h3>1. شحن البطارية</h3>
+      <p>اشحن السكوتر بعد كل استعمال، حتى لو ما استعملتش البطارية بالكامل. ما تخليش البطارية تفرغ بالكامل. استعمل الشاحن اللي جا مع السكوتر ديما وما تستعملش شواحن أخرى.</p>
+    </div>
+
+    <div class="step">
+      <h3>2. فحص الإطارات</h3>
+      <p>تأكد أنو الإطارات منفوخين مليح. ضغط الهواء المنخفض يقلل من المدى والسرعة. افحص الإطارات دوريًا على ضربات أو تشققات.</p>
+    </div>
+
+    <div class="step">
+      <h3>3. صيانة الفرامل</h3>
+      <p>افحص الفرامل قبل كل استعمال. تأكد أنها تستجيب بشكل صحيح. إذا حسيت بأي مشكلة في الفرامل، شوف متخصص على طول.</p>
+    </div>
+
+    <div class="step">
+      <h3>4. نظافة السكوتر</h3>
+      <p>نظف السكوتر دوريًا، خاصة بعد المشي في الطرق المتربة أو المبلولة. استعمل قطعة قماش مبلولة شوية، وما تستعملش ماء برشا خاطر ممكن يضر المكونات الإلكترونية.</p>
+    </div>
+
+    <div class="step">
+      <h3>5. تخزين السكوتر</h3>
+      <p>خزن السكوتر في مكان جاف وبعيد عن أشعة الشمس المباشرة. إذا ما كنتش باش تستعمل السكوتر لفترة طويلة، احتفظ بالبطارية مشحونة بنسبة تقريبًا 50% وافحصها كل شهر.</p>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tips">
+    <div class="step">
+      <h3>1. تمرّن في مكان آمن</h3>
+      <p>قبل ما تخرج للطرقات، تمرن على استعمال السكوتر في مكان واسع وفارغ كيما موقف سيارات فارغ أو ساحة. تمرن على الإنطلاق، التوقف، والدوران.</p>
+    </div>
+
+    <div class="step">
+      <h3>2. وضعية الجسم</h3>
+      <p>خلي الركبتين مرخيين شوية باش تمتص الصدمات. شد المقود مليح لكن ما تشدوش بقوة برشا. خلي يديك متوازنين على طرفي المقود.</p>
+    </div>
+
+    <div class="step">
+      <h3>3. خطط طريقك</h3>
+      <p>قبل ما تخرج، اعرف المسار اللي باش تاخذه. اختار طرق أكثر أمانًا كيما مسارات الدراجات أو الطرق الهادئة بدل الطرق المزدحمة.</p>
+    </div>
+
+    <div class="step">
+      <h3>4. بطارية إضافية</h3>
+      <p>إذا كنت مسافر لبعيد، فكر في شراء بطارية إضافية أو شاحن متنقل. هذا باش يعاونك تمشي مسافات أطول دون ما تقلق على شحن البطارية.</p>
+    </div>
+
+    <div class="step">
+      <h3>5. تطبيقات مفيدة</h3>
+      <p>بعض السكوترات الكهربائية تجي معاها تطبيقات للهواتف الذكية تعاونك تتبع معلومات كيما المسافة، شحن البطارية، والسرعة. تأكد من تحميل وإعداد هالتطبيق إذا كان السكوتر متاعك يدعمه.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 - دليل استخدام السكوتر الكهربائي باللهجة التونسية</p>
+</footer>
+
+<script>
+  // Three.js setup
+  let scene, camera, renderer, controls, scooter;
+  const container = document.getElementById('canvas-container');
+
+  function init() {
+    // Scene
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xccddff);
+
+    // Camera
+    camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(2, 1, 2);
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    // Controls
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 1;
+    controls.maxDistance = 10;
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 5);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+
+    // Ground plane
+    const groundGeometry = new THREE.PlaneGeometry(20, 20);
+    const groundMaterial = new THREE.MeshStandardMaterial({
+      color: 0x3a7757,
+      roughness: 0.8,
+      metalness: 0.2
+    });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Use a placeholder model until we load the user's GLB
+    createPlaceholderScooter();
+
+    // Attempt to load user's GLB (this would normally connect to your file)
+    loadScooterModel();
+
+    // Window resize
+    window.addEventListener('resize', onWindowResize);
+
+    // Reset view button
+    document.getElementById('resetView').addEventListener('click', resetCamera);
+
+    // Start animation loop
+    animate();
+  }
+
+  function createPlaceholderScooter() {
+    // Create a simple placeholder scooter
+    const body = new THREE.Group();
+
+    // Deck
+    const deckGeometry = new THREE.BoxGeometry(0.8, 0.05, 0.25);
+    const deckMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const deck = new THREE.Mesh(deckGeometry, deckMaterial);
+    deck.position.y = 0.1;
+    deck.castShadow = true;
+    body.add(deck);
+
+    // Steering column
+    const columnGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.7);
+    const columnMaterial = new THREE.MeshStandardMaterial({ color: 0x555555 });
+    const column = new THREE.Mesh(columnGeometry, columnMaterial);
+    column.position.set(0.3, 0.45, 0);
+    column.rotation.x = Math.PI / 2 - Math.PI / 8;
+    column.castShadow = true;
+    body.add(column);
+
+    // Handlebar
+    const handlebarGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.4);
+    const handlebar = new THREE.Mesh(handlebarGeometry, columnMaterial);
+    handlebar.position.set(0.55, 0.8, 0);
+    handlebar.rotation.z = Math.PI / 2;
+    handlebar.castShadow = true;
+    body.add(handlebar);
+
+    // Wheels
+    const wheelGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 16);
+    const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+
+    const frontWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    frontWheel.position.set(0.4, 0.1, 0);
+    frontWheel.rotation.x = Math.PI / 2;
+    frontWheel.castShadow = true;
+    body.add(frontWheel);
+
+    const backWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+    backWheel.position.set(-0.3, 0.1, 0);
+    backWheel.rotation.x = Math.PI / 2;
+    backWheel.castShadow = true;
+    body.add(backWheel);
+
+    scooter = body;
+    scene.add(scooter);
+  }
+
+  function loadScooterModel() {
+    // This would normally load the user's provided GLB file
+    // For now we'll keep using our placeholder
+
+    // Example code for when you have an actual GLB loader:
+
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+        'electric_scooter.glb',
+        function (gltf) {
+            scene.remove(scooter); // Remove placeholder
+            scooter = gltf.scene;
+            scooter.scale.set(1, 1, 1); // Adjust scale if needed
+            scooter.position.y = 0; // Adjust position
+            scene.add(scooter);
+
+            // Center camera on model
+            resetCamera();
+        },
+        undefined,
+        function (error) {
+            console.error('Error loading GLB:', error);
+        }
+    );
+
+  }
+
+  function resetCamera() {
+    camera.position.set(2, 1, 2);
+    controls.target.set(0, 0.5, 0);
+    controls.update();
+  }
+
+  function onWindowResize() {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  // Initialize Three.js scene
+  init();
+
+  // Tab functionality
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.dataset.tab;
+
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html

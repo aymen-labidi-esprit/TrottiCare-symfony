@@ -1,0 +1,179 @@
+{# templates/public/trottinette/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos Trottinettes - TrottiCare{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# FontAwesome or Bootstrap Icons if used #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* --- COPY/ADAPT Styles from maintenance/admin trottinette index --- */
+        /* Form Input/Select Styles */
+        .form-input, .form-select { appearance: none; display: block; width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #1f2937; background-color: #fff; background-clip: padding-box; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+        .form-select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+        .form-input.text-sm, .form-select.text-sm { font-size: 0.75rem; padding-top: 0.375rem; padding-bottom: 0.375rem; } /* Smaller filter inputs */
+        .search-input { padding-left: 2.5rem; /* Space for icon */ }
+
+        /* Button Styles */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+        /* ... other button colors if needed ... */
+        .button-reserve { background-color: #10b981; color: white; } .button-reserve:hover { background-color: #059669; }
+        .button-qr { background-color: #6366f1; color: white; } .button-qr:hover { background-color: #4f46e5; }
+        .button-unavailable { background-color: #9ca3af; color: white; cursor: not-allowed; }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Scooter Card Styles (from _scooter_card.html.twig or define here) */
+        .scooter-card { display: flex; flex-direction: column; background-color: #fff; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e5e7eb; height: 100%; }
+        .scooter-image-wrapper { position: relative; }
+        .scooter-image { width: 100%; height: 160px; object-fit: cover; }
+        .battery-indicator { position: absolute; top: 0.5rem; right: 0.5rem; background-color: rgba(0, 0, 0, 0.6); color: white; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; }
+        .scooter-card .p-4 { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
+        .scooter-title { font-size: 1rem; font-semibold; color: #111827; margin-bottom: 0.5rem; }
+        .scooter-info { font-size: 0.8rem; color: #4b5563; margin-bottom: 1rem; flex-grow: 1; }
+        .scooter-info p { margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.25rem; }
+        .scooter-actions { margin-top: auto; /* Pushes actions to bottom */ }
+
+        /* Pagination Container Styles */
+        .pagination-container { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; }
+        .pagination-controls { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: #4b5563; margin-top: 0.5rem; }
+        .pagination-controls label { margin-bottom: 0; white-space: nowrap; margin-right: 0.25rem; }
+        .limit-select { padding: 0.25rem 1.75rem 0.25rem 0.5rem; font-size: 0.875rem; line-height: 1.25; height: auto; min-width: 4.5rem; background-size: 1.2em 1.2em; background-position: right 0.3rem center; border-radius: 0.375rem; border: 1px solid #d1d5db; }
+
+        /* Icons */
+        .fas { display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; -webkit-font-smoothing: antialiased; font-family: "Font Awesome 6 Free"; font-weight: 900; }
+        .fa-motorcycle:before { content: "\f21c"; } .fa-qrcode:before { content: "\f029"; }
+        .fa-info-circle:before { content: "\f05a"; } .fa-search:before { content: "\f002"; }
+        .fa-filter:before { content: "\f0b0"; } .fa-sync-alt:before { content: "\f2f1"; }
+        .me-1 { margin-right: 0.25rem; } .me-2 { margin-right: 0.5rem; }
+        .fa-road:before { content: "\f018"; } /* Autonomy icon */
+        /* --- END COPY/ADAPT --- */
+    </style>
+{% endblock %}
+
+
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+        <div class="container mx-auto max-w-7xl">
+
+            <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center md:text-left">
+                Découvrez nos Événements
+            </h1>
+
+            {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+            {# Filter and Sort Controls Card #}
+            <div class="mb-8 p-4 bg-white rounded-lg shadow-md border border-gray-200">
+                <form method="get" action="{{ path('client_event_index') }}" class="filter-form grid gap-4 items-end">
+
+                    {# Search Input #}
+                    <div class="md:col-span-2 lg:col-span-2">
+                        <label for="search_id" class="block text-xs font-medium text-gray-600">Rechercher</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <svg class="h-4 w-4 text-gray-400" ...> </svg> </div>
+                            <input type="search" id="search_id" name="search" class="form-input search-input w-full text-sm" placeholder="Titre, description, lieu..." value="{{ search_term|default('') }}">
+                        </div>
+                    </div>
+
+                    {# --- Sort Field Dropdown --- #}
+                    <div>
+                        <label for="sort_field_id" class="block text-xs font-medium text-gray-600">Trier par</label>
+                        {# Use the allowed_sorts_map passed from controller #}
+                        <select name="sort" id="sort_field_id" class="form-select text-sm w-full" onchange="this.form.submit()">
+                            {% for label, dql_path in allowed_sorts_map %}
+                                {# The VALUE is now the DQL path, the text is the user-friendly label #}
+                                <option value="{{ dql_path }}" {{ dql_path == current_sort_field ? 'selected' : '' }}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {# --- End Sort Field Dropdown --- #}
+
+                    {# --- Sort Direction Dropdown --- #}
+                    <div>
+                        <label for="sort_direction_id" class="block text-xs font-medium text-gray-600">Ordre</label>
+                        <select name="direction" id="sort_direction_id" class="form-select text-sm w-full" onchange="this.form.submit()">
+                            <option value="asc" {{ current_direction == 'asc' ? 'selected' : '' }}>Croissant</option>
+                            <option value="desc" {{ current_direction == 'desc' ? 'selected' : '' }}>Décroissant</option>
+                        </select>
+                    </div>
+                    {# --- End Sort Direction Dropdown --- #}
+
+                    {# --- Filter Buttons (Links) --- #}
+                    <div class="flex flex-col items-start md:self-end"> {# Align to bottom on larger screens #}
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Filtrer Dates</label>
+                        <div class="flex gap-2 flex-wrap w-full">
+                            {% set filter_buttons = {'all':'Tous', 'upcoming':'À venir', 'past':'Passés'} %}
+                            {% set current_filter_param = app.request.query.get('filter', 'all') %}
+                            {% for key, label in filter_buttons %}
+                                <a href="{{ path('client_event_index', app.request.query.all|merge({'filter': key, 'page': 1})) }}"
+                                   class="button button-sm {{ current_filter_param == key ? 'button-primary' : 'button-secondary' }} flex-grow sm:flex-grow-0">
+                                    {{ label }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {# --- End Filter Buttons --- #}
+
+                    {# Hidden inputs to preserve state when changing sort/direction via form submit #}
+                    <input type="hidden" name="filter" value="{{ current_filter|default('all') }}">
+                    <input type="hidden" name="search" value="{{ search_term|default('') }}">
+                    <input type="hidden" name="limit" value="{{ currentLimit|default(12) }}">
+
+                </form> {# End Filter/Sort Form #}
+            </div>
+
+            {# Event Grid & Pagination (No changes needed below this point) #}
+            {# ... Results count ... #}
+            {% if pagination is defined and pagination.getTotalItemCount > 0 %}
+                <div class="text-sm text-gray-600 mb-4"> ... </div>
+            {% endif %}
+
+            {# ... Event Grid Loop ... #}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 events-grid">
+                {% if events_data is not empty %}
+                    {% for event_data in events_data %}
+                        {% include 'client/event/_event_card.html.twig' with event_data %}
+                    {% endfor %}
+                {% else %}
+                    <div class="col-span-full text-center py-16 ..."> ... Aucun événement ... </div>
+                {% endif %}
+            </div>
+
+            {# --- Pagination Controls Container (No changes needed) --- #}
+            {% if pagination is defined and pagination.getTotalItemCount > 0 %}
+                <div class="pagination-container mt-8">
+                    {# ... KNP Render & Limit Selector ... #}
+                </div>
+            {% endif %}
+
+        </div> {# End Container #}
+    </div> {# End Page Wrapper #}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {# --- JavaScript for Limit Selector --- #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectElement = document.getElementById('itemsPerPageSelect');
+            if (selectElement) {
+                selectElement.addEventListener('change', function() {
+                    const newLimit = this.value;
+                    const currentUrl = new URL(window.location.href);
+                    const params = currentUrl.searchParams;
+                    params.set('limit', newLimit);
+                    params.set('page', '1');
+                    currentUrl.search = params.toString();
+                    window.location.href = currentUrl.toString();
+                });
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{# templates/partials/_flash_messages.html.twig #}
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+            {# Add appropriate icons based on label #}
+            {% if label == 'success' %}
+                <i class="bi bi-check-circle-fill me-2"></i>
+            {% elseif label == 'danger' or label == 'error' %}
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {% elseif label == 'warning' %}
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            {% elseif label == 'info' %}
+                <i class="bi bi-info-circle-fill me-2"></i>
+            {% endif %}
+
+            {{ message|raw }} {# Use raw filter if messages might contain HTML #}
+
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endfor %}

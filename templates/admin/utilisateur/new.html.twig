@@ -1,0 +1,36 @@
+{# templates/admin/utilisateur/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un Utilisateur{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100 p-4 md:p-6 lg:p-8">
+        <div class="container mx-auto max-w-3xl"> {# Centered form container #}
+
+            {# 1. Header #}
+            <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-6">
+                Créer un Nouvel Utilisateur
+            </h1>
+
+            {# 2. Flash Messages #}
+            {% include 'partials/_flash_messages.html.twig' ignore missing %}
+
+            {# 3. Form Card - Include the form partial here #}
+            <div class="bg-white rounded-lg shadow p-6 md:p-8">
+                {# Pass the form and button label to the partial #}
+                {{ include('admin/utilisateur/_form.html.twig', {
+                    'form': form,
+                    'button_label': 'Créer Utilisateur'
+                }) }}
+            </div>
+
+            {# Back button can be inside or outside the card, here it's outside #}
+            <div class="mt-6 text-center">
+                <a href="{{ path('admin_utilisateur_index') }}" class="text-sm text-blue-600 hover:underline">
+                    Retour à la liste des utilisateurs
+                </a>
+            </div>
+
+        </div> {# End Container #}
+    </div> {# End Page Wrapper #}
+{% endblock %}

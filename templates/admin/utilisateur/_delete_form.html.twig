@@ -1,0 +1,9 @@
+{# templates/admin/utilisateur/_delete_form_tailwind.html.twig #}
+{# Expects 'utilisateur' variable #}
+<form method="post" action="{{ path('admin_utilisateur_delete', {'id': utilisateur.id}) }}" onsubmit="return confirm('Supprimer l\'utilisateur {{ utilisateur.prenom }} {{ utilisateur.nom }} ? Cette action est irréversible.');" class="inline-block">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ utilisateur.id) }}">
+    {# Use Tailwind styled button #}
+    <button type="submit" class="button button-sm button-outline-danger" title="Supprimer">
+        <i class="fas fa-trash"></i>
+    </button>
+</form>

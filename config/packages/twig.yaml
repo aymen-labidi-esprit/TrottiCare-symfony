@@ -1,0 +1,13 @@
+# config/packages/twig.yaml
+twig:
+
+    default_path: '%kernel.project_dir%/templates'
+    globals:
+        # Add this line: Make the reCAPTCHA site key available globally in Twig
+        recaptcha_v2_site_key: '%env(RECAPTCHA_V2_SITE_KEY)%'
+        # You can add other global variables here if needed
+    form_themes: ['bootstrap_5_layout.html.twig']
+
+when@test:
+    twig:
+        strict_variables: true

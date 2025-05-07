@@ -1,0 +1,14 @@
+# config/packages/knp_paginator.yaml
+knp_paginator:
+  page_range: 5                       # Default number of links shown around current page
+  default_options:
+    page_name: page                 # query parameter name for page number
+    sort_field_name: sort           # query parameter name for sorting field
+    sort_direction_name: direction  # query parameter name for sort direction
+    distinct: true                  # true to add DISTINCT to query automatically (usually good)
+    # filter_field_name: filterField # Not generally used with custom filter forms
+    # filter_value_name: filterValue # Not generally used with custom filter forms
+  template:
+    pagination: 'pagination/tailwindcss_pagination.html.twig' # <-- USE THE NEW TEMPLATE
+    # You can keep the default sorting template or create a custom one for Tailwind
+    # sorting: '@KnpPaginator/Pagination/sortable_link.html.twig'

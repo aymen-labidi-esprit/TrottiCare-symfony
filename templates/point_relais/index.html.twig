@@ -1,0 +1,127 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Points Relais{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 p-4 md:p-6">
+    <div class="container mx-auto">
+
+        {# Page Header & New Button #}
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+                Gestion des Points Relais
+            </h1>
+            <a href="{{ path('point_relais_new') }}" class="button button-success inline-flex items-center whitespace-nowrap">
+                <i class="fas fa-plus mr-2"></i> Nouveau Point Relais
+            </a>
+        </div>
+
+        {# Flash Messages #}
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {# Table #}
+        <div class="bg-white shadow-md overflow-x-auto sm:rounded-lg">
+            {% if point_relais is empty %}
+                <div class="px-6 py-12 text-center text-sm text-gray-500">
+                    Aucun point relais trouvé.
+                </div>
+            {% else %}
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adresse</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horaire d'ouverture</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for relais in point_relais %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ relais.id }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ relais.nom }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ relais.addresse }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ relais.horaireOuverture ? relais.horaireOuverture|date('H:i \\l\\e d/m/Y') : '-' }}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium space-x-1">
+                                    <a href="{{ path('point_relais_show', {id: relais.id}) }}" class="button button-small button-info" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('point_relais_edit', {id: relais.id}) }}" class="button button-small button-warning" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button
+                                        type="button"
+                                        class="button button-small button-danger openDeleteModalBtn"
+                                        data-action="{{ path('point_relais_delete', {id: relais.id}) }}"
+                                        data-token="{{ csrf_token('delete' ~ relais.id) }}"
+                                        title="Supprimer"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+{# Delete Confirmation Modal #}
+<div id="deleteModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
+        <h2 class="text-lg font-semibold mb-4 text-gray-800">Confirmer la suppression</h2>
+        <p class="text-sm text-gray-600 mb-6">Êtes-vous sûr de vouloir supprimer ce point relais ?</p>
+
+        <form method="post" id="deleteForm">
+            <input type="hidden" name="_token" id="deleteToken">
+            <div class="flex justify-end gap-2">
+                <button type="button" id="cancelDeleteBtn" class="button button-secondary">Annuler</button>
+                <button type="submit" class="button button-danger">Supprimer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Delete Modal Logic
+            const deleteModal = document.getElementById('deleteModal');
+            const deleteForm = document.getElementById('deleteForm');
+            const deleteTokenInput = document.getElementById('deleteToken');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+            document.querySelectorAll('.openDeleteModalBtn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.getAttribute('data-action');
+                    const token = button.getAttribute('data-token');
+
+                    deleteForm.setAttribute('action', action);
+                    deleteTokenInput.value = token;
+
+                    deleteModal.classList.remove('hidden');
+                });
+            });
+
+            cancelDeleteBtn.addEventListener('click', () => {
+                deleteModal.classList.add('hidden');
+            });
+        });
+    </script>
+{% endblock %}

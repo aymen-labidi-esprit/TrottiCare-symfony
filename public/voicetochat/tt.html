@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ar-TN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>السكوتر الكهربائي 3D - الدليل التفاعلي</title> <!-- Updated Title -->
+    <!-- Using Import Map for Three.js >= r150 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- Other Libraries (GSAP for smoother camera) -->
+    <!-- Keep this separate script tag for GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> --> <!-- jQuery likely not needed anymore -->
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            direction: rtl;
+            overflow: hidden; /* Prevent body scroll */
+            transition: background-color 0.3s ease;
+        }
+
+        #canvas-container {
+            position: fixed; /* Fix canvas to viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh; /* Default full height */
+            overflow: hidden;
+            background: linear-gradient(135deg, #6dd5ed, #2193b0);
+            z-index: 1; /* Canvas behind content initially */
+            transition: height 0.4s ease;
+        }
+
+        /* --- Controls INSIDE Canvas --- */
+        .canvas-overlay-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 25px;
+            z-index: 10; /* Above canvas */
+        }
+
+        .canvas-overlay-controls button {
+            background-color: #eee;
+            color: #333;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+        .canvas-overlay-controls button:hover:not(:disabled) {
+            background-color: #ddd;
+        }
+        .canvas-overlay-controls button:disabled {
+            background-color: #777;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* --- Edit Controls --- */
+        #edit-controls {
+            position: absolute;
+            top: 60px; /* Position below the top toggle */
+            right: 15px;
+            background-color: rgba(30, 30, 30, 0.85);
+            color: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 10;
+            width: 220px; /* Fixed width */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            display: none; /* Hidden by default, shown via JS */
+        }
+        #edit-controls h4 {
+            margin: 0 0 12px 0;
+            color: #ffc107; /* Amber color for title */
+            font-size: 1em;
+            border-bottom: 1px solid #555;
+            padding-bottom: 8px;
+        }
+        #edit-controls label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        #edit-controls input[type="checkbox"] {
+            margin-left: 8px; /* RTL adjustment */
+            transform: scale(1.1);
+        }
+        #arrow-coords {
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #ccc;
+            background-color: rgba(0,0,0,0.4);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            border: 1px solid #444;
+        }
+        #log-arrow-config {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+        #log-arrow-config:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        #log-arrow-config:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        /* Show edit controls when edit mode is active */
+        body.edit-mode-active #edit-controls {
+            display: block;
+        }
+
+
+        /* --- Main Text Content Area --- */
+        .content {
+            position: relative; /* Change from absolute */
+            max-width: 900px;
+            margin: 20px auto; /* Centered, with top/bottom margin */
+            padding: 2rem;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            z-index: 5; /* Below controls, above canvas */
+            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+            overflow-y: auto; /* Allow scrolling if content is tall */
+            max-height: calc(100vh - 150px); /* Limit height when visible */
+        }
+
+        .content h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .content h3 { /* Style for placeholder text */
+            color: #3498db;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .content p { /* Style for placeholder text */
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 1.5rem;
+        }
+
+
+        /* --- View Toggle Button (Top Right) --- */
+        #toggleTextBtn {
+            position: fixed; /* Keep it fixed */
+            top: 15px;
+            right: 15px;
+            padding: 8px 15px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 20; /* Above everything */
+            transition: all 0.3s ease;
+        }
+        #toggleTextBtn:hover {
+            background-color: white;
+            border-color: #bbb;
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #eee; /* Lighter footer */
+            color: #555;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+
+        /* --- Text Hidden Mode --- */
+        body.text-hidden .content {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px); /* Optional slide out effect */
+        }
+        body.text-hidden #toggleTextBtn {
+            background-color: #3498db; /* Change button style when hidden */
+            color: white;
+            border-color: #2980b9;
+        }
+        body.text-hidden #toggleTextBtn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content {
+                max-width: 95%;
+                padding: 1.5rem;
+                max-height: calc(100vh - 120px);
+            }
+            .content h1 {
+                font-size: 1.6rem;
+            }
+            .canvas-overlay-controls {
+                bottom: 10px;
+                padding: 8px 15px;
+                gap: 10px;
+            }
+            .canvas-overlay-controls button {
+                padding: 6px 12px;
+                font-size: 0.9em;
+            }
+            #edit-controls {
+                top: 60px;
+                right: 10px;
+                width: 180px; /* Smaller */
+                padding: 10px;
+            }
+            #edit-controls h4 { font-size: 0.9em; margin-bottom: 8px; padding-bottom: 5px; }
+            #arrow-coords { font-size: 0.8em; padding: 5px; }
+            #log-arrow-config { font-size: 0.9em; padding: 6px 10px; margin-top: 8px; }
+
+            #toggleTextBtn {
+                top: 10px;
+                right: 10px;
+                padding: 6px 10px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- Text Toggle Button -->
+<button id="toggleTextBtn">إخفاء المحتوى</button> <!-- Hide Content -->
+
+<!-- 3D Canvas Container -->
+<div id="canvas-container">
+    <!-- Navigation Controls inside Canvas -->
+    <div id="tutorial-navigation" class="canvas-overlay-controls">
+        <button id="prev-btn" disabled>السابق</button> <!-- Previous -->
+        <button id="next-btn">التالي</button> <!-- Next -->
+    </div>
+    <!-- Edit Controls inside Canvas (hidden by default) -->
+    <div id="edit-controls">
+        <h4>تعديل موضع السهم</h4> <!-- Edit Arrow Position -->
+        <label>
+            <input type="checkbox" id="edit-mode-toggle"> تفعيل التعديل <!-- Enable Edit -->
+        </label>
+        <div id="arrow-coords">
+            إحداثيات السهم (XYZ): N/A
+        </div>
+        <button id="log-arrow-config" disabled>تسجيل الإحداثيات</button> <!-- Log Coordinates -->
+    </div>
+</div>
+
+<!-- Main Text Content Area -->
+<div class="content">
+    <h1>السكوتر الكهربائي 3D - الدليل التفاعلي</h1>
+    <h3>استكشف السكوتر!</h3>
+    <p>
+        استخدم الفأرة للدوران والعجلة للتقريب/التبعيد. <br>
+        انقر على "التالي" لبدء الدليل خطوة بخطوة، أو انقر على "إخفاء المحتوى" لاستكشاف النموذج بحرية.
+        <!-- You can keep the original tutorial text here if you want, -->
+        <!-- or just have introductory text. -->
+    </p>
+    <footer>
+        <p>© 2025 - دليل استخدام السكوتر الكهربائي باللهجة التونسية</p>
+    </footer>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { TransformControls } from 'three/addons/controls/TransformControls.js';
+    // *** NO GSAP IMPORT HERE ***
+
+    // --- Basic Scene Setup ---
+    let scene, camera, renderer, orbitControls, scooterModel;
+    let originalMaterials = {};
+    let currentHighlightedPart = null; // Tracks the actual mesh highlighted
+    const canvasContainer = document.getElementById('canvas-container');
+
+    // --- Editing Variables ---
+    let transformControls;
+    let isEditMode = false;
+    let tutorialArrows = {}; // Store arrows by targetName { targetName: ArrowHelper }
+    let currentVisibleArrow = null; // Track the currently visible arrow helper
+
+    // --- UI Elements ---
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const editModeToggle = document.getElementById('edit-mode-toggle');
+    const arrowCoordsDisplay = document.getElementById('arrow-coords');
+    const logArrowConfigBtn = document.getElementById('log-arrow-config');
+    const toggleTextBtn = document.getElementById('toggleTextBtn');
+    const contentDiv = document.querySelector('.content');
+    const bodyElement = document.body;
+    // ========================
+
+    // --- Helper Functions (Store Materials, Highlight, Reset, Get Position) ---
+
+    function storeOriginalMaterials() {
+        if (!scooterModel) return;
+        originalMaterials = {};
+        scooterModel.traverse((child) => {
+            if (child.isMesh && child.material) {
+                if (Array.isArray(child.material)) {
+                    originalMaterials[child.uuid] = child.material.map(m => m.clone());
+                } else {
+                    originalMaterials[child.uuid] = child.material.clone();
+                }
+            }
+        });
+        console.log("Original materials stored (by UUID):", Object.keys(originalMaterials).length);
+    }
+
+    const highlightMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffaa00, emissive: 0xcc8800, emissiveIntensity: 0.5,
+        roughness: 0.3, metalness: 0.1, depthTest: false, side: THREE.DoubleSide
+    });
+
+    function highlightPart(partName) {
+        resetHighlight();
+        if (!scooterModel || !partName) return;
+
+        const part = scooterModel.getObjectByName(partName);
+        if (part) {
+            let highlighted = false;
+            part.traverse((child) => {
+                if (child.isMesh && originalMaterials[child.uuid]) {
+                    if (Array.isArray(originalMaterials[child.uuid])) {
+                        child.material = originalMaterials[child.uuid].map(() => highlightMaterial);
+                    } else {
+                        child.material = highlightMaterial;
+                    }
+                    currentHighlightedPart = child; // Track last highlighted mesh
+                    highlighted = true;
+                }
+            });
+            if (!highlighted) console.warn(`No mesh with stored materials found to highlight in: ${partName}`);
+        } else {
+            console.warn(`Part not found for highlight: ${partName}. CHECK YOUR GLTF MODEL'S MESH NAMES!`);
+        }
+    }
+
+    function resetHighlight() {
+        for (const uuid in originalMaterials) {
+            const originalMaterial = originalMaterials[uuid];
+            const object = scene.getObjectByProperty('uuid', uuid);
+            if (object && object.isMesh) {
+                let needsReset = false;
+                if (Array.isArray(object.material)) {
+                    needsReset = object.material.some(mat => mat === highlightMaterial);
+                } else {
+                    needsReset = object.material === highlightMaterial;
+                }
+                if (needsReset) {
+                    object.material = originalMaterial; // Restore cloned original
+                }
+            }
+        }
+        currentHighlightedPart = null;
+    }
+
+    function getObjectWorldPosition(objectName) {
+        const defaultPos = new THREE.Vector3(0, 0.6, 0); // Adjust default Y based on model
+        if (!scooterModel || !objectName) return defaultPos;
+
+        const object = scooterModel.getObjectByName(objectName);
+        if (!object) {
+            console.warn(`Object not found for position: ${objectName}. Using default target.`);
+            return defaultPos;
+        }
+
+        const box = new THREE.Box3();
+        try {
+            object.updateMatrixWorld(true);
+            box.setFromObject(object, true); // Precise calculation
+
+            if (box.isEmpty()) {
+                const worldPos = new THREE.Vector3();
+                object.getWorldPosition(worldPos);
+                if (isNaN(worldPos.x) || isNaN(worldPos.y) || isNaN(worldPos.z)) throw new Error("NaN world position");
+                console.warn(`Empty bounding box for ${objectName}, using object's world position.`);
+                return worldPos;
+            }
+
+            const center = box.getCenter(new THREE.Vector3());
+            if (isNaN(center.x) || isNaN(center.y) || isNaN(center.z)) throw new Error("NaN center");
+            return center;
+        } catch (error) {
+            console.error(`Error calculating position for ${objectName}:`, error, `. Returning default.`);
+            return defaultPos;
+        }
+    }
+
+
+    // --- Initialization Function ---
+    function init() {
+        // Scene
+        scene = new THREE.Scene();
+        // scene.background = new THREE.Color(0xcccccc); // Use gradient from CSS
+
+        // Camera
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(2.5, 1.5, 3); // Initial camera position
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // Alpha for CSS background
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        // renderer.outputEncoding = THREE.sRGBEncoding; // Often needed for GLTF colors
+        renderer.shadowMap.enabled = true; // Enable shadows if needed
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        canvasContainer.appendChild(renderer.domElement);
+
+        // Environment Lighting (Good for realistic materials)
+        const environment = new RoomEnvironment(renderer);
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmremGenerator.fromScene(environment).texture;
+        environment.dispose();
+        pmremGenerator.dispose();
+
+        // Basic Lighting (Supplement environment)
+        // const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        // scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 7.5);
+        // directionalLight.castShadow = true; // Enable shadows if needed
+        scene.add(directionalLight);
+        const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444, 0.5 ); // Softer fill light
+        hemiLight.position.set( 0, 20, 0 );
+        scene.add( hemiLight );
+
+
+        // Orbit Controls (for navigation)
+        orbitControls = new OrbitControls(camera, renderer.domElement);
+        orbitControls.enableDamping = true;
+        orbitControls.dampingFactor = 0.05;
+        orbitControls.screenSpacePanning = false;
+        orbitControls.minDistance = 0.3; // Allow closer zoom
+        orbitControls.maxDistance = 10; // Limit zoom out
+        orbitControls.target.set(0, 0.6, 0); // Initial focus point (adjust Y based on model)
+        orbitControls.maxPolarAngle = Math.PI / 1.9; // Prevent looking from below much
+        orbitControls.minPolarAngle = 0.1; // Prevent looking straight down
+
+        // Transform Controls (for editing arrows)
+        transformControls = new TransformControls(camera, renderer.domElement);
+        transformControls.setSize(0.6);
+        transformControls.showX = true; transformControls.showY = true; transformControls.showZ = true;
+        transformControls.setSpace('world');
+        transformControls.addEventListener('dragging-changed', (event) => {
+            orbitControls.enabled = !event.value;
+        });
+        transformControls.addEventListener('objectChange', () => {
+            if (transformControls.object) updateArrowCoordsDisplay(transformControls.object);
+        });
+        transformControls.enabled = false; transformControls.visible = false;
+        scene.add(transformControls);
+
+        // Load Model
+        loadScooterModel(); // This calls dependent functions on success
+
+        // --- Event Listeners ---
+        window.addEventListener('resize', onWindowResize);
+        prevBtn.addEventListener('click', navigatePrev);
+        nextBtn.addEventListener('click', navigateNext);
+        editModeToggle.addEventListener('change', toggleEditMode);
+        logArrowConfigBtn.addEventListener('click', logCurrentArrowConfig);
+        toggleTextBtn.addEventListener('click', toggleContentView);
+
+        // Optional: Keyboard controls for transform modes
+        window.addEventListener('keydown', (event) => {
+            if (!isEditMode || !transformControls.object) return;
+            switch (event.key.toLowerCase()) {
+                case 'w': transformControls.setMode('translate'); break;
+                // case 'e': transformControls.setMode('rotate'); break; // Usually not needed for arrow origin
+                // case 'r': transformControls.setMode('scale'); break; // Usually not needed for arrow origin
+            }
+        });
+        // ========================
+
+        // Start Animation Loop
+        animate();
+    }
+
+    // --- Load Model ---
+    function loadScooterModel() {
+        const loader = new GLTFLoader();
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/'); // Adjust if needed
+        loader.setDRACOLoader(dracoLoader);
+
+        loader.load(
+            // === IMPORTANT: Replace with your actual model path ===
+            'electric_scooter.glb', // Make sure this path is correct!
+            // =====================================================
+            (gltf) => {
+                scooterModel = gltf.scene;
+
+                // --- Auto-center and scale ---
+                const box = new THREE.Box3().setFromObject(scooterModel);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                // Adjust targetSize based on how large you want the scooter in the scene
+                const targetSize = 1.0; // Target height ~1 meter? Adjust this!
+                const scale = targetSize / size.y; // Scale based on height
+
+                scooterModel.scale.set(scale, scale, scale);
+                box.setFromObject(scooterModel); // Recalculate box after scaling
+                box.getCenter(center);
+
+                scooterModel.position.x -= center.x;
+                scooterModel.position.y -= box.min.y; // Set bottom to y=0
+                scooterModel.position.z -= center.z;
+
+                // Enable shadows on model parts if desired
+                // scooterModel.traverse(node => {
+                //     if (node.isMesh) {
+                //         node.castShadow = true;
+                //         node.receiveShadow = true;
+                //     }
+                // });
+
+                scene.add(scooterModel);
+                console.log("Model loaded successfully!");
+                console.log("Model Structure (Check Mesh Names Here):", scooterModel);
+
+                // --- Post-Load Operations ---
+                storeOriginalMaterials();
+                setupTutorialSteps();
+                createArrows();
+                updateUI(); // Initialize the first view/UI state
+                // --------------------------
+            },
+            undefined, // Progress callback (optional)
+            (error) => {
+                console.error('Error loading model:', error);
+                if (contentDiv) {
+                    contentDiv.innerHTML = `<h1>خطأ</h1><p>حدث خطأ أثناء تحميل نموذج السكوتر ثلاثي الأبعاد. يرجى التحقق من مسار الملف ('electric_scooter.glb') والتأكد من وجوده. تحقق أيضًا من وحدة التحكم (F12) بحثًا عن مزيد من التفاصيل.</p>`; // Error message in Arabic
+                }
+                // Disable navigation if model fails
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                editModeToggle.disabled = true;
+            }
+        );
+    }
+
+    // --- Tutorial Steps Definition ---
+    let tutorialSteps = [];
+    let currentStepIndex = -1; // Start before the first step (-1 = Welcome)
+
+    function setupTutorialSteps() {
+        // =======================================================================
+        // == CRITICAL: Replace 'Your_Mesh_Name_Here' with ACTUAL mesh names! ==
+        // == Find names by inspecting the `console.log("Model Structure...")` output above ==
+        // == CRITICAL: Adjust initial 'arrowOrigin' Vector3 for YOUR model!  ==
+        // == Use the 'Edit Mode' checkbox and 'Log Coordinates' button in the UI to find the best arrow positions ==
+        // =======================================================================
+        tutorialSteps = [
+            // Step 0: Power Button
+            {
+                targetName: 'PowerButton_MeshName', // <-- CHANGE THIS NAME
+                // title: 'Marche/Arrêt', // Titles/Descriptions not shown directly anymore
+                // description: 'Appuyez et maintenez...',
+                cameraPosition: new THREE.Vector3(0.4, 1.0, 0.8), // Adjust camera position
+                arrowOrigin: new THREE.Vector3(0.2, 0.9, 0.6),    // <-- ADJUST THIS STARTING POINT
+                arrowLength: 0.25,
+                arrowColor: 0xff0000 // Red
+            },
+            // Step 1: Display
+            {
+                targetName: 'Display_MeshName', // <-- CHANGE THIS NAME
+                cameraPosition: new THREE.Vector3(0, 1.1, 0.7),
+                arrowOrigin: new THREE.Vector3(0.1, 1.0, 0.5),    // <-- ADJUST THIS
+                arrowLength: 0.2,
+                arrowColor: 0x00ff00 // Green
+            },
+            // Step 2: Throttle
+            {
+                targetName: 'ThrottleLever_MeshName', // <-- CHANGE THIS NAME
+                cameraPosition: new THREE.Vector3(-0.5, 1.0, 0.9),
+                arrowOrigin: new THREE.Vector3(-0.3, 0.9, 0.6),   // <-- ADJUST THIS
+                arrowLength: 0.3,
+                arrowColor: 0x0000ff // Blue
+            },
+            // Step 3: Left Brake
+            {
+                targetName: 'LeftBrakeLever_MeshName', // <-- CHANGE THIS NAME
+                cameraPosition: new THREE.Vector3(0.5, 1.0, 0.9),
+                arrowOrigin: new THREE.Vector3(0.3, 0.9, 0.6),    // <-- ADJUST THIS
+                arrowLength: 0.3,
+                arrowColor: 0xffff00 // Yellow
+            },
+            // Step 4: Deck
+            {
+                targetName: 'Deck_MeshName', // <-- CHANGE THIS NAME
+                cameraPosition: new THREE.Vector3(1.0, 0.6, 1.0),
+                arrowOrigin: new THREE.Vector3(0.5, 0.4, 0.2),    // <-- ADJUST THIS (Point towards deck surface)
+                arrowLength: 0.4,
+                arrowColor: 0xff00ff // Magenta
+            },
+            // Step 5: Kickstand
+            {
+                targetName: 'Kickstand_MeshName', // <-- CHANGE THIS NAME
+                cameraPosition: new THREE.Vector3(-0.8, 0.4, -0.8),
+                arrowOrigin: new THREE.Vector3(-0.4, 0.2, -0.7),  // <-- ADJUST THIS
+                arrowLength: 0.3,
+                arrowColor: 0x00ffff // Cyan
+            },
+            // Step 6: Charging Port
+            {
+                targetName: 'ChargingPort_MeshName', // <-- CHANGE THIS NAME
+                cameraPosition: new THREE.Vector3(0.8, 0.4, -1.2),
+                arrowOrigin: new THREE.Vector3(0.3, 0.15, -0.9),  // <-- ADJUST THIS
+                arrowLength: 0.3,
+                arrowColor: 0xffa500 // Orange
+            },
+            // Step 7: Folding Latch (Example)
+            {
+                targetName: 'FoldingLatch_MeshName', // <-- CHANGE THIS NAME
+                cameraPosition: new THREE.Vector3(0.6, 0.7, 0.6),
+                arrowOrigin: new THREE.Vector3(0.4, 0.6, 0.5),    // <-- ADJUST THIS
+                arrowLength: 0.3,
+                arrowColor: 0x8888ff // Light Blue/Purple
+            },
+            // Add more steps as needed for your model...
+        ];
+    }
+
+    // --- Create Arrows Function ---
+    function createArrows() {
+        if (!scooterModel || tutorialSteps.length === 0) return;
+
+        // Clear existing arrows if any (e.g., on model reload)
+        Object.values(tutorialArrows).forEach(arrow => scene.remove(arrow));
+        tutorialArrows = {};
+
+        tutorialSteps.forEach((step, index) => {
+            if (!step.targetName || !step.arrowOrigin) {
+                console.warn(`Step ${index} (Target: ${step.targetName || 'N/A'}) missing targetName or arrowOrigin. Arrow not created.`);
+                return;
+            }
+
+            const targetCenter = getObjectWorldPosition(step.targetName);
+            const origin = step.arrowOrigin instanceof THREE.Vector3 ? step.arrowOrigin : new THREE.Vector3().copy(step.arrowOrigin); // Ensure it's a Vector3
+
+
+            const direction = new THREE.Vector3().subVectors(targetCenter, origin).normalize();
+            if (isNaN(direction.x) || isNaN(direction.y) || isNaN(direction.z) || direction.lengthSq() < 0.0001) {
+                console.warn(`Invalid direction for arrow "${step.targetName}". Using default (0, -1, 0).`);
+                direction.set(0, -1, 0);
+            }
+
+            const arrowLength = (typeof step.arrowLength === 'number' && step.arrowLength > 0) ? step.arrowLength : 0.3;
+            const headLength = Math.min(arrowLength * 0.3, 0.15); // Clamp head size
+            const headWidth = Math.min(arrowLength * 0.2, 0.1);
+
+            const arrow = new THREE.ArrowHelper(
+                direction, origin, arrowLength,
+                step.arrowColor || 0xff0000, headLength, headWidth
+            );
+
+            arrow.name = `arrow_${step.targetName}`;
+            arrow.userData.stepIndex = index;
+            arrow.visible = false;
+            scene.add(arrow);
+            tutorialArrows[step.targetName] = arrow;
+        });
+        console.log("Arrows created:", tutorialArrows);
+    }
+
+    // --- UI Update and Navigation Logic ---
+
+    function updateUI() {
+        let step;
+        let targetLookAtPoint;
+        let currentArrowToShow = null;
+
+        // --- Reset Previous State ---
+        if (currentVisibleArrow) {
+            currentVisibleArrow.visible = false; // Hide previous arrow
+        }
+        if (transformControls.object) {
+            transformControls.detach(); // Detach gizmo if attached
+        }
+        currentVisibleArrow = null; // Clear tracked arrow
+        resetHighlight();          // Clear previous highlight
+
+        // Reset edit mode controls for the new step
+        bodyElement.classList.remove('edit-mode-active'); // Hide edit panel
+        editModeToggle.checked = false;
+        isEditMode = false;
+        transformControls.enabled = false;
+        transformControls.visible = false;
+        orbitControls.enabled = true; // Ensure orbit controls are enabled
+        logArrowConfigBtn.disabled = true;
+        editModeToggle.disabled = true; // Disable toggle until a valid step/arrow is shown
+        arrowCoordsDisplay.textContent = 'إحداثيات السهم (XYZ): N/A';
+
+
+        // --- Determine New State ---
+        if (currentStepIndex < 0) { // Welcome Screen / Initial state
+            // No specific highlight or arrow
+            // Optional: Move camera to a good overview position
+            moveCameraSmoothly(new THREE.Vector3(2.0, 1.2, 2.5), new THREE.Vector3(0, 0.5, 0)); // Adjust overview camera/target
+        } else if (currentStepIndex < tutorialSteps.length) { // Tutorial Step
+            step = tutorialSteps[currentStepIndex];
+
+            if (!step || !step.targetName) {
+                console.error(`Invalid step data at index ${currentStepIndex}`);
+                // Optionally navigate to next/prev valid step or show error
+                return; // Prevent further processing of invalid step
+            }
+
+            targetLookAtPoint = getObjectWorldPosition(step.targetName);
+
+            highlightPart(step.targetName); // Highlight the target part
+
+            // Move camera smoothly
+            if (step.cameraPosition) {
+                moveCameraSmoothly(step.cameraPosition, targetLookAtPoint);
+            } else {
+                console.warn(`No cameraPosition defined for step ${currentStepIndex}`);
+                // Maybe just orbit controls focus on target?
+                // orbitControls.target.copy(targetLookAtPoint);
+            }
+
+
+            // Find and show the arrow for this step
+            currentArrowToShow = tutorialArrows[step.targetName];
+            if (currentArrowToShow) {
+                currentArrowToShow.visible = true;
+                currentVisibleArrow = currentArrowToShow; // Track the visible one
+                editModeToggle.disabled = false; // Enable the edit toggle now
+            } else {
+                console.warn(`Arrow not found for target: ${step.targetName}`);
+            }
+
+        } else { // End of Tutorial / Free Explore State
+            // Reset highlight/arrow, move to overview
+            moveCameraSmoothly(new THREE.Vector3(2.0, 1.2, 2.5), new THREE.Vector3(0, 0.5, 0)); // Back to overview
+        }
+
+        // --- Update Navigation Button States ---
+        prevBtn.disabled = currentStepIndex <= -1; // Disable prev on welcome screen
+        nextBtn.disabled = currentStepIndex >= tutorialSteps.length; // Disable next on "End" screen
+        nextBtn.textContent = (currentStepIndex === tutorialSteps.length - 1) ? "إنهاء" : "التالي"; // "Finish" : "Next"
+    }
+
+    // --- Edit Mode Functions ---
+    function toggleEditMode() {
+        isEditMode = editModeToggle.checked;
+        bodyElement.classList.toggle('edit-mode-active', isEditMode); // Show/hide panel via CSS class
+        transformControls.enabled = isEditMode;
+        transformControls.visible = isEditMode;
+
+        if (isEditMode) {
+            if (currentVisibleArrow) {
+                transformControls.attach(currentVisibleArrow);
+                updateArrowCoordsDisplay(currentVisibleArrow);
+                logArrowConfigBtn.disabled = false;
+            } else {
+                // Should not happen if toggle is disabled, but safety check
+                logArrowConfigBtn.disabled = true;
+                arrowCoordsDisplay.textContent = 'إحداثيات السهم (XYZ): N/A';
+                transformControls.enabled = false; // Ensure gizmo is off
+                transformControls.visible = false;
+            }
+        } else {
+            if (transformControls.object) transformControls.detach();
+            arrowCoordsDisplay.textContent = 'إحداثيات السهم (XYZ): N/A';
+            logArrowConfigBtn.disabled = true;
+            orbitControls.enabled = true; // Ensure orbit controls are re-enabled
+        }
+    }
+
+    function updateArrowCoordsDisplay(arrow) {
+        if (!arrow || !arrow.isArrowHelper) {
+            arrowCoordsDisplay.textContent = 'إحداثيات السهم (XYZ): N/A'; return;
+        }
+        const pos = arrow.position; // ArrowHelper position is its origin
+        arrowCoordsDisplay.textContent = `إحداثيات السهم (XYZ):\n X: ${pos.x.toFixed(3)}\n Y: ${pos.y.toFixed(3)}\n Z: ${pos.z.toFixed(3)}`;
+    }
+
+    function logCurrentArrowConfig() {
+        const arrow = transformControls.object;
+        if (!arrow || !arrow.isArrowHelper) {
+            console.warn("No arrow selected to log config.");
+            alert("خطأ: لم يتم تحديد سهم حاليًا للتعديل."); // Error: No arrow currently selected for editing.
+            return;
+        }
+
+        const stepIndex = arrow.userData.stepIndex;
+        if (stepIndex === undefined || stepIndex < 0 || stepIndex >= tutorialSteps.length) {
+            console.error("Could not find associated step data for this arrow (missing/invalid userData.stepIndex).");
+            alert("خطأ: لا يمكن ربط السهم ببيانات الدليل."); // Error: Cannot link arrow to tutorial data.
+            return;
+        }
+        const originalStep = tutorialSteps[stepIndex];
+        const newPosition = arrow.position;
+
+        console.log(`\n// ==== Arrow Config for: ${originalStep.targetName} (Step Index ${stepIndex}) ====`);
+        console.log(`// Copy/paste this 'arrowOrigin' line into your tutorialSteps array`);
+        console.log(`// for the corresponding step (index ${stepIndex}):`);
+        console.log(`arrowOrigin: new THREE.Vector3(${newPosition.x.toFixed(4)}, ${newPosition.y.toFixed(4)}, ${newPosition.z.toFixed(4)}),`);
+        console.log(`// ===================== End Config ======================`);
+
+        alert(`تم تسجيل إحداثيات السهم للخطوة ${stepIndex} (${originalStep.targetName}) في وحدة التحكم (F12)!\n\nانسخ السطر 'arrowOrigin: new THREE.Vector3(...)'`); // Arrow coordinates for step X logged... Copy the line...
+    }
+
+
+    // --- Toggle Content View ---
+    let isTextHidden = false; // Initial state: text is visible
+
+    function toggleContentView() {
+        isTextHidden = !isTextHidden;
+        bodyElement.classList.toggle('text-hidden', isTextHidden);
+
+        if (isTextHidden) {
+            toggleTextBtn.textContent = 'إظهار المحتوى'; // Show Content
+            // Optional: Make canvas explicitly take full height if needed, though fixed positioning might handle it
+            // canvasContainer.style.height = '100vh';
+        } else {
+            toggleTextBtn.textContent = 'إخفاء المحتوى'; // Hide Content
+            // Optional: Reset canvas height if it was changed
+            // canvasContainer.style.height = '';
+        }
+        // Resize THREE canvas after transition (important!)
+        setTimeout(onWindowResize, 450); // Delay slightly longer than CSS transition
+    }
+
+
+    // --- Navigation Button Handlers ---
+    function navigatePrev() {
+        if (currentStepIndex > -1) { // Allow going back from step 0 to welcome (-1)
+            currentStepIndex--;
+            updateUI();
+        }
+    }
+
+    function navigateNext() {
+        if (!scooterModel && currentStepIndex === -1) {
+            alert("يرجى انتظار تحميل النموذج بالكامل قبل المتابعة."); // Please wait for model to load...
+            return;
+        }
+        // Allow proceeding from last content step to the "End" state
+        if (currentStepIndex < tutorialSteps.length) {
+            currentStepIndex++;
+            updateUI();
+        }
+    }
+
+    // --- Camera Animation (Smooth Lerp using GSAP) ---
+    let cameraTween, targetTween;
+
+    function moveCameraSmoothly(newPosition, newTarget) {
+        if (!newPosition || !newTarget || isNaN(newTarget.x) || isNaN(newTarget.y) || isNaN(newTarget.z)) {
+            console.error("Attempting to move camera to invalid position/target.", newPosition, newTarget);
+            return;
+        }
+        // Check if GSAP is loaded
+        if (typeof gsap === 'undefined') {
+            console.warn("GSAP not loaded. Falling back to instant camera movement.");
+            camera.position.copy(newPosition);
+            orbitControls.target.copy(newTarget);
+            return;
+        }
+
+
+        // Kill existing tweens to prevent conflicts if user clicks fast
+        if (cameraTween) cameraTween.kill();
+        if (targetTween) targetTween.kill();
+
+        // Use GSAP for smoother animation
+        cameraTween = gsap.to(camera.position, {
+            duration: 1.2, // Animation duration
+            x: newPosition.x,
+            y: newPosition.y,
+            z: newPosition.z,
+            ease: "power2.inOut", // Smoother easing
+            onUpdate: () => {}, // orbitControls.update() is called in animate loop
+            onComplete: () => cameraTween = null // Clear reference on complete
+        });
+
+        targetTween = gsap.to(orbitControls.target, {
+            duration: 1.2,
+            x: newTarget.x,
+            y: newTarget.y,
+            z: newTarget.z,
+            ease: "power2.inOut",
+            onUpdate: () => {},
+            onComplete: () => targetTween = null
+        });
+    }
+    // Note: updateCameraAnimation function is removed as GSAP handles the lerp
+
+
+    // --- Window Resize Handler ---
+    function onWindowResize() {
+        if (!camera || !renderer) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // --- Animation Loop ---
+    let animationFrameId = null;
+    function animate() {
+        animationFrameId = requestAnimationFrame(animate);
+        orbitControls.update(); // Required for damping
+
+        // Explicitly render even if camera isn't moving (for orbit controls, etc.)
+        if (renderer && scene && camera) {
+            renderer.render(scene, camera);
+        }
+    }
+
+    // --- Start Everything ---
+    document.addEventListener('DOMContentLoaded', () => {
+        init();
+        // Initial UI setup
+        updateUI(); // Show welcome state
+    });
+
+</script>
+
+</body>
+</html>

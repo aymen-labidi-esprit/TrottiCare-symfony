@@ -1,0 +1,29 @@
+{# templates/reset_password/check_email.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérifiez votre Email{% endblock %}
+
+{% block body %}
+    <div class="container mt-5 text-center">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body p-5">
+                        <i class="bi bi-envelope-check-fill text-success fs-1 mb-3"></i>
+                        <h1 class="h3 mb-3 fw-normal">Vérifiez votre Email</h1>
+                        <p class="lead mb-4">
+                            Si un compte correspondant à votre adresse e-mail existe, un e-mail vient d'être envoyé contenant un lien pour réinitialiser votre mot de passe.
+                        </p>
+                        <p class="text-muted">
+                            Ce lien expirera dans {{ tokenLifetime|date('g') }} heure(s). {# Adjust format if needed #}
+                        </p>
+                        <p class="text-muted mt-3">
+                            Si vous ne recevez pas l'e-mail, veuillez vérifier votre dossier spam ou <a href="{{ path('app_forgot_password_request') }}">réessayer</a>.
+                        </p>
+                        <a href="{{ path('app_login_page') }}" class="btn btn-secondary mt-4">Retour à la connexion</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

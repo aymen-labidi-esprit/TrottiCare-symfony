@@ -1,0 +1,163 @@
+{# templates/public/event/_event_card.html.twig #}
+{# Expects 'event_data' variable (array with 'entity', 'duration', 'location', 'user_participation_status') #}
+{% set event = event_data.entity %}
+{% set user_status = event_data.user_participation_status|default(null) %}
+{% set location_display = event_data.location|default('-') %}
+{% set duration_display = event_data.duration|default(null) %}
+
+{# ---- STYLES NEEDED FOR THIS CARD --- #}
+{# (These should ideally be in your global CSS or base template styles) #}
+{% block stylesheets %}
+    {# Only include if not already globally available #}
+    <style>
+        /* Reusable Button Styles */
+        .button { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; text-align: center; cursor: pointer; transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out; border: 1px solid transparent; line-height: 1.25; font-size: 0.875rem; white-space: nowrap; }
+        .button-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+        .button-primary { background-color: #3b82f6; color: white; border-color: #3b82f6; } .button-primary:hover { background-color: #2563eb; border-color: #1d4ed8;}
+        .button-secondary { background-color: #e5e7eb; color: #374151; border-color: #d1d5db; } .button-secondary:hover { background-color: #d1d5db; border-color: #9ca3af;}
+        .button-outline-danger { color: #dc2626; border-color: #ef4444; background-color: transparent;} .button-outline-danger:hover { background-color: #fee2e2; }
+        .button-outline-secondary { color: #6b7280; border-color: #d1d5db; background-color: transparent;} .button-outline-secondary:hover { background-color: #f3f4f6; }
+
+        /* Status Badge Styles */
+        .status-badge { padding: 0.25em 0.6em; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; line-height: 1; }
+        .status-a_venir { background-color: #dbeafe; color: #1e40af; } /* blue */
+        .status-en_cours { background-color: #dcfce7; color: #166534; } /* green */
+        .status-termine { background-color: #f3f4f6; color: #374151; } /* gray */
+        .status-annule { background-color: #fee2e2; color: #991b1b; } /* red */
+        .badge-green { background-color: #dcfce7; color: #166534; } /* For 'Inscrit' */
+
+        /* Ensure SVGs render correctly */
+        svg { display: inline-block; vertical-align: middle; }
+    </style>
+{% endblock %}
+
+{% if event %} {# Only render card if event exists #}
+    <div class="event-card flex flex-col bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-200">
+
+        {# Card Header with Gradient and Title #}
+        <div class="h-32 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center relative p-4">
+            {# Optional overlay for better text contrast #}
+            {# <div class="absolute inset-0 bg-black/20"></div> #}
+            <h3 class="text-xl font-bold text-white text-center line-clamp-2 relative z-10">
+                {{ event.titre }}
+            </h3>
+        </div>
+
+        {# Card Body #}
+        <div class="p-5 flex flex-col flex-grow"> {# Use flex-grow to push footer down #}
+
+            {# Description (Truncated) #}
+            <p class="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed flex-grow"> {# Use flex-grow to take available space #}
+                {{ event.description|striptags|default('Aucune description fournie.') }}
+            </p>
+
+            {# Metadata Section #}
+            <div class="space-y-2 mb-5 text-xs text-gray-600">
+                {# Date Début #}
+                <div class="flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="font-medium">{{ event.dateDebut|date('d M Y, H:i') }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="font-medium">Min Autonomie:{{ event.trottinetteMinAutonomie }}</span>
+                </div>
+                {# Duration (if available) #}
+                {% if duration_display %}
+                    <div class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Durée: {{ duration_display }}</span>
+                    </div>
+                {% endif %}
+
+                {# Location #}
+                <div class="flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>{{ location_display }}</span>
+                </div>
+
+                {# Participants Count #}
+                <div class="flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span>{{ event.participations|length }} participant{{ event.participations|length > 1 ? 's' : '' }}</span>
+                </div>
+            </div>
+
+            {# Footer Section - Aligned to bottom #}
+            <div class="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
+                {# Status Badge #}
+                <span class="status-badge status-{{ event.statut|lower }}">
+                {% if event.statut == 'A_VENIR' %}À venir
+                {% elseif event.statut == 'EN_COURS' %}En cours
+                {% elseif event.statut == 'TERMINE' %}Terminé
+                {% elseif event.statut == 'ANNULE' %}Annulé
+                {% else %}{{ event.statut }}{% endif %}
+            </span>
+
+                {# Action Buttons #}
+                <div class="flex gap-2 flex-shrink-0">
+                    {# Details Button is always shown #}
+                    {# Use appropriate route for client view #}
+                    <a href="{{ path('client_event_show', {'id': event.id}) }}"
+                       class="button button-secondary button-sm flex items-center gap-1 text-xs" title="Voir les détails">
+                        {# Eye Icon SVG #}
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7z"></path></svg>
+                        Détails
+                    </a>
+
+                    {# Conditional Participation Buttons #}
+                    {% if event.statut == 'A_VENIR' %}
+                        {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                            {# Check against the ParticipationStatus Enum #}
+                            {% if user_status == constant('App\\Enum\\ParticipationStatus::INSCRIT') %}
+                                {# --- Cancel Button --- #}
+                                {# Use client route #}
+                                <form action="{{ path('client_event_cancel_participation', {'id': event.id}) }}" method="post" class="inline-block">
+                                    {# Consider adding CSRF token here for security #}
+                                    {# <input type="hidden" name="_token" value="{{ csrf_token('cancel_' ~ app.user.id ~ '_' ~ event.id) }}"> #}
+                                    <button type="submit"
+                                            class="button button-outline-danger button-sm flex items-center gap-1 text-xs"
+                                            onclick="return confirm('Annuler votre participation ?');"
+                                            title="Se désinscrire">
+                                        {# X Circle Icon SVG #}
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span>Annuler</span> {# Use span for potentially hiding text on small screens #}
+                                    </button>
+                                </form>
+                            {% else %} {# Covers both NULL (not participated) and ANNULE status #}
+                                {# --- Participate/Re-register Button --- #}
+                                {# Use client route #}
+                                <form action="{{ path('client_event_participate', {'id': event.id}) }}" method="post" class="inline-block">
+                                    {# Consider adding CSRF token #}
+                                    {# <input type="hidden" name="_token" value="{{ csrf_token('participate_' ~ event.id) }}"> #}
+                                    <button type="submit"
+                                            class="button button-primary button-sm flex items-center gap-1 text-xs"
+                                            title="{{ user_status == constant('App\\Enum\\ParticipationStatus::ANNULE') ? 'Se réinscrire' : 'Participer' }}">
+                                        {% if user_status == constant('App\\Enum\\ParticipationStatus::ANNULE') %}
+                                            {# Refresh Icon SVG #}
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.357-2a8.001 8.001 0 0115.357-2m0 0H15"></path></svg>
+                                            <span>Réinscrire</span>
+                                        {% else %}
+                                            {# User Plus Icon SVG #}
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                                            <span>Participer</span>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            {# --- Login Button --- #}
+                            <a href="{{ path('app_login') }}" {# Or app_login_page #}
+                               class="button button-secondary button-sm flex items-center gap-1 text-xs"
+                               title="Connectez-vous pour participer">
+                                {# Login Icon SVG #}
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                                <span>Connexion</span>
+                            </a>
+                        {% endif %}
+                    {% endif %} {# End check for event.statut == 'A_VENIR' #}
+                </div> {# End Actions flex container #}
+            </div> {# End Footer #}
+        </div> {# End Card Body #}
+    </div> {# End Card #}
+{% endif %} {# End check event exists #}

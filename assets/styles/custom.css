@@ -1,0 +1,112 @@
+/* Bootstrap’s compiled CSS */
+
+/* Font Awesome’s compiled CSS */
+@import "~@fortawesome/fontawesome-free/css/all.min.css";
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css");
+
+/* ====================================================================
+   File: custom.css  (put in assets/styles or public/css)
+   ==================================================================== */
+:root {
+    --tc-primary: #0072ff;
+    --tc-secondary: #00c6ff;
+    --tc-dark: #001e3c;
+}
+
+/* --- Navbar ------------------------------------------------------------ */
+.navbar-glass {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    transition: background 0.3s ease;
+}
+.navbar-glass.scrolled {
+    background: var(--tc-dark);
+}
+.navbar-glass .navbar-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -.5px;
+}
+.navbar-glass .navbar-brand span {
+    background: linear-gradient(135deg, var(--tc-primary), var(--tc-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.navbar-glass .nav-link {
+    position: relative;
+    font-weight: 500;
+    padding: .5rem 1rem;
+}
+.navbar-glass .nav-link::after {
+    content: "";
+    position: absolute;
+    bottom: .25rem;
+    left: 1rem;
+    width: 0;
+    height: 2px;
+    background: var(--tc-secondary);
+    transition: width .25s ease;
+}
+.navbar-glass .nav-link:hover::after,
+.navbar-glass .nav-link.active::after {
+    width: calc(100% - 2rem);
+}
+.navbar-toggler {
+    border: 0;
+}
+.navbar-toggler-icon {
+    filter: invert(1);
+}
+.dropdown-menu {
+    background: var(--tc-dark);
+    border: none;
+}
+.dropdown-item:hover {
+    background: rgba(255,255,255,.05);
+}
+
+/* --- Hero ---------------------------------------------------------------- */
+.hero {
+    background: linear-gradient(135deg, var(--tc-primary), var(--tc-secondary));
+    min-height: 100vh;
+    position: relative;
+    color: #fff;
+    overflow: hidden;
+}
+.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
+}
+.shape-divider {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    line-height: 0;
+}
+.shape-divider svg { width: 100%; height: 4rem; display: block; fill: #fff; }
+
+/* --- Buttons -------------------------------------------------------------- */
+.btn-rounded { border-radius: 2rem; padding-inline: 2rem; }
+
+/* --- Lift‑on‑hover cards -------------------------------------------------- */
+.card--lift {
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.card--lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.15);
+}
+
+/* --- Icon circles --------------------------------------------------------- */
+.icon-circle {
+    width: 3.5rem; height: 3.5rem;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--tc-primary), var(--tc-secondary));
+    color: #fff;
+}
+
+/* --- Generic section spacing --------------------------------------------- */
+.section { padding: 4rem 0; }

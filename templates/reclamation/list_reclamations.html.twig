@@ -1,0 +1,150 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Réclamations{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css" rel="stylesheet">
+<style>
+    .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4rem 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        font-size: 0.75rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        border: 1px solid transparent;
+    }
+    .button-warning { background-color: #f59e0b; color: white; }
+    .button-warning:hover { background-color: #d97706; }
+    .button-danger { background-color: #ef4444; color: white; }
+    .button-danger:hover { background-color: #dc2626; }
+    .button-info { background-color: #0ea5e9; color: white; }
+    .button-info:hover { background-color: #0284c7; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-100 p-4 md:p-6">
+    <div class="container mx-auto max-w-6xl">
+        <div class="bg-white rounded-lg shadow-md p-6">
+
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-clipboard-list text-blue-600 mr-2"></i> Liste des Réclamations
+                </h1>
+                <a href="{{ path('create_reclamation') }}" class="button button-info">
+                    <i class="fas fa-plus mr-1"></i> Créer une Réclamation
+                </a>
+            </div>
+
+            <form method="get" action="{{ path('reclamation_list') }}" class="bg-white rounded-lg shadow p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                    <div>{{ form_row(searchForm.dateDebut, { attr: { class: 'form-input' } }) }}</div>
+                    <div>{{ form_row(searchForm.dateFin, { attr: { class: 'form-input' } }) }}</div>
+                    <div>{{ form_row(searchForm.typeReclamation, { attr: { class: 'form-input' } }) }}</div>
+                    <div>{{ form_row(searchForm.userEmail, { attr: { class: 'form-input' } }) }}</div>
+                    <div>
+                        <button type="submit" class="button button-primary w-full">
+                            <i class="fas fa-filter mr-1.5"></i> Filtrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Titre</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type de réclamation</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date de création</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for reclamation in reclamations %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ reclamation.titre }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ reclamation.description }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ reclamation.getTypeReclamation() }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ reclamation.getDateCreation()|date('Y-m-d') }}</td>
+                                <td class="px-4 py-3 text-right flex flex-wrap justify-end gap-2">
+                                    <a href="{{ path('edit_reclamation_front', {'id': reclamation.id}) }}" class="button button-warning" title="Modifier">
+                                        <i class="fas fa-edit mr-1"></i> Modifier
+                                    </a>
+                                    <a href="{{ path('delete_reclamation_front', {'id': reclamation.id}) }}"
+                                       class="button button-danger"
+                                       onclick="return confirm('Voulez-vous vraiment supprimer cette réclamation ?');"
+                                       title="Supprimer">
+                                        <i class="fas fa-trash-alt mr-1"></i> Supprimer
+                                    </a>
+                                    <a href="{{ path('show_reclamation', {'id': reclamation.id}) }}" class="button button-info" title="Voir">
+                                        <i class="fas fa-eye mr-1"></i> Voir
+                                    </a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-12 text-gray-500">
+                                    Aucune réclamation trouvée.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="reclamation-calendar" class="mt-10 bg-white rounded-lg shadow-md p-6"></div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+
+{# ✅ Twig-safe preparation of calendar events #}
+{% set calendarEvents = [] %}
+{% for reclamation in reclamations %}
+    {% set calendarEvents = calendarEvents|merge([{
+        title: reclamation.titre,
+        start: reclamation.dateCreation|date('Y-m-d'),
+        url: path('show_reclamation', { id: reclamation.id })
+    }]) %}
+{% endfor %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const calendarEl = document.getElementById('reclamation-calendar');
+
+        // ✅ Safe JSON injection from Twig
+        const eventData = JSON.parse("{{ calendarEvents|json_encode|e('js') }}");
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'fr',
+            firstDay: 1,
+            height: 'auto',
+            events: eventData,
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                if (info.event.url) {
+                    window.open(info.event.url, '_blank');
+                }
+            }
+        });
+
+        calendar.render();
+    });
+</script>
+{% endblock %}
